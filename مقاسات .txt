@@ -1,0 +1,162 @@
+---
+
+مقاس EU 34
+| القياس EN / AR | القيمة (سم) |
+|---|---|
+| Back width / عرض الظهر | 36 |
+| Shoulder / الكتف | 12 |
+| Back Length / طول الظهر | 40 |
+| Arm Length / طول الذراع | 58 |
+| Upper Arm / أعلى الذراع | 28 |
+| Wrist Circumference / محيط المعصم | 15 |
+| Neck / الرقبة | 32 |
+| Bust Circumference / محيط الصدر | 81 |
+| Waist / الخصر | 61 |
+| Hip / الورك | 86 |
+| Hip Length / طول الورك | 20 |
+| Knee Length / طول الركبة | 55 |
+| Pants Outseam / طول البنطال الخارجي | 100 |
+| Skirt length / طول التنورة | 60 |
+| Front Length / طول الصدر الأمامي | 40 |
+| Armhole Circumference / محيط فتحة الذراع | 38 |
+| Side / جانب (طول جانبي) | 18 |
+| Bust Length / طول الصدر | 24 |
+| Bust distance / مسافة الصدر | 18 |
+
+مقاس EU 36
+| القياس EN / AR | القيمة (سم) |
+|---|---|
+| Back width / عرض الظهر | 37 |
+| Shoulder / الكتف | 12.5 |
+| Back Length / طول الظهر | 40.5 |
+| Arm Length / طول الذراع | 58.5 |
+| Upper Arm / أعلى الذراع | 29 |
+| Wrist Circumference / محيط المعصم | 15.5 |
+| Neck / الرقبة | 33 |
+| Bust Circumference / محيط الصدر | 86 |
+| Waist / الخصر | 66 |
+| Hip / الورك | 91 |
+| Hip Length / طول الورك | 20.5 |
+| Knee Length / طول الركبة | 55.5 |
+| Pants Outseam / طول البنطال الخارجي | 101 |
+| Skirt length / طول التنورة | 60.5 |
+| Front Length / طول الصدر الأمامي | 40.5 |
+| Armhole Circumference / محيط فتحة الذراع | 39 |
+| Side / جانب (طول جانبي) | 18.5 |
+| Bust Length / طول الصدر | 24.5 |
+| Bust distance / مسافة الصدر | 18.5 |
+
+مقاس EU 38
+| القياس EN / AR | القيمة (سم) |
+|---|---|
+| Back width / عرض الظهر | 38 |
+| Shoulder / الكتف | 13 |
+| Back Length / طول الظهر | 41 |
+| Arm Length / طول الذراع | 59 |
+| Upper Arm / أعلى الذراع | 30 |
+| Wrist Circumference / محيط المعصم | 16 |
+| Neck / الرقبة | 34 |
+| Bust Circumference / محيط الصدر | 91 |
+| Waist / الخصر | 71 |
+| Hip / الورك | 97 |
+| Hip Length / طول الورك | 21 |
+| Knee Length / طول الركبة | 56 |
+| Pants Outseam / طول البنطال الخارجي | 102 |
+| Skirt length / طول التنورة | 61 |
+| Front Length / طول الصدر الأمامي | 41 |
+| Armhole Circumference / محيط فتحة الذراع | 40 |
+| Side / جانب (طول جانبي) | 19 |
+| Bust Length / طول الصدر | 25 |
+| Bust distance / مسافة الصدر | 19 |
+
+مقاس EU 40
+| القياس EN / AR | القيمة (سم) |
+|---|---|
+| Back width / عرض الظهر | 39 |
+| Shoulder / الكتف | 13.5 |
+| Back Length / طول الظهر | 41.5 |
+| Arm Length / طول الذراع | 59.5 |
+| Upper Arm / أعلى الذراع | 31 |
+| Wrist Circumference / محيط المعصم | 16.5 |
+| Neck / الرقبة | 35 |
+| Bust Circumference / محيط الصدر | 94 |
+| Waist / الخصر | 74 |
+| Hip / الورك | 99 |
+| Hip Length / طول الورك | 21.5 |
+| Knee Length / طول الركبة | 56.5 |
+| Pants Outseam / طول البنطال الخارجي | 103 |
+| Skirt length / طول التنورة | 61.5 |
+| Front Length / طول الصدر الأمامي | 41.5 |
+| Armhole Circumference / محيط فتحة الذراع | 41 |
+| Side / جانب (طول جانبي) | 19.5 |
+| Bust Length / طول الصدر | 25.5 |
+| Bust distance / مسافة الصدر | 19.5 |
+
+مقاس EU 42
+| القياس EN / AR | القيمة (سم) |
+|---|---|
+| Back width / عرض الظهر | 40 |
+| Shoulder / الكتف | 14 |
+| Back Length / طول الظهر | 42 |
+| Arm Length / طول الذراع | 60 |
+| Upper Arm / أعلى الذراع | 32 |
+| Wrist Circumference / محيط المعصم | 17 |
+| Neck / الرقبة | 36 |
+| Bust Circumference / محيط الصدر | 97 |
+| Waist / الخصر | 79 |
+| Hip / الورك | 104 |
+| Hip Length / طول الورك | 22 |
+| Knee Length / طول الركبة | 57 |
+| Pants Outseam / طول البنطال الخارجي | 104 |
+| Skirt length / طول التنورة | 62 |
+| Front Length / طول الصدر الأمامي | 42 |
+| Armhole Circumference / محيط فتحة الذراع | 42 |
+| Side / جانب (طول جانبي) | 20 |
+| Bust Length / طول الصدر | 26 |
+| Bust distance / مسافة الصدر | 20 |
+
+مقاس EU 44
+| القياس EN / AR | القيمة (سم) |
+|---|---|
+| Back width / عرض الظهر | 41 |
+| Shoulder / الكتف | 14.5 |
+| Back Length / طول الظهر | 42.5 |
+| Arm Length / طول الذراع | 60.5 |
+| Upper Arm / أعلى الذراع | 33 |
+| Wrist Circumference / محيط المعصم | 17.5 |
+| Neck / الرقبة | 37 |
+| Bust Circumference / محيط الصدر | 99 |
+| Waist / الخصر | 84 |
+| Hip / الورك | 109 |
+| Hip Length / طول الورك | 22.5 |
+| Knee Length / طول الركبة | 57.5 |
+| Pants Outseam / طول البنطال الخارجي | 105 |
+| Skirt length / طول التنورة | 62.5 |
+| Front Length / طول الصدر الأمامي | 42.5 |
+| Armhole Circumference / محيط فتحة الذراع | 43 |
+| Side / جانب (طول جانبي) | 20.5 |
+| Bust Length / طول الصدر | 26.5 |
+| Bust distance / مسافة الصدر | 20.5 |
+
+مقاس EU 46
+| القياس EN / AR | القيمة (سم) |
+|---|---|
+| Back width / عرض الظهر | 42 |
+| Shoulder / الكتف | 15 |
+| Back Length / طول الظهر | 43 |
+| Arm Length / طول الذراع | 61 |
+| Upper Arm / أعلى الذراع | 34 |
+| Wrist Circumference / محيط المعصم | 18 |
+| Neck / الرقبة | 38 |
+| Bust Circumference / محيط الصدر | 104 |
+| Waist / الخصر | 86 |
+| Hip / الورك | 112 |
+| Hip Length / طول الورك | 23 |
+| Knee Length / طول الركبة | 58 |
+| Pants Outseam / طول البنطال الخارجي | 106 |
+| Skirt length / طول التنورة | 63 |
+| Front Length / طول الصدر الأمامي | 43 |
+| Armhole Circumference / محيط فتحة الذراع | 44 |
+| Side / جانب (طول جانبي) | 21 |
+| Bust Length / طول الصدر | 27 |
+| Bust distance / مسافة الصدر | 21 |
