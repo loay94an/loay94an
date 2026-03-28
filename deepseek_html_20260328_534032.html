@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>نظام الكورساج الاحترافي - تعليمات رسم البترون حسب المقاسات العالمية</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f0f4fa 0%, #e2e8f0 100%);
+            font-family: 'Segoe UI', 'Tahoma', 'Cairo', system-ui, sans-serif;
+            padding: 1.5rem;
+            color: #1e2f3f;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.96);
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #1e2f3f;
+            color: white;
+            padding: 1.5rem 2rem;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.3rem;
+        }
+        .header p {
+            opacity: 0.85;
+        }
+
+        .app-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            padding: 2rem;
+        }
+
+        .inputs-panel {
+            flex: 1.2;
+            min-width: 300px;
+            background: #ffffffdd;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #eef2f8;
+        }
+
+        .results-panel {
+            flex: 2.2;
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            border-right: 5px solid #c49a6c;
+            padding-right: 1rem;
+            margin-bottom: 1rem;
+            color: #2c3e44;
+        }
+
+        .selector-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background: #f8fafd;
+            padding: 1rem;
+            border-radius: 1.2rem;
+        }
+        .selector-item {
+            flex: 1;
+            min-width: 140px;
+        }
+        .selector-item label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.3rem;
+            font-size: 0.85rem;
+        }
+        select, button {
+            width: 100%;
+            padding: 0.7rem;
+            border-radius: 1rem;
+            border: 1px solid #cbd5e1;
+            background: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        select:focus, input:focus {
+            outline: none;
+            border-color: #c49a6c;
+            box-shadow: 0 0 0 2px rgba(196,154,108,0.2);
+        }
+
+        .measure-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 0.8rem;
+            margin: 1rem 0 1.5rem;
+        }
+        .measure-field {
+            display: flex;
+            flex-direction: column;
+        }
+        .measure-field label {
+            font-weight: 600;
+            font-size: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        .measure-field input {
+            padding: 0.5rem;
+            border-radius: 0.8rem;
+            border: 1px solid #cfdfe8;
+            font-family: monospace;
+            font-weight: 500;
+        }
+
+        .btn-calc {
+            background: #1e2f3f;
+            color: white;
+            border: none;
+            padding: 0.8rem;
+            width: 100%;
+            border-radius: 2rem;
+            font-weight: bold;
+            margin-top: 1rem;
+            transition: 0.2s;
+        }
+        .btn-calc:hover {
+            background: #c49a6c;
+            transform: scale(0.98);
+        }
+
+        .info-card {
+            background: #f9f9fc;
+            padding: 1rem;
+            border-radius: 1rem;
+            margin-bottom: 0.5rem;
+            border-right: 4px solid #c49a6c;
+        }
+        .ease-table, .method-steps {
+            background: #f9f9fc;
+            padding: 1rem;
+            border-radius: 1rem;
+            margin: 0.5rem 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        td {
+            padding: 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .badge-school {
+            background: #eef2f7;
+            padding: 0.3rem 1rem;
+            border-radius: 2rem;
+            display: inline-block;
+            font-weight: bold;
+            margin-bottom: 0.8rem;
+        }
+        hr {
+            margin: 0.8rem 0;
+        }
+        .footer-note {
+            font-size: 0.7rem;
+            text-align: center;
+            margin-top: 1rem;
+            color: #5a6e7c;
+        }
+        .pattern-instruction {
+            background: #fffaf0;
+            border-radius: 1rem;
+            padding: 1rem;
+        }
+        .pattern-instruction ol, .pattern-instruction ul {
+            margin-right: 1.5rem;
+            margin-top: 0.5rem;
+        }
+        .pattern-instruction li {
+            margin-bottom: 0.5rem;
+        }
+        .calc-highlight {
+            font-weight: bold;
+            color: #b45f2b;
+            background: #fff0e0;
+            padding: 0.1rem 0.3rem;
+            border-radius: 0.5rem;
+        }
+        .formula {
+            font-family: monospace;
+            background: #f0f0f0;
+            padding: 0.1rem 0.3rem;
+            border-radius: 0.3rem;
+            direction: ltr;
+            display: inline-block;
+        }
+        @media (max-width: 800px) {
+            .app-grid { flex-direction: column; }
+            .selector-group { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>✂️ نظام الكورساج الاحترافي</h1>
+        <p>اختر نظام المقاسات (الدولة) والجنس والمقاس – احصل على تعليمات رسم البترون التفصيلية حسب المعايير العالمية</p>
+    </div>
+
+    <div class="app-grid">
+        <!-- اللوحة اليسرى: التحكم -->
+        <div class="inputs-panel">
+            <div class="section-title">📐 تحديد المقاسات الديناميكية</div>
+            <div class="selector-group">
+                <div class="selector-item">
+                    <label>🌍 نظام المقاسات حسب الدولة</label>
+                    <select id="countrySelect">
+                        <option value="eu">🇪🇺 EU (أوروبي)</option>
+                        <option value="us">🇺🇸 US (أمريكي)</option>
+                        <option value="uk">🇬🇧 UK (بريطاني)</option>
+                        <option value="jp">🇯🇵 JP (ياباني)</option>
+                    </select>
+                </div>
+                <div class="selector-item">
+                    <label>🧑 الجنس</label>
+                    <select id="genderSelect">
+                        <option value="women">👩 نساء (Women)</option>
+                        <option value="men">👨 رجال (Men)</option>
+                        <option value="kids">🧒 أطفال (Kids)</option>
+                    </select>
+                </div>
+                <div class="selector-item">
+                    <label>📏 المقاس القياسي</label>
+                    <select id="sizeSelect"></select>
+                </div>
+                <div class="selector-item">
+                    <label>🏛️ مدرسة الخياطة</label>
+                    <select id="schoolSelect">
+                        <option value="french">🇫🇷 الفرنسية (Moulage)</option>
+                        <option value="italian">🇮🇹 الإيطالية (هندسية)</option>
+                        <option value="american">🇺🇸 الأمريكية (RTW)</option>
+                        <option value="german">🇩🇪 الألمانية (Müller)</option>
+                        <option value="japanese">🇯🇵 اليابانية (Pattern Magic)</option>
+                        <option value="british">🇬🇧 البريطانية (Savile Row)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="section-title">📏 قياسات الجسم (سم) – قابلة للتعديل اليدوي</div>
+            <div class="measure-grid" id="measureGrid"></div>
+            <button id="applyBtn" class="btn-calc">🔄 تحديث النتائج والتعليمات</button>
+            <div class="footer-note">* تغيير الدولة أو الجنس أو المقاس يعيد تعبئة القياسات. يمكنك تعديل أي قياس يدويًا ثم الضغط على تحديث.</div>
+        </div>
+
+        <!-- اللوحة اليمنى: نتائج المدرسة + تعليمات رسم البترون -->
+        <div class="results-panel" id="resultsPanel">
+            <div>
+                <div class="section-title">🧵 تفاصيل المدرسة وطريقة العمل</div>
+                <div id="schoolResult"></div>
+            </div>
+            <div>
+                <div class="section-title">📐 تعليمات رسم البترون (الكورساج) – احترافي عالمي</div>
+                <div id="patternInstructions"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ------------------- قاعدة بيانات المقاسات المعيارية حسب الدولة والجنس -------------------
+    const sizeSystems = {
+        eu: {
+            women: {
+                sizes: ["34", "36", "38", "40", "42", "44", "46"],
+                measurements: {
+                    "34": { chest: 82, waist: 64, hip: 90, frontWaistLen: 41, backWaistLen: 39, shoulder: 11.5, armholeDepth: 20, neck: 35 },
+                    "36": { chest: 86, waist: 68, hip: 94, frontWaistLen: 41.5, backWaistLen: 39.5, shoulder: 12, armholeDepth: 20.5, neck: 36 },
+                    "38": { chest: 90, waist: 72, hip: 98, frontWaistLen: 42, backWaistLen: 40, shoulder: 12.5, armholeDepth: 21, neck: 37 },
+                    "40": { chest: 94, waist: 76, hip: 102, frontWaistLen: 42.5, backWaistLen: 40.5, shoulder: 13, armholeDepth: 21.5, neck: 38 },
+                    "42": { chest: 98, waist: 80, hip: 106, frontWaistLen: 43, backWaistLen: 41, shoulder: 13.5, armholeDepth: 22, neck: 39 },
+                    "44": { chest: 102, waist: 84, hip: 110, frontWaistLen: 43.5, backWaistLen: 41.5, shoulder: 14, armholeDepth: 22.5, neck: 40 },
+                    "46": { chest: 106, waist: 88, hip: 114, frontWaistLen: 44, backWaistLen: 42, shoulder: 14.5, armholeDepth: 23, neck: 41 }
+                }
+            },
+            men: {
+                sizes: ["46", "48", "50", "52", "54", "56"],
+                measurements: {
+                    "46": { chest: 92, waist: 80, hip: 96, frontWaistLen: 44, backWaistLen: 43, shoulder: 13, armholeDepth: 23, neck: 39 },
+                    "48": { chest: 96, waist: 84, hip: 100, frontWaistLen: 44.5, backWaistLen: 43.5, shoulder: 13.5, armholeDepth: 23.5, neck: 40 },
+                    "50": { chest: 100, waist: 88, hip: 104, frontWaistLen: 45, backWaistLen: 44, shoulder: 14, armholeDepth: 24, neck: 41 },
+                    "52": { chest: 104, waist: 92, hip: 108, frontWaistLen: 45.5, backWaistLen: 44.5, shoulder: 14.5, armholeDepth: 24.5, neck: 42 },
+                    "54": { chest: 108, waist: 96, hip: 112, frontWaistLen: 46, backWaistLen: 45, shoulder: 15, armholeDepth: 25, neck: 43 },
+                    "56": { chest: 112, waist: 100, hip: 116, frontWaistLen: 46.5, backWaistLen: 45.5, shoulder: 15.5, armholeDepth: 25.5, neck: 44 }
+                }
+            },
+            kids: {
+                sizes: ["4-5ans", "6-7ans", "8-9ans", "10-11ans", "12-13ans"],
+                measurements: {
+                    "4-5ans": { chest: 56, waist: 54, hip: 62, frontWaistLen: 30, backWaistLen: 29, shoulder: 8, armholeDepth: 14, neck: 28 },
+                    "6-7ans": { chest: 62, waist: 58, hip: 68, frontWaistLen: 33, backWaistLen: 32, shoulder: 9, armholeDepth: 15.5, neck: 30 },
+                    "8-9ans": { chest: 68, waist: 62, hip: 74, frontWaistLen: 36, backWaistLen: 35, shoulder: 10, armholeDepth: 17, neck: 32 },
+                    "10-11ans": { chest: 74, waist: 66, hip: 80, frontWaistLen: 39, backWaistLen: 38, shoulder: 11, armholeDepth: 18.5, neck: 34 },
+                    "12-13ans": { chest: 80, waist: 70, hip: 86, frontWaistLen: 41, backWaistLen: 40, shoulder: 12, armholeDepth: 20, neck: 36 }
+                }
+            }
+        },
+        us: { // US sizes conversion (women: 0-16, men: S-XXL, kids similar)
+            women: {
+                sizes: ["2", "4", "6", "8", "10", "12", "14"],
+                measurements: {
+                    "2": { chest: 82, waist: 64, hip: 90, frontWaistLen: 41, backWaistLen: 39, shoulder: 11.5, armholeDepth: 20, neck: 35 },
+                    "4": { chest: 86, waist: 68, hip: 94, frontWaistLen: 41.5, backWaistLen: 39.5, shoulder: 12, armholeDepth: 20.5, neck: 36 },
+                    "6": { chest: 90, waist: 72, hip: 98, frontWaistLen: 42, backWaistLen: 40, shoulder: 12.5, armholeDepth: 21, neck: 37 },
+                    "8": { chest: 94, waist: 76, hip: 102, frontWaistLen: 42.5, backWaistLen: 40.5, shoulder: 13, armholeDepth: 21.5, neck: 38 },
+                    "10": { chest: 98, waist: 80, hip: 106, frontWaistLen: 43, backWaistLen: 41, shoulder: 13.5, armholeDepth: 22, neck: 39 },
+                    "12": { chest: 102, waist: 84, hip: 110, frontWaistLen: 43.5, backWaistLen: 41.5, shoulder: 14, armholeDepth: 22.5, neck: 40 },
+                    "14": { chest: 106, waist: 88, hip: 114, frontWaistLen: 44, backWaistLen: 42, shoulder: 14.5, armholeDepth: 23, neck: 41 }
+                }
+            },
+            men: {
+                sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+                measurements: {
+                    "XS": { chest: 88, waist: 76, hip: 92, frontWaistLen: 43, backWaistLen: 42, shoulder: 12.5, armholeDepth: 22.5, neck: 38 },
+                    "S": { chest: 92, waist: 80, hip: 96, frontWaistLen: 44, backWaistLen: 43, shoulder: 13, armholeDepth: 23, neck: 39 },
+                    "M": { chest: 98, waist: 86, hip: 102, frontWaistLen: 45, backWaistLen: 44, shoulder: 14, armholeDepth: 24, neck: 40 },
+                    "L": { chest: 104, waist: 92, hip: 108, frontWaistLen: 46, backWaistLen: 45, shoulder: 15, armholeDepth: 25, neck: 41 },
+                    "XL": { chest: 110, waist: 98, hip: 114, frontWaistLen: 47, backWaistLen: 46, shoulder: 16, armholeDepth: 26, neck: 42 },
+                    "XXL": { chest: 116, waist: 104, hip: 120, frontWaistLen: 48, backWaistLen: 47, shoulder: 17, armholeDepth: 27, neck: 43 }
+                }
+            },
+            kids: {
+                sizes: ["4", "5", "6", "7", "8", "10", "12"],
+                measurements: {
+                    "4": { chest: 56, waist: 54, hip: 62, frontWaistLen: 30, backWaistLen: 29, shoulder: 8, armholeDepth: 14, neck: 28 },
+                    "5": { chest: 58, waist: 56, hip: 64, frontWaistLen: 31, backWaistLen: 30, shoulder: 8.5, armholeDepth: 14.5, neck: 29 },
+                    "6": { chest: 62, waist: 58, hip: 68, frontWaistLen: 33, backWaistLen: 32, shoulder: 9, armholeDepth: 15.5, neck: 30 },
+                    "7": { chest: 65, waist: 60, hip: 71, frontWaistLen: 34.5, backWaistLen: 33.5, shoulder: 9.5, armholeDepth: 16.2, neck: 31 },
+                    "8": { chest: 68, waist: 62, hip: 74, frontWaistLen: 36, backWaistLen: 35, shoulder: 10, armholeDepth: 17, neck: 32 },
+                    "10": { chest: 74, waist: 66, hip: 80, frontWaistLen: 39, backWaistLen: 38, shoulder: 11, armholeDepth: 18.5, neck: 34 },
+                    "12": { chest: 80, waist: 70, hip: 86, frontWaistLen: 41, backWaistLen: 40, shoulder: 12, armholeDepth: 20, neck: 36 }
+                }
+            }
+        },
+        uk: { // UK sizes similar to US but with offset, simplified for demo
+            women: {
+                sizes: ["6", "8", "10", "12", "14", "16", "18"],
+                measurements: {
+                    "6": { chest: 82, waist: 64, hip: 90, frontWaistLen: 41, backWaistLen: 39, shoulder: 11.5, armholeDepth: 20, neck: 35 },
+                    "8": { chest: 86, waist: 68, hip: 94, frontWaistLen: 41.5, backWaistLen: 39.5, shoulder: 12, armholeDepth: 20.5, neck: 36 },
+                    "10": { chest: 90, waist: 72, hip: 98, frontWaistLen: 42, backWaistLen: 40, shoulder: 12.5, armholeDepth: 21, neck: 37 },
+                    "12": { chest: 94, waist: 76, hip: 102, frontWaistLen: 42.5, backWaistLen: 40.5, shoulder: 13, armholeDepth: 21.5, neck: 38 },
+                    "14": { chest: 98, waist: 80, hip: 106, frontWaistLen: 43, backWaistLen: 41, shoulder: 13.5, armholeDepth: 22, neck: 39 },
+                    "16": { chest: 102, waist: 84, hip: 110, frontWaistLen: 43.5, backWaistLen: 41.5, shoulder: 14, armholeDepth: 22.5, neck: 40 },
+                    "18": { chest: 106, waist: 88, hip: 114, frontWaistLen: 44, backWaistLen: 42, shoulder: 14.5, armholeDepth: 23, neck: 41 }
+                }
+            },
+            men: {
+                sizes: ["XS", "S", "M", "L", "XL", "XXL"], // same as US for simplicity
+                measurements: {
+                    "XS": { chest: 88, waist: 76, hip: 92, frontWaistLen: 43, backWaistLen: 42, shoulder: 12.5, armholeDepth: 22.5, neck: 38 },
+                    "S": { chest: 92, waist: 80, hip: 96, frontWaistLen: 44, backWaistLen: 43, shoulder: 13, armholeDepth: 23, neck: 39 },
+                    "M": { chest: 98, waist: 86, hip: 102, frontWaistLen: 45, backWaistLen: 44, shoulder: 14, armholeDepth: 24, neck: 40 },
+                    "L": { chest: 104, waist: 92, hip: 108, frontWaistLen: 46, backWaistLen: 45, shoulder: 15, armholeDepth: 25, neck: 41 },
+                    "XL": { chest: 110, waist: 98, hip: 114, frontWaistLen: 47, backWaistLen: 46, shoulder: 16, armholeDepth: 26, neck: 42 },
+                    "XXL": { chest: 116, waist: 104, hip: 120, frontWaistLen: 48, backWaistLen: 47, shoulder: 17, armholeDepth: 27, neck: 43 }
+                }
+            },
+            kids: {
+                sizes: ["4-5ans", "6-7ans", "8-9ans", "10-11ans", "12-13ans"],
+                measurements: {
+                    "4-5ans": { chest: 56, waist: 54, hip: 62, frontWaistLen: 30, backWaistLen: 29, shoulder: 8, armholeDepth: 14, neck: 28 },
+                    "6-7ans": { chest: 62, waist: 58, hip: 68, frontWaistLen: 33, backWaistLen: 32, shoulder: 9, armholeDepth: 15.5, neck: 30 },
+                    "8-9ans": { chest: 68, waist: 62, hip: 74, frontWaistLen: 36, backWaistLen: 35, shoulder: 10, armholeDepth: 17, neck: 32 },
+                    "10-11ans": { chest: 74, waist: 66, hip: 80, frontWaistLen: 39, backWaistLen: 38, shoulder: 11, armholeDepth: 18.5, neck: 34 },
+                    "12-13ans": { chest: 80, waist: 70, hip: 86, frontWaistLen: 41, backWaistLen: 40, shoulder: 12, armholeDepth: 20, neck: 36 }
+                }
+            }
+        },
+        jp: { // Japanese sizes (women: 5-21, men: S-XXL, kids by height)
+            women: {
+                sizes: ["5", "7", "9", "11", "13", "15", "17"],
+                measurements: {
+                    "5": { chest: 80, waist: 62, hip: 88, frontWaistLen: 40.5, backWaistLen: 38.5, shoulder: 11, armholeDepth: 19.5, neck: 34 },
+                    "7": { chest: 84, waist: 66, hip: 92, frontWaistLen: 41, backWaistLen: 39, shoulder: 11.5, armholeDepth: 20, neck: 35 },
+                    "9": { chest: 88, waist: 70, hip: 96, frontWaistLen: 41.5, backWaistLen: 39.5, shoulder: 12, armholeDepth: 20.5, neck: 36 },
+                    "11": { chest: 92, waist: 74, hip: 100, frontWaistLen: 42, backWaistLen: 40, shoulder: 12.5, armholeDepth: 21, neck: 37 },
+                    "13": { chest: 96, waist: 78, hip: 104, frontWaistLen: 42.5, backWaistLen: 40.5, shoulder: 13, armholeDepth: 21.5, neck: 38 },
+                    "15": { chest: 100, waist: 82, hip: 108, frontWaistLen: 43, backWaistLen: 41, shoulder: 13.5, armholeDepth: 22, neck: 39 },
+                    "17": { chest: 104, waist: 86, hip: 112, frontWaistLen: 43.5, backWaistLen: 41.5, shoulder: 14, armholeDepth: 22.5, neck: 40 }
+                }
+            },
+            men: {
+                sizes: ["S", "M", "L", "XL", "XXL"],
+                measurements: {
+                    "S": { chest: 90, waist: 78, hip: 94, frontWaistLen: 43.5, backWaistLen: 42.5, shoulder: 12.8, armholeDepth: 22.8, neck: 38.5 },
+                    "M": { chest: 96, waist: 84, hip: 100, frontWaistLen: 44.5, backWaistLen: 43.5, shoulder: 13.5, armholeDepth: 23.5, neck: 39.5 },
+                    "L": { chest: 102, waist: 90, hip: 106, frontWaistLen: 45.5, backWaistLen: 44.5, shoulder: 14.2, armholeDepth: 24.2, neck: 40.5 },
+                    "XL": { chest: 108, waist: 96, hip: 112, frontWaistLen: 46.5, backWaistLen: 45.5, shoulder: 15, armholeDepth: 25, neck: 41.5 },
+                    "XXL": { chest: 114, waist: 102, hip: 118, frontWaistLen: 47.5, backWaistLen: 46.5, shoulder: 15.8, armholeDepth: 25.8, neck: 42.5 }
+                }
+            },
+            kids: {
+                sizes: ["100", "110", "120", "130", "140", "150"],
+                measurements: {
+                    "100": { chest: 54, waist: 52, hip: 60, frontWaistLen: 29, backWaistLen: 28, shoulder: 7.5, armholeDepth: 13.5, neck: 27 },
+                    "110": { chest: 58, waist: 55, hip: 64, frontWaistLen: 31, backWaistLen: 30, shoulder: 8.2, armholeDepth: 14.2, neck: 28.5 },
+                    "120": { chest: 64, waist: 60, hip: 70, frontWaistLen: 34, backWaistLen: 33, shoulder: 9, armholeDepth: 15.5, neck: 30 },
+                    "130": { chest: 70, waist: 64, hip: 76, frontWaistLen: 37, backWaistLen: 36, shoulder: 10, armholeDepth: 17, neck: 32 },
+                    "140": { chest: 76, waist: 68, hip: 82, frontWaistLen: 40, backWaistLen: 39, shoulder: 11, armholeDepth: 18.5, neck: 34 },
+                    "150": { chest: 82, waist: 72, hip: 88, frontWaistLen: 42, backWaistLen: 41, shoulder: 12, armholeDepth: 20, neck: 36 }
+                }
+            }
+        }
+    };
+
+    // المدارس (بدلات الارتياح والخطوات)
+    const schoolsData = {
+        french: { name: "الفرنسية (Moulage)", easeChest: { min:2, max:4, desc:"ضيق 2-4 سم" }, easeWaist:{ min:0, max:2, desc:"0-2 سم" }, philosophy:"دقة تشريحية، تشكيل على المانيكان", steps: ["تثبيت أشرطة على المانيكان","تشكيل سهم الصدر","تفريغ البترون مع بدلات ضيقة","تركيب متعدد"] },
+        italian: { name: "الإيطالية (هندسية)", easeChest: { min:5, max:7, desc:"5-7 سم" }, easeWaist:{ min:4, max:6, desc:"4-6 سم" }, philosophy:"قص معماري، بلوكات دقيقة", steps: ["بناء البلوك الأساسي","إضافة سهام متوازنة","تعديل على المانيكان","تشطيبات داخلية"] },
+        american: { name: "الأمريكية (RTW)", easeChest: { min:8, max:12, desc:"8-12 سم" }, easeWaist:{ min:6, max:10, desc:"6-10 سم" }, philosophy:"إنتاج ضخم، مقاسات موحدة", steps: ["اختيار البلوك المناسب","تعديل طفيف للسهام","قص آلي سريع","تشطيب عملي"] },
+        german: { name: "الألمانية (مولر)", easeChest: { min:6, max:8, desc:"6-8 سم" }, easeWaist:{ min:4, max:5, desc:"4-5 سم" }, philosophy:"معادلات رياضية دقيقة", steps: ["حساب عرض الأمام بالمعادلة","تحديد عمق فتحة الإبط","توزيع السهام بنسب","رسم بترون بزوايا قائمة"] },
+        japanese: { name: "اليابانية (Pattern Magic)", easeChest: { min:12, max:20, desc:"12-20+ سم" }, easeWaist:{ min:8, max:15, desc:"8-15 سم" }, philosophy:"تحوير ثلاثي الأبعاد، ابتكار", steps: ["تحوير الباترون الأساسي","فتحات واستدارة","استخدام المانيكان للتشكيل","تفريغ بترون معقد"] },
+        british: { name: "البريطانية (Savile Row)", easeChest: { min:4, max:6, desc:"4-6 سم" }, easeWaist:{ min:2, max:4, desc:"2-4 سم" }, philosophy:"هيكلية يدوية، كانفاس", steps: ["أخذ 35 قياسًا","بناء كانفاس صدري","تركيب أولي يدوي","تشطيب بالكوى"] }
+    };
+
+    const measureFields = [
+        { id: "chest", label: "محيط الصدر", unit: "سم", key: "chest" },
+        { id: "waist", label: "محيط الخصر", unit: "سم", key: "waist" },
+        { id: "hip", label: "محيط الورك", unit: "سم", key: "hip" },
+        { id: "frontWaistLen", label: "طول الجذع الأمامي", unit: "سم", key: "frontWaistLen" },
+        { id: "backWaistLen", label: "طول الجذع الخلفي", unit: "سم", key: "backWaistLen" },
+        { id: "shoulder", label: "عرض الكتف", unit: "سم", key: "shoulder" },
+        { id: "armholeDepth", label: "عمق فتحة الإبط", unit: "سم", key: "armholeDepth" },
+        { id: "neck", label: "محيط العنق", unit: "سم", key: "neck" }
+    ];
+
+    let currentCountry = "eu";
+    let currentGender = "women";
+    let currentSize = "38";
+    let currentMeasurements = {};
+
+    const countrySelect = document.getElementById("countrySelect");
+    const genderSelect = document.getElementById("genderSelect");
+    const sizeSelect = document.getElementById("sizeSelect");
+    const schoolSelect = document.getElementById("schoolSelect");
+    const applyBtn = document.getElementById("applyBtn");
+    const measureGrid = document.getElementById("measureGrid");
+    const schoolResultDiv = document.getElementById("schoolResult");
+    const patternInstructionsDiv = document.getElementById("patternInstructions");
+
+    function buildMeasureInputs(measurementsObj) {
+        let html = "";
+        for (let field of measureFields) {
+            const val = measurementsObj[field.key] || 0;
+            html += `
+                <div class="measure-field">
+                    <label>${field.label} <span style="font-size:0.65rem;">(${field.unit})</span></label>
+                    <input type="number" step="0.5" id="${field.id}" value="${val}" class="measure-input">
+                </div>
+            `;
+        }
+        measureGrid.innerHTML = html;
+    }
+
+    function updateSizeOptions(country, gender) {
+        const sys = sizeSystems[country];
+        if (!sys) return;
+        const genderData = sys[gender];
+        if (!genderData) return;
+        const sizes = genderData.sizes;
+        sizeSelect.innerHTML = "";
+        sizes.forEach(sz => {
+            const option = document.createElement("option");
+            option.value = sz;
+            option.textContent = sz;
+            sizeSelect.appendChild(option);
+        });
+        // set default size based on gender and country
+        if (gender === "women") currentSize = sizes[2] || sizes[0];
+        else if (gender === "men") currentSize = sizes.find(s => s === "M" || s === "50" || s === "S") || sizes[0];
+        else currentSize = sizes[2] || sizes[0];
+        sizeSelect.value = currentSize;
+    }
+
+    function getMeasurementsFromDB(country, gender, size) {
+        const sys = sizeSystems[country];
+        if (!sys) return null;
+        const genderData = sys[gender];
+        if (!genderData) return null;
+        const measures = genderData.measurements[size];
+        if (measures) return { ...measures };
+        // fallback
+        return { chest: 90, waist: 72, hip: 98, frontWaistLen: 42, backWaistLen: 40, shoulder: 12, armholeDepth: 21, neck: 37 };
+    }
+
+    function refreshAll() {
+        currentCountry = countrySelect.value;
+        currentGender = genderSelect.value;
+        updateSizeOptions(currentCountry, currentGender);
+        currentSize = sizeSelect.value;
+        const dbMeasure = getMeasurementsFromDB(currentCountry, currentGender, currentSize);
+        currentMeasurements = dbMeasure;
+        buildMeasureInputs(currentMeasurements);
+    }
+
+    function getCurrentMeasurementsFromInputs() {
+        let vals = {};
+        for (let field of measureFields) {
+            const input = document.getElementById(field.id);
+            if (input) vals[field.key] = parseFloat(input.value) || 0;
+            else vals[field.key] = 0;
+        }
+        return vals;
+    }
+
+    function getEaseValues(schoolKey) {
+        const school = schoolsData[schoolKey];
+        let chestEase = (school.easeChest.min + school.easeChest.max) / 2;
+        let waistEase = (school.easeWaist.min + school.easeWaist.max) / 2;
+        if (schoolKey === 'japanese') chestEase = 16;
+        if (schoolKey === 'american') chestEase = 10;
+        if (schoolKey === 'german') chestEase = 7;
+        if (schoolKey === 'italian') chestEase = 6;
+        if (schoolKey === 'british') chestEase = 5;
+        if (schoolKey === 'french') chestEase = 3;
+        return { chestEase, waistEase };
+    }
+
+    function renderSchoolResults(measurements, schoolKey) {
+        const school = schoolsData[schoolKey];
+        if (!school) return;
+        const { chestEase, waistEase } = getEaseValues(schoolKey);
+        const chestFinal = measurements.chest + chestEase;
+        const waistFinal = measurements.waist + waistEase;
+        const halfChest = chestFinal / 2;
+        const frontWidth = (halfChest * 0.48).toFixed(1);
+        const backWidth = (halfChest * 0.52).toFixed(1);
+        let stepsHtml = school.steps.map(s => `<li>${s}</li>`).join('');
+        let html = `
+            <div><span class="badge-school">${school.name} | ${currentGender === 'women' ? 'نساء' : currentGender === 'men' ? 'رجال' : 'أطفال'} | المقاس: ${currentSize} (${currentCountry.toUpperCase()})</span></div>
+            <div class="ease-table">
+                <h4>📌 بدلات الارتياح المطبقة (Ease)</h4>
+                <table>
+                    <tr><td>محيط الصدر</td><td>${measurements.chest} سم + ${chestEase.toFixed(1)} = <strong>${chestFinal.toFixed(1)} سم</strong></td><td>${school.easeChest.desc}</td></tr>
+                    <tr><td>محيط الخصر</td><td>${measurements.waist} سم + ${waistEase.toFixed(1)} = <strong>${waistFinal.toFixed(1)} سم</strong></td><td>${school.easeWaist.desc}</td></tr>
+                    <tr><td>نصف محيط الصدر (للبترون)</td><td colspan="2"><strong>${halfChest.toFixed(1)} سم</strong> (عرض الأمام ${frontWidth} / عرض الخلف ${backWidth})</td></tr>
+                </table>
+            </div>
+            <div style="background:#fef5ea; padding:0.8rem; border-radius:1rem;">
+                <strong>🎨 الفلسفة:</strong> ${school.philosophy}
+            </div>
+            <div class="method-steps">
+                <h4>🪡 خطوات تنفيذ الكورساج (استخراج البترون) حسب المدرسة</h4>
+                <ul>${stepsHtml}</ul>
+                <p style="margin-top:8px;"><strong>✂️ ملاحظة:</strong> بناءً على القياسات المدخلة (${measurements.chest} - ${measurements.waist}) تم تطبيق بدلات الارتياح الخاصة بمدرسة ${school.name}.</p>
+            </div>
+        `;
+        schoolResultDiv.innerHTML = html;
+    }
+
+    // تعليمات رسم البترون المفصلة احترافياً
+    function renderPatternInstructions(measurements, schoolKey) {
+        const school = schoolsData[schoolKey];
+        if (!school) return;
+        const { chestEase, waistEase } = getEaseValues(schoolKey);
+        const chestFinal = measurements.chest + chestEase;
+        const halfChestFinal = chestFinal / 2;
+        const waistFinal = measurements.waist + waistEase;
+        const halfWaistFinal = waistFinal / 2;
+        const bustDiff = measurements.chest - measurements.waist;
+        const dartWidthTotal = bustDiff * 0.6; // توزيع السهام
+        const frontDart = (dartWidthTotal * 0.5).toFixed(1);
+        const backDart = (dartWidthTotal * 0.5).toFixed(1);
+        
+        // حسابات إضافية
+        const armholeDepthCalc = measurements.armholeDepth;
+        const shoulderSlope = 2.5; // cm standard slope
+        const bustPoint = (measurements.frontWaistLen * 0.45).toFixed(1);
+        const neckWidth = (measurements.neck / 6).toFixed(1);
+        const neckDepthFront = (measurements.neck / 12).toFixed(1);
+        const neckDepthBack = (measurements.neck / 16).toFixed(1);
+        const chestLine = armholeDepthCalc;
+        
+        let additionalNotes = "";
+        if (schoolKey === "japanese") additionalNotes = "⚠️ في المدرسة اليابانية، يتم تحوير هذه الأبعاد لخلق أشكال ثلاثية الأبعاد غير تقليدية (Pattern Magic).";
+        if (schoolKey === "british") additionalNotes = "📌 في المدرسة البريطانية، يضاف كانفاس داخلي (2-3 سم إضافي للهيكل) ويتم تعديل السهام يدويًا بعد التركيب.";
+        if (schoolKey === "german") additionalNotes = "📐 حسب منهج مولر، يتم حساب عمق فتحة الإبط بدقة: (محيط الصدر/8) + 7 سم = " + ((measurements.chest/8)+7).toFixed(1) + " سم.";
+
+        let instructionHtml = `
+            <div class="pattern-instruction">
+                <p><strong>📐 الأبعاد الأساسية للباترون (بعد إضافة بدلات الارتياح):</strong></p>
+                <ul>
+                    <li><span class="calc-highlight">نصف محيط الصدر (عرض البترون):</span> ${halfChestFinal.toFixed(1)} سم</li>
+                    <li><span class="calc-highlight">نصف محيط الخصر (للسهام):</span> ${halfWaistFinal.toFixed(1)} سم</li>
+                    <li><span class="calc-highlight">طول الجذع الأمامي:</span> ${measurements.frontWaistLen} سم</li>
+                    <li><span class="calc-highlight">طول الجذع الخلفي:</span> ${measurements.backWaistLen} سم</li>
+                    <li><span class="calc-highlight">عرض الكتف:</span> ${measurements.shoulder} سم</li>
+                    <li><span class="calc-highlight">عمق فتحة الإبط:</span> ${armholeDepthCalc} سم</li>
+                    <li><span class="calc-highlight">نقطة الصدر (أعلى نقطة):</span> ${bustPoint} سم من خط الكتف على خط الوسط الأمامي</li>
+                </ul>
+                <p><strong>✍️ خطوات رسم البترون الاحترافي (الكورساج الأمامي والخلفي):</strong></p>
+                <ol>
+                    <li><strong>رسم المستطيل الأساسي:</strong> عرضه = ${halfChestFinal.toFixed(1)} سم، وارتفاعه = طول الجذع الأمامي (${measurements.frontWaistLen} سم).</li>
+                    <li><strong>تحديد خط الصدر:</strong> من أعلى المستطيل انزل بمقدار عمق فتحة الإبط = ${armholeDepthCalc} سم، ارسم خطًا أفقيًا (خط الصدر).</li>
+                    <li><strong>تحديد خط الخصر:</strong> من أعلى المستطيل انزل بطول الجذع الأمامي (${measurements.frontWaistLen} سم) وارسم خط الخصر.</li>
+                    <li><strong>رسم خط العنق الأمامي:</strong> عرض العنق = ${neckWidth} سم، عمق العنق الأمامي = ${neckDepthFront} سم. ارسم منحنى ناعم.</li>
+                    <li><strong>رسم خط العنق الخلفي:</strong> عرض العنق = ${neckWidth} سم، عمق العنق الخلفي = ${neckDepthBack} سم. ارسم منحنى خفيف.</li>
+                    <li><strong>رسم خط الكتف:</strong> من نقطة نهاية العنق، أفقياً بمقدار عرض الكتف (${measurements.shoulder} سم) ثم انزل بميلان ${shoulderSlope} سم لفتحة الذراع (نقطة الكتف).</li>
+                    <li><strong>رسم فتحة الإبط:</strong> باستخدام منحنى يبدأ من نقطة الكتف ويمر بنقطة منتصف خط الصدر (${(armholeDepthCalc/3).toFixed(1)} سم داخل المستطيل) ثم ينتهي عند خط الصدر.</li>
+                    <li><strong>رسم سهم الصدر (Dart):</strong> تحديد نقطة الصدر (${bustPoint} سم من خط الكتف). عرض سهم الصدر = ${frontDart} سم. طول السهم 7-10 سم تحت خط الصدر.</li>
+                    <li><strong>رسم سهام الخصر:</strong> الفرق بين نصف محيط الصدر ونصف محيط الخصر = ${(halfChestFinal - halfWaistFinal).toFixed(1)} سم. يتم توزيع هذا الفرق على سهام أمامية وخلفية وجانبية. عرض السهم الأمامي التقريبي = ${frontDart} سم، والخلفي = ${backDart} سم.</li>
+                    <li><strong>رسم الخطوط الجانبية:</strong> من خط الصدر إلى خط الخصر مع انحناء بسيط للداخل (1-2 سم) لتناسب شكل الجسم.</li>
+                    <li><strong>إضافة بدلات الخياطة (Seam Allowance):</strong> أضف ${schoolKey === 'japanese' ? '0.7' : '1.2'} سم حول جميع الحواف (الكتف، الجنب، العنق، فتحة الذراع، الخصر).</li>
+                </ol>
+                <p><strong>🔧 ملاحظات خاصة بالمدرسة (${school.name}):</strong> ${school.philosophy}. ${additionalNotes}</p>
+                <p><strong>✅ نصيحة احترافية:</strong> قم بإنشاء نموذج تجريبي (Toile) من قماش رخيص للتأكد من الملاءمة قبل القص على القماش النهائي. استخدم علامات واضحة لنقل السهام.</p>
+                <p><strong>📏 المعادلات المستخدمة:</strong> عرض العنق = محيط العنق/6، عمق العنق الأمامي = محيط العنق/12، نقطة الصدر = طول الجذع الأمامي × 0.45، عرض السهم = (محيط الصدر - محيط الخصر) × 0.3 لكل سهم.</p>
+            </div>
+        `;
+        patternInstructionsDiv.innerHTML = instructionHtml;
+    }
+
+    function updateAll() {
+        const measurements = getCurrentMeasurementsFromInputs();
+        const schoolKey = schoolSelect.value;
+        renderSchoolResults(measurements, schoolKey);
+        renderPatternInstructions(measurements, schoolKey);
+    }
+
+    // أحداث التغيير
+    countrySelect.addEventListener("change", () => {
+        refreshAll();
+        updateAll();
+    });
+    genderSelect.addEventListener("change", () => {
+        refreshAll();
+        updateAll();
+    });
+    sizeSelect.addEventListener("change", () => {
+        refreshAll();
+        updateAll();
+    });
+    applyBtn.addEventListener("click", () => {
+        updateAll();
+    });
+
+    // تهيئة أولية
+    function init() {
+        refreshAll();
+        updateAll();
+    }
+    init();
+</script>
+</body>
+</html>

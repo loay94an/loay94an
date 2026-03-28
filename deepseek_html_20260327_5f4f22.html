@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>نظام رسم الباترون الاحترافي – موسوعة الأجيال</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bezier-js@6.1.0/bezier.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #2c5282; --secondary: #48bb78; --accent: #ed8936;
+            --gray-light: #f7fafc; --gray: #cbd5e0; --dark: #2d3748;
+            --white: #ffffff; --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --radius: 12px;
+        }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            color: var(--dark); direction: rtl; line-height: 1.5;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
+        .header {
+            background: linear-gradient(135deg, #1e3c72, #2c5282);
+            color: white; padding: 2rem 1.5rem; border-radius: var(--radius);
+            margin-bottom: 2rem; text-align: center;
+        }
+        .header h1 { font-size: 1.8rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 0.75rem; }
+        .selection-card {
+            background: var(--white); border-radius: var(--radius); padding: 1.5rem;
+            margin-bottom: 2rem; box-shadow: var(--shadow);
+        }
+        .row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .form-group { flex: 1; min-width: 200px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
+        .form-group select {
+            width: 100%; padding: 0.75rem; border: 2px solid var(--gray);
+            border-radius: 10px; font-family: 'Tajawal', sans-serif; font-size: 1rem;
+            background: white; cursor: pointer;
+        }
+        .type-buttons { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .type-btn {
+            flex: 1; padding: 0.75rem 1rem; border: 2px solid var(--gray);
+            background: var(--white); border-radius: 10px; cursor: pointer;
+            font-weight: 600; transition: 0.2s; display: flex;
+            align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        .type-btn.active { background: var(--secondary); border-color: var(--secondary); color: white; }
+        .sizes-grid {
+            display: flex; flex-wrap: wrap; gap: 0.75rem; max-height: 180px;
+            overflow-y: auto; padding: 0.5rem; background: var(--gray-light);
+            border-radius: 10px;
+        }
+        .size-option {
+            padding: 0.5rem 1rem; background: white; border: 1px solid var(--gray);
+            border-radius: 30px; cursor: pointer; transition: 0.2s; font-weight: 500;
+        }
+        .size-option:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+        .size-option.selected { background: var(--primary); color: white; border-color: var(--primary); }
+        .info-bar {
+            background: linear-gradient(90deg, var(--primary), #4299c1);
+            color: white; padding: 1rem 1.5rem; border-radius: 10px; margin-bottom: 2rem;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+        }
+        .patterns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .pattern-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        .pattern-card .card-header {
+            background: var(--accent);
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .pattern-canvas-container {
+            background: #fafafa;
+            padding: 1rem;
+            text-align: center;
+            overflow-x: auto;
+        }
+        canvas {
+            background: white;
+            box-shadow: var(--shadow);
+            border-radius: 8px;
+            max-width: 100%;
+            height: auto;
+        }
+        .footer {
+            text-align: center; padding: 2rem; margin-top: 2rem;
+            color: var(--dark); border-top: 1px solid var(--gray);
+        }
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .patterns-grid { grid-template-columns: 1fr; }
+            .row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-drafting-compass"></i> نظام رسم الباترون الاحترافي</h1>
+        <p>خوارزميات متقدمة – أبعاد دقيقة – خطوط مساعدة – بدل خياطة – نوتشات</p>
+    </div>
+
+    <div class="selection-card">
+        <div class="row">
+            <div class="form-group">
+                <label><i class="fas fa-tag"></i> نظام المقاسات</label>
+                <select id="size-system">
+                    <option value="eu">🇪🇺 أوروبي (EU)</option>
+                    <option value="us">🇺🇸 أمريكي (US)</option>
+                    <option value="arab">🇸🇦 عربي (Arab)</option>
+                    <option value="asian">🇯🇵 آسيوي (Asian)</option>
+                </select>
+            </div>
+        </div>
+        <div class="type-buttons">
+            <button class="type-btn active" data-type="women"><i class="fas fa-female"></i> نساء</button>
+            <button class="type-btn" data-type="men"><i class="fas fa-male"></i> رجال</button>
+            <button class="type-btn" data-type="kids"><i class="fas fa-child"></i> أطفال</button>
+        </div>
+        <div class="size-selector">
+            <div class="size-label"><i class="fas fa-ruler"></i> اختر المقاس:</div>
+            <div id="sizes-container" class="sizes-grid"></div>
+        </div>
+    </div>
+
+    <div id="info-bar" class="info-bar" style="display: none;">
+        <div><i class="fas fa-tag"></i> النوع: <span id="type-name"></span></div>
+        <div><i class="fas fa-ruler"></i> المقاس: <span id="size-value"></span></div>
+        <div><i class="fas fa-chart-simple"></i> النظام: <span id="system-name"></span></div>
+    </div>
+
+    <div class="patterns-grid" id="patterns-grid">
+        <!-- سيتم إنشاء البطاقات ديناميكياً -->
+    </div>
+
+    <div class="footer">
+        <p>© 2025 – رسم الباترون الاحترافي مع أبعاد كاملة، خطوط مساعدة، نوتشات، بدل خياطة</p>
+    </div>
+</div>
+
+<script>
+    // ========================== إعدادات الرسم ==========================
+    const scale = 10;        // عامل التحجيم (1 سم = 10 بكسل)
+    const seamAllowance = 1.5; // سم بدل الخياطة
+
+    // ========================== دوال حساب القياسات ==========================
+    // البيانات الأساسية (EU) - للنساء والرجال والأطفال (نفس الإصدارات السابقة)
+    const womenBaseEU = {
+        chest: 88, waist: 70, hip: 96, backWidth: 36, shoulderLength: 13.5,
+        backLength: 40, sleeveLength: 58, armCirc: 30, cuffCirc: 22, neckCirc: 36,
+        waistToHip: 20, waistToKnee: 58, legLength: 108, skirtLength: 60,
+        chestLength: 38, armholeCirc: 42, waistToArmpit: 28, shoulderToBust: 24, bustPointDist: 18
+    };
+    const womenStep = { chest: 4, waist: 4, hip: 4 };
+    const menBaseEU = {
+        chest: 96, waist: 84, hip: 100, backWidth: 40, shoulderLength: 15,
+        backLength: 45, sleeveLength: 62, armCirc: 34, cuffCirc: 26, neckCirc: 40,
+        waistToHip: 22, waistToKnee: 60, legLength: 112, pantsLength: 108,
+        chestLength: 42, armholeCirc: 48, waistToArmpit: 32, shoulderToChest: 26, chestPointDist: 20
+    };
+    const menStep = { chest: 4, waist: 4, hip: 4 };
+    const kidsHeightTable = [80,86,92,98,104,110,116,122,128,134,140,146,152,158,164,170,176];
+    const kidsDataFull = {
+        80:  { chest:52, waist:51, hip:54, backWidth:23, shoulderLength:9, backLength:22, sleeveLength:28, armCirc:18, cuffCirc:14, neckCirc:26, waistToHip:12, waistToKnee:32, legLength:62, skirtLength:34, chestLength:24, armholeCirc:28, waistToArmpit:16, shoulderToBust:14, bustPointDist:10 },
+        86:  { chest:54, waist:52, hip:56, backWidth:24, shoulderLength:9.5, backLength:23, sleeveLength:30, armCirc:19, cuffCirc:15, neckCirc:27, waistToHip:12.5, waistToKnee:34, legLength:66, skirtLength:36, chestLength:25, armholeCirc:29, waistToArmpit:17, shoulderToBust:14.5, bustPointDist:10.5 },
+        92:  { chest:56, waist:53, hip:58, backWidth:25, shoulderLength:10, backLength:24, sleeveLength:32, armCirc:20, cuffCirc:16, neckCirc:28, waistToHip:13, waistToKnee:36, legLength:70, skirtLength:38, chestLength:26, armholeCirc:30, waistToArmpit:18, shoulderToBust:15, bustPointDist:11 },
+        98:  { chest:58, waist:54, hip:60, backWidth:26, shoulderLength:10.5, backLength:25, sleeveLength:34, armCirc:21, cuffCirc:17, neckCirc:29, waistToHip:13.5, waistToKnee:38, legLength:74, skirtLength:40, chestLength:27, armholeCirc:31, waistToArmpit:19, shoulderToBust:15.5, bustPointDist:11.5 },
+        104: { chest:60, waist:55, hip:62, backWidth:27, shoulderLength:11, backLength:26, sleeveLength:36, armCirc:22, cuffCirc:18, neckCirc:30, waistToHip:14, waistToKnee:40, legLength:78, skirtLength:42, chestLength:28, armholeCirc:32, waistToArmpit:20, shoulderToBust:16, bustPointDist:12 },
+        110: { chest:62, waist:56, hip:64, backWidth:28, shoulderLength:11.5, backLength:27, sleeveLength:38, armCirc:23, cuffCirc:19, neckCirc:31, waistToHip:14.5, waistToKnee:42, legLength:82, skirtLength:44, chestLength:29, armholeCirc:33, waistToArmpit:21, shoulderToBust:16.5, bustPointDist:12.5 },
+        116: { chest:64, waist:57, hip:66, backWidth:29, shoulderLength:12, backLength:28, sleeveLength:40, armCirc:24, cuffCirc:20, neckCirc:32, waistToHip:15, waistToKnee:44, legLength:86, skirtLength:46, chestLength:30, armholeCirc:34, waistToArmpit:22, shoulderToBust:17, bustPointDist:13 },
+        122: { chest:66, waist:58, hip:68, backWidth:30, shoulderLength:12.5, backLength:29, sleeveLength:42, armCirc:25, cuffCirc:21, neckCirc:33, waistToHip:15.5, waistToKnee:46, legLength:90, skirtLength:48, chestLength:31, armholeCirc:35, waistToArmpit:23, shoulderToBust:17.5, bustPointDist:13.5 },
+        128: { chest:68, waist:60, hip:70, backWidth:31, shoulderLength:13, backLength:30, sleeveLength:44, armCirc:26, cuffCirc:22, neckCirc:34, waistToHip:16, waistToKnee:48, legLength:94, skirtLength:50, chestLength:32, armholeCirc:36, waistToArmpit:24, shoulderToBust:18, bustPointDist:14 },
+        134: { chest:70, waist:62, hip:72, backWidth:32, shoulderLength:13.5, backLength:31, sleeveLength:46, armCirc:27, cuffCirc:23, neckCirc:35, waistToHip:16.5, waistToKnee:50, legLength:98, skirtLength:52, chestLength:33, armholeCirc:37, waistToArmpit:25, shoulderToBust:18.5, bustPointDist:14.5 },
+        140: { chest:72, waist:64, hip:74, backWidth:33, shoulderLength:14, backLength:32, sleeveLength:48, armCirc:28, cuffCirc:24, neckCirc:36, waistToHip:17, waistToKnee:52, legLength:102, skirtLength:54, chestLength:34, armholeCirc:38, waistToArmpit:26, shoulderToBust:19, bustPointDist:15 },
+        146: { chest:76, waist:66, hip:78, backWidth:34, shoulderLength:14.5, backLength:33, sleeveLength:50, armCirc:29, cuffCirc:25, neckCirc:37, waistToHip:17.5, waistToKnee:54, legLength:106, skirtLength:56, chestLength:35, armholeCirc:39, waistToArmpit:27, shoulderToBust:19.5, bustPointDist:15.5 },
+        152: { chest:80, waist:68, hip:82, backWidth:35, shoulderLength:15, backLength:34, sleeveLength:52, armCirc:30, cuffCirc:26, neckCirc:38, waistToHip:18, waistToKnee:56, legLength:110, skirtLength:58, chestLength:36, armholeCirc:40, waistToArmpit:28, shoulderToBust:20, bustPointDist:16 },
+        158: { chest:84, waist:70, hip:86, backWidth:36, shoulderLength:15.5, backLength:35, sleeveLength:54, armCirc:31, cuffCirc:27, neckCirc:39, waistToHip:18.5, waistToKnee:58, legLength:114, skirtLength:60, chestLength:37, armholeCirc:41, waistToArmpit:29, shoulderToBust:20.5, bustPointDist:16.5 },
+        164: { chest:88, waist:72, hip:90, backWidth:37, shoulderLength:16, backLength:36, sleeveLength:56, armCirc:32, cuffCirc:28, neckCirc:40, waistToHip:19, waistToKnee:60, legLength:118, skirtLength:62, chestLength:38, armholeCirc:42, waistToArmpit:30, shoulderToBust:21, bustPointDist:17 },
+        170: { chest:92, waist:74, hip:94, backWidth:38, shoulderLength:16.5, backLength:37, sleeveLength:58, armCirc:33, cuffCirc:29, neckCirc:41, waistToHip:19.5, waistToKnee:62, legLength:122, skirtLength:64, chestLength:39, armholeCirc:43, waistToArmpit:31, shoulderToBust:21.5, bustPointDist:17.5 },
+        176: { chest:96, waist:76, hip:98, backWidth:39, shoulderLength:17, backLength:38, sleeveLength:60, armCirc:34, cuffCirc:30, neckCirc:42, waistToHip:20, waistToKnee:64, legLength:126, skirtLength:66, chestLength:40, armholeCirc:44, waistToArmpit:32, shoulderToBust:22, bustPointDist:18 }
+    };
+
+    function getWomenMeasurements(system, size) {
+        let eu = (system==='eu'?size: system==='us'?{0:30,2:32,4:34,6:36,8:38,10:40,12:42,14:44,16:46,18:48,20:50}[size]||38: system==='arab'?size: size-4);
+        let diff = (eu-38)/2;
+        let factor = system==='asian'?0.97:(system==='arab'?1.02:1);
+        const chest = (womenBaseEU.chest + diff*womenStep.chest)*factor;
+        const waist = (womenBaseEU.waist + diff*womenStep.waist)*factor;
+        const hip = (womenBaseEU.hip + diff*womenStep.hip)*factor;
+        const backWidth = (womenBaseEU.backWidth + diff*1.2)*factor;
+        const shoulderLength = (womenBaseEU.shoulderLength + diff*0.3)*factor;
+        const backLength = (womenBaseEU.backLength + diff*0.8)*factor;
+        const sleeveLength = (womenBaseEU.sleeveLength + diff*0.8)*factor;
+        const armCirc = (womenBaseEU.armCirc + diff*0.8)*factor;
+        const cuffCirc = (womenBaseEU.cuffCirc + diff*0.6)*factor;
+        const neckCirc = (womenBaseEU.neckCirc + diff*0.8)*factor;
+        const waistToHip = (womenBaseEU.waistToHip + diff*0.2)*factor;
+        const waistToKnee = (womenBaseEU.waistToKnee + diff*0.8)*factor;
+        const legLength = (womenBaseEU.legLength + diff*1.2)*factor;
+        const skirtLength = (womenBaseEU.skirtLength + diff*0.8)*factor;
+        const chestLength = (womenBaseEU.chestLength + diff*0.8)*factor;
+        const armholeCirc = (womenBaseEU.armholeCirc + diff*1.2)*factor;
+        const waistToArmpit = (womenBaseEU.waistToArmpit + diff*0.5)*factor;
+        const shoulderToBust = (womenBaseEU.shoulderToBust + diff*0.3)*factor;
+        const bustPointDist = (womenBaseEU.bustPointDist + diff*0.2)*factor;
+        return { chest,waist,hip,backWidth,shoulderLength,backLength,sleeveLength,armCirc,cuffCirc,neckCirc,waistToHip,waistToKnee,legLength,skirtLength,chestLength,armholeCirc,waistToArmpit,shoulderToBust,bustPointDist };
+    }
+    function getMenMeasurements(system, size) {
+        let eu = (system==='eu'?size: system==='us'?{34:44,36:46,38:48,40:50,42:52,44:54,46:56,48:58,50:60}[size]||size+10: system==='arab'?size: size-4);
+        let diff = (eu-48)/2;
+        let factor = system==='asian'?0.97:(system==='arab'?1.02:1);
+        const chest = (menBaseEU.chest + diff*menStep.chest)*factor;
+        const waist = (menBaseEU.waist + diff*menStep.waist)*factor;
+        const hip = (menBaseEU.hip + diff*menStep.hip)*factor;
+        const backWidth = (menBaseEU.backWidth + diff*1.2)*factor;
+        const shoulderLength = (menBaseEU.shoulderLength + diff*0.3)*factor;
+        const backLength = (menBaseEU.backLength + diff*0.8)*factor;
+        const sleeveLength = (menBaseEU.sleeveLength + diff*0.8)*factor;
+        const armCirc = (menBaseEU.armCirc + diff*0.8)*factor;
+        const cuffCirc = (menBaseEU.cuffCirc + diff*0.6)*factor;
+        const neckCirc = (menBaseEU.neckCirc + diff*0.8)*factor;
+        const waistToHip = (menBaseEU.waistToHip + diff*0.2)*factor;
+        const waistToKnee = (menBaseEU.waistToKnee + diff*0.8)*factor;
+        const legLength = (menBaseEU.legLength + diff*1.2)*factor;
+        const pantsLength = (menBaseEU.pantsLength + diff*0.8)*factor;
+        const chestLength = (menBaseEU.chestLength + diff*0.8)*factor;
+        const armholeCirc = (menBaseEU.armholeCirc + diff*1.2)*factor;
+        const waistToArmpit = (menBaseEU.waistToArmpit + diff*0.5)*factor;
+        const shoulderToChest = (menBaseEU.shoulderToChest + diff*0.3)*factor;
+        const chestPointDist = (menBaseEU.chestPointDist + diff*0.2)*factor;
+        return { chest,waist,hip,backWidth,shoulderLength,backLength,sleeveLength,armCirc,cuffCirc,neckCirc,waistToHip,waistToKnee,legLength,pantsLength,chestLength,armholeCirc,waistToArmpit,shoulderToChest,chestPointDist };
+    }
+    function getKidsMeasurements(system, size) {
+        let height;
+        if (system === 'eu') height = kidsHeightTable[size-1] || 110;
+        else {
+            let map = {2:86,3:92,4:98,5:104,6:110,7:116,8:122,9:128,10:134,11:140,12:146,13:152,14:158,15:164,16:170,17:176};
+            let h = map[size] || 110;
+            height = kidsHeightTable.reduce((p,c)=>Math.abs(c-h)<Math.abs(p-h)?c:p);
+        }
+        let meas = kidsDataFull[height];
+        if (!meas) meas = kidsDataFull[110];
+        let factor = system==='asian'?0.96:(system==='arab'?1.02:1);
+        let scaled = {};
+        for(let k in meas) scaled[k] = meas[k]*factor;
+        return scaled;
+    }
+
+    // ========================== دوال مساعدة للرسم ==========================
+    function createDimension(ctx, x1, y1, x2, y2, offset, label, scaleFactor) {
+        // رسم أبعاد بين نقطتين (أفقي أو عمودي)
+        const isHorizontal = Math.abs(y1 - y2) < 0.1;
+        let p1Ext, p2Ext, textPos;
+        const termSize = 0.4 * scaleFactor;
+        if (isHorizontal) {
+            const y = y1 + offset;
+            p1Ext = { x: x1, y: y };
+            p2Ext = { x: x2, y: y };
+            textPos = { x: (x1 + x2)/2, y: y + (offset > 0 ? 8 : -8) };
+        } else {
+            const x = x1 + offset;
+            p1Ext = { x: x, y: y1 };
+            p2Ext = { x: x, y: y2 };
+            textPos = { x: x + (offset > 0 ? 8 : -8), y: (y1 + y2)/2 };
+        }
+        ctx.beginPath();
+        ctx.moveTo(p1Ext.x, p1Ext.y);
+        ctx.lineTo(p2Ext.x, p2Ext.y);
+        ctx.strokeStyle = '#6c757d';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(p1Ext.x, p1Ext.y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(p2Ext.x, p2Ext.y);
+        ctx.stroke();
+        // terminators
+        if (isHorizontal) {
+            ctx.beginPath(); ctx.moveTo(p1Ext.x, p1Ext.y - termSize); ctx.lineTo(p1Ext.x, p1Ext.y + termSize); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(p2Ext.x, p2Ext.y - termSize); ctx.lineTo(p2Ext.x, p2Ext.y + termSize); ctx.stroke();
+        } else {
+            ctx.beginPath(); ctx.moveTo(p1Ext.x - termSize, p1Ext.y); ctx.lineTo(p1Ext.x + termSize, p1Ext.y); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(p2Ext.x - termSize, p2Ext.y); ctx.lineTo(p2Ext.x + termSize, p2Ext.y); ctx.stroke();
+        }
+        ctx.fillStyle = '#495057';
+        ctx.font = `12px 'Tajawal'`;
+        ctx.fillText(label, textPos.x, textPos.y);
+    }
+
+    function createNotch(ctx, x, y, normalX, normalY, length = 5) {
+        ctx.beginPath();
+        ctx.moveTo(x - normalX * length, y - normalY * length);
+        ctx.lineTo(x + normalX * length, y + normalY * length);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+    }
+
+    function drawGrid(ctx, w, h, step = 20) {
+        ctx.save();
+        ctx.strokeStyle = '#e9ecef';
+        ctx.lineWidth = 0.5;
+        for (let x = 0; x < w; x += step) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+        }
+        for (let y = 0; y < h; y += step) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    // ========================== رسم الكورساج الأمامي ==========================
+    function drawFrontBodice(ctx, w, h, meas, category) {
+        const { chest, waist, hip, backLength, shoulderLength, neckCirc } = meas;
+        const bustEase = category === 'man' ? 2.5 : 2;
+        const waistEase = 2.5;
+        const hipsEase = category === 'man' ? 2 : 1.5;
+        const finalQuarterBust = (chest / 4) + bustEase;
+        const finalQuarterWaist = (waist / 4) + waistEase;
+        const finalQuarterHips = (hip / 4) + hipsEase;
+        const armholeDepth = (chest / 10) + (category === 'woman' ? 10.5 : 12);
+        const waistline = category === 'child' ? 35 : 42;
+        const hipLine = waistline + (category === 'child' ? 15 : 20);
+        const pieceLength = backLength;
+        const neckWidth = (chest / 20) + 2;
+        const frontNeckDrop = (chest / 12) + 1;
+        const shoulderSlope = category === 'child' ? 3 : 4.5;
+
+        const p = {
+            neckTop: { x: neckWidth, y: 0 },
+            shoulderTip: { x: shoulderLength / 2, y: shoulderSlope },
+            neckDrop: { x: 0, y: frontNeckDrop },
+            bustSide: { x: finalQuarterBust, y: armholeDepth },
+            waistCenter: { x: 0, y: waistline },
+            waistSide: { x: finalQuarterWaist, y: waistline },
+            hipCenter: { x: 0, y: hipLine },
+            hipSide: { x: finalQuarterHips, y: hipLine },
+            hemCenter: { x: 0, y: pieceLength },
+            hemSide: { x: finalQuarterHips, y: pieceLength }
+        };
+        const armholeHeight = p.bustSide.y - p.shoulderTip.y;
+        const armholeC1 = { x: p.shoulderTip.x - (p.shoulderTip.x - (chest/4-4)) * 0.7, y: p.shoulderTip.y + armholeHeight * 0.3 };
+        const armholeC2 = { x: (chest/4-4) + (p.bustSide.x - (chest/4-4)) * 0.2, y: p.bustSide.y - armholeHeight * 0.3 };
+        const neckCurveC1 = { x: p.neckDrop.x + p.neckTop.x * 0.55, y: p.neckDrop.y };
+        const neckCurveC2 = { x: p.neckTop.x * 0.9, y: p.neckTop.y + p.neckDrop.y * 0.55 };
+        const waistHeight = p.waistSide.y - p.bustSide.y;
+        const hipHeight = p.hipSide.y - p.waistSide.y;
+        const bustToWaistC1 = { x: p.bustSide.x, y: p.bustSide.y + waistHeight * 0.4 };
+        const bustToWaistC2 = { x: p.waistSide.x, y: p.waistSide.y - waistHeight * 0.6 };
+        const waistToHipC1 = { x: p.waistSide.x, y: p.waistSide.y + hipHeight * 0.6 };
+        const waistToHipC2 = { x: p.hipSide.x, y: p.hipSide.y - hipHeight * 0.4 };
+
+        ctx.clearRect(0, 0, w, h);
+        drawGrid(ctx, w, h);
+        ctx.save();
+        ctx.translate(30, 40); // هامش للرسم
+
+        // رسم المسار الرئيسي
+        ctx.beginPath();
+        ctx.moveTo(p.hemCenter.x * scale, p.hemCenter.y * scale);
+        ctx.lineTo(p.waistCenter.x * scale, p.waistCenter.y * scale);
+        ctx.lineTo(p.neckDrop.x * scale, p.neckDrop.y * scale);
+        ctx.bezierCurveTo(neckCurveC1.x * scale, neckCurveC1.y * scale, neckCurveC2.x * scale, neckCurveC2.y * scale, p.neckTop.x * scale, p.neckTop.y * scale);
+        ctx.lineTo(p.shoulderTip.x * scale, p.shoulderTip.y * scale);
+        ctx.bezierCurveTo(armholeC1.x * scale, armholeC1.y * scale, armholeC2.x * scale, armholeC2.y * scale, p.bustSide.x * scale, p.bustSide.y * scale);
+        ctx.bezierCurveTo(bustToWaistC1.x * scale, bustToWaistC1.y * scale, bustToWaistC2.x * scale, bustToWaistC2.y * scale, p.waistSide.x * scale, p.waistSide.y * scale);
+        ctx.bezierCurveTo(waistToHipC1.x * scale, waistToHipC1.y * scale, waistToHipC2.x * scale, waistToHipC2.y * scale, p.hipSide.x * scale, p.hipSide.y * scale);
+        ctx.lineTo(p.hemSide.x * scale, p.hemSide.y * scale);
+        ctx.closePath();
+        ctx.strokeStyle = '#2c5282';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(44,82,130,0.05)';
+        ctx.fill();
+
+        // خطوط المساعدة الأفقية
+        ctx.beginPath(); ctx.moveTo(0, p.bustSide.y * scale); ctx.lineTo(p.bustSide.x * scale, p.bustSide.y * scale); ctx.strokeStyle = '#e53e3e'; ctx.setLineDash([5,5]); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, p.waistSide.y * scale); ctx.lineTo(p.waistSide.x * scale, p.waistSide.y * scale); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, p.hipSide.y * scale); ctx.lineTo(p.hipSide.x * scale, p.hipSide.y * scale); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // خط الثنية (grainline)
+        const grainX = (finalQuarterBust / 2) * scale;
+        ctx.beginPath(); ctx.moveTo(grainX, 10); ctx.lineTo(grainX, pieceLength * scale - 10); ctx.strokeStyle = '#000'; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(grainX - 5, 10); ctx.lineTo(grainX, 5); ctx.lineTo(grainX + 5, 10); ctx.fillStyle = '#000'; ctx.fill();
+
+        // أبعاد
+        createDimension(ctx, 0, p.bustSide.y * scale, p.bustSide.x * scale, p.bustSide.y * scale, -15, `${finalQuarterBust.toFixed(1)} سم`, scale);
+        createDimension(ctx, 0, p.waistSide.y * scale, p.waistSide.x * scale, p.waistSide.y * scale, -18, `${finalQuarterWaist.toFixed(1)} سم`, scale);
+        createDimension(ctx, 0, p.hipSide.y * scale, p.hipSide.x * scale, p.hipSide.y * scale, -21, `${finalQuarterHips.toFixed(1)} سم`, scale);
+        createDimension(ctx, 0, 0, 0, pieceLength * scale, -12, `${pieceLength.toFixed(1)} سم`, scale);
+        createDimension(ctx, 0, 0, 0, p.neckDrop.y * scale, -10, `${frontNeckDrop.toFixed(1)} سم`, scale);
+        createDimension(ctx, 0, 0, p.neckTop.x * scale, 0, -8, `${neckWidth.toFixed(1)} سم`, scale);
+        createDimension(ctx, p.neckTop.x * scale, 0, p.shoulderTip.x * scale, p.shoulderTip.y * scale, 8, `${(shoulderLength/2).toFixed(1)} سم`, scale);
+
+        // نوتش على حفرة الإبط (موقع 0.65 من أعلى)
+        if (typeof Bezier === 'function') {
+            try {
+                const armCurve = new Bezier(p.shoulderTip.x, p.shoulderTip.y, armholeC1.x, armholeC1.y, armholeC2.x, armholeC2.y, p.bustSide.x, p.bustSide.y);
+                const t = 0.65;
+                const pt = armCurve.get(t);
+                const norm = armCurve.normal(t);
+                createNotch(ctx, pt.x * scale, pt.y * scale, norm.x, norm.y);
+            } catch(e) {}
+        }
+
+        ctx.fillStyle = '#1e3c72';
+        ctx.font = "bold 16px 'Tajawal'";
+        ctx.fillText("الأمامي", 10, 30);
+        ctx.fillStyle = '#666';
+        ctx.font = "12px 'Tajawal'";
+        ctx.fillText("على ثنية القماش", 10, 55);
+        ctx.restore();
+    }
+
+    function drawBackBodice(ctx, w, h, meas, category) {
+        const { chest, waist, hip, backLength, shoulderLength, neckCirc } = meas;
+        const bustEase = category === 'man' ? 2.5 : 2;
+        const waistEase = 2.5;
+        const hipsEase = category === 'man' ? 2 : 1.5;
+        const finalQuarterBust = (chest / 4) + bustEase;
+        const finalQuarterWaist = (waist / 4) + waistEase;
+        const finalQuarterHips = (hip / 4) + hipsEase;
+        const armholeDepth = (chest / 10) + (category === 'woman' ? 10.5 : 12);
+        const waistline = category === 'child' ? 35 : 42;
+        const hipLine = waistline + (category === 'child' ? 15 : 20);
+        const pieceLength = backLength;
+        const neckWidth = (chest / 20) + 2;
+        const backNeckDrop = 2;
+        const shoulderSlope = category === 'child' ? 3 : 4.5;
+
+        const p = {
+            neckTop: { x: neckWidth, y: 0 },
+            shoulderTip: { x: shoulderLength / 2, y: shoulderSlope },
+            neckDrop: { x: 0, y: backNeckDrop },
+            bustSide: { x: finalQuarterBust, y: armholeDepth },
+            waistCenter: { x: 0, y: waistline },
+            waistSide: { x: finalQuarterWaist, y: waistline },
+            hipCenter: { x: 0, y: hipLine },
+            hipSide: { x: finalQuarterHips, y: hipLine },
+            hemCenter: { x: 0, y: pieceLength },
+            hemSide: { x: finalQuarterHips, y: pieceLength }
+        };
+        const armholeHeight = p.bustSide.y - p.shoulderTip.y;
+        const armholeC1 = { x: p.shoulderTip.x - (p.shoulderTip.x - (chest/4-4)) * 0.6, y: p.shoulderTip.y + armholeHeight * 0.3 };
+        const armholeC2 = { x: (chest/4-4) + (p.bustSide.x - (chest/4-4)) * 0.6, y: p.bustSide.y - armholeHeight * 0.3 };
+        const neckCurveC1 = { x: p.neckDrop.x + p.neckTop.x * 0.55, y: p.neckDrop.y };
+        const neckCurveC2 = { x: p.neckTop.x * 0.9, y: p.neckTop.y + p.neckDrop.y * 0.55 };
+        const waistHeight = p.waistSide.y - p.bustSide.y;
+        const hipHeight = p.hipSide.y - p.waistSide.y;
+        const bustToWaistC1 = { x: p.bustSide.x, y: p.bustSide.y + waistHeight * 0.4 };
+        const bustToWaistC2 = { x: p.waistSide.x, y: p.waistSide.y - waistHeight * 0.6 };
+        const waistToHipC1 = { x: p.waistSide.x, y: p.waistSide.y + hipHeight * 0.6 };
+        const waistToHipC2 = { x: p.hipSide.x, y: p.hipSide.y - hipHeight * 0.4 };
+
+        ctx.clearRect(0, 0, w, h);
+        drawGrid(ctx, w, h);
+        ctx.save();
+        ctx.translate(30, 40);
+
+        ctx.beginPath();
+        ctx.moveTo(p.hemCenter.x * scale, p.hemCenter.y * scale);
+        ctx.lineTo(p.waistCenter.x * scale, p.waistCenter.y * scale);
+        ctx.lineTo(p.neckDrop.x * scale, p.neckDrop.y * scale);
+        ctx.bezierCurveTo(neckCurveC1.x * scale, neckCurveC1.y * scale, neckCurveC2.x * scale, neckCurveC2.y * scale, p.neckTop.x * scale, p.neckTop.y * scale);
+        ctx.lineTo(p.shoulderTip.x * scale, p.shoulderTip.y * scale);
+        ctx.bezierCurveTo(armholeC1.x * scale, armholeC1.y * scale, armholeC2.x * scale, armholeC2.y * scale, p.bustSide.x * scale, p.bustSide.y * scale);
+        ctx.bezierCurveTo(bustToWaistC1.x * scale, bustToWaistC1.y * scale, bustToWaistC2.x * scale, bustToWaistC2.y * scale, p.waistSide.x * scale, p.waistSide.y * scale);
+        ctx.bezierCurveTo(waistToHipC1.x * scale, waistToHipC1.y * scale, waistToHipC2.x * scale, waistToHipC2.y * scale, p.hipSide.x * scale, p.hipSide.y * scale);
+        ctx.lineTo(p.hemSide.x * scale, p.hemSide.y * scale);
+        ctx.closePath();
+        ctx.strokeStyle = '#2c5282';
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(44,82,130,0.05)';
+        ctx.fill();
+
+        ctx.beginPath(); ctx.moveTo(0, p.bustSide.y * scale); ctx.lineTo(p.bustSide.x * scale, p.bustSide.y * scale); ctx.strokeStyle = '#e53e3e'; ctx.setLineDash([5,5]); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, p.waistSide.y * scale); ctx.lineTo(p.waistSide.x * scale, p.waistSide.y * scale); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, p.hipSide.y * scale); ctx.lineTo(p.hipSide.x * scale, p.hipSide.y * scale); ctx.stroke();
+        ctx.setLineDash([]);
+
+        const grainX = (finalQuarterBust / 2) * scale;
+        ctx.beginPath(); ctx.moveTo(grainX, 10); ctx.lineTo(grainX, pieceLength * scale - 10); ctx.strokeStyle = '#000'; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(grainX - 5, 10); ctx.lineTo(grainX, 5); ctx.lineTo(grainX + 5, 10); ctx.fill();
+
+        createDimension(ctx, 0, p.bustSide.y * scale, p.bustSide.x * scale, p.bustSide.y * scale, -15, `${finalQuarterBust.toFixed(1)} سم`, scale);
+        createDimension(ctx, 0, p.waistSide.y * scale, p.waistSide.x * scale, p.waistSide.y * scale, -18, `${finalQuarterWaist.toFixed(1)} سم`, scale);
+        createDimension(ctx, 0, p.hipSide.y * scale, p.hipSide.x * scale, p.hipSide.y * scale, -21, `${finalQuarterHips.toFixed(1)} سم`, scale);
+        createDimension(ctx, 0, 0, 0, pieceLength * scale, -12, `${pieceLength.toFixed(1)} سم`, scale);
+        createDimension(ctx, 0, 0, p.neckTop.x * scale, 0, -8, `${neckWidth.toFixed(1)} سم`, scale);
+        createDimension(ctx, p.neckTop.x * scale, 0, p.shoulderTip.x * scale, p.shoulderTip.y * scale, 8, `${(shoulderLength/2).toFixed(1)} سم`, scale);
+
+        ctx.fillStyle = '#1e3c72';
+        ctx.font = "bold 16px 'Tajawal'";
+        ctx.fillText("الخلفي", 10, 30);
+        ctx.fillStyle = '#666';
+        ctx.font = "12px 'Tajawal'";
+        ctx.fillText("على ثنية القماش", 10, 55);
+        ctx.restore();
+    }
+
+    function drawSleeve(ctx, w, h, meas) {
+        const { chest, sleeveLength, armCirc, cuffCirc } = meas;
+        const armholeHeight = (chest/4)-2;
+        const bicepWidth = armCirc + 6;
+        const sleeveCapHeight = armholeHeight;
+        const sleeveWidth = (chest/5)+3;
+        const cuff = cuffCirc;
+        const halfSleeve = sleeveWidth/2;
+
+        ctx.clearRect(0,0,w,h);
+        drawGrid(ctx,w,h);
+        ctx.save();
+        ctx.translate(30,40);
+
+        const topY = 0;
+        const bottomY = sleeveLength * scale;
+        const leftX = 0;
+        const rightX = sleeveWidth * scale;
+
+        ctx.beginPath();
+        ctx.moveTo(leftX, bottomY);
+        ctx.lineTo(leftX, sleeveCapHeight * scale);
+        ctx.quadraticCurveTo(sleeveWidth/2 * scale, 0, rightX, sleeveCapHeight * scale);
+        ctx.lineTo(rightX, bottomY);
+        ctx.closePath();
+        ctx.strokeStyle = '#2c5282';
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(44,82,130,0.05)';
+        ctx.fill();
+
+        createDimension(ctx, leftX, sleeveCapHeight * scale, rightX, sleeveCapHeight * scale, -12, `${sleeveWidth.toFixed(1)} سم`, scale);
+        createDimension(ctx, leftX + sleeveWidth/2 * scale, topY, leftX + sleeveWidth/2 * scale, bottomY, 15, `${sleeveLength.toFixed(1)} سم`, scale);
+        createDimension(ctx, leftX, bottomY, rightX, bottomY, 8, `${cuff.toFixed(1)} سم`, scale);
+
+        const grainX = sleeveWidth/2 * scale;
+        ctx.beginPath(); ctx.moveTo(grainX, 10); ctx.lineTo(grainX, bottomY-10); ctx.strokeStyle = '#000'; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(grainX - 5, 10); ctx.lineTo(grainX, 5); ctx.lineTo(grainX + 5, 10); ctx.fill();
+
+        ctx.fillStyle = '#1e3c72';
+        ctx.font = "bold 16px 'Tajawal'";
+        ctx.fillText("الكم (قص 2)", 10, 30);
+        ctx.restore();
+    }
+
+    function drawSkirt(ctx, w, h, meas, category) {
+        const { waist, hip, pieceLength: skirtLength } = meas;
+        const waistEase = 1;
+        const hipEase = 1.5;
+        const finalQuarterWaist = (waist/4) + waistEase;
+        const finalQuarterHips = (hip/4) + hipEase;
+        const hipLineDepth = category === 'child' ? 15 : 20;
+
+        ctx.clearRect(0,0,w,h);
+        drawGrid(ctx,w,h);
+        ctx.save();
+        ctx.translate(30,40);
+
+        const p = {
+            waistSide: { x: finalQuarterWaist, y: 0 },
+            hipSide: { x: finalQuarterHips, y: hipLineDepth },
+            hemSide: { x: finalQuarterHips + 2, y: skirtLength }
+        };
+        ctx.beginPath();
+        ctx.moveTo(0, skirtLength * scale);
+        ctx.lineTo(0, 0);
+        ctx.lineTo(p.waistSide.x * scale, 0);
+        ctx.bezierCurveTo(p.waistSide.x * scale, hipLineDepth * 0.4 * scale, p.hipSide.x * scale, (hipLineDepth - 4) * scale, p.hipSide.x * scale, p.hipSide.y * scale);
+        ctx.lineTo(p.hemSide.x * scale, skirtLength * scale);
+        ctx.closePath();
+        ctx.strokeStyle = '#2c5282';
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(44,82,130,0.05)';
+        ctx.fill();
+
+        createDimension(ctx, 0, 0, p.waistSide.x * scale, 0, -8, `${finalQuarterWaist.toFixed(1)} سم`, scale);
+        createDimension(ctx, 0, hipLineDepth * scale, p.hipSide.x * scale, hipLineDepth * scale, 10, `${finalQuarterHips.toFixed(1)} سم`, scale);
+        createDimension(ctx, 0, skirtLength * scale, p.hemSide.x * scale, skirtLength * scale, 12, `${p.hemSide.x.toFixed(1)} سم`, scale);
+        createDimension(ctx, 0, 0, 0, skirtLength * scale, -10, `${skirtLength.toFixed(1)} سم`, scale);
+
+        const grainX = (finalQuarterWaist / 2) * scale;
+        ctx.beginPath(); ctx.moveTo(grainX, 10); ctx.lineTo(grainX, skirtLength * scale - 10); ctx.strokeStyle = '#000'; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(grainX - 5, 10); ctx.lineTo(grainX, 5); ctx.lineTo(grainX + 5, 10); ctx.fill();
+
+        ctx.fillStyle = '#1e3c72';
+        ctx.font = "bold 16px 'Tajawal'";
+        ctx.fillText("التنورة (قص 1 على الثنية)", 10, 30);
+        ctx.restore();
+    }
+
+    function drawPants(ctx, w, h, meas, category, isFront = true) {
+        const { waist, hip, waistToFloor, inlegLength } = meas;
+        const quarterWaist = waist/4;
+        const quarterHips = hip/4;
+        const crotchDepth = waistToFloor - inlegLength;
+        const waistEase = 0.5;
+        const hipEase = isFront ? 0.5 : 1.5;
+        const crotchExtension = isFront ? (hip / 20) : (hip / 10);
+        const centerShift = isFront ? 0 : 1;
+        const sideShift = isFront ? 0 : 2;
+        const centerWaistRaise = isFront ? 0 : 2.5;
+        const blockWidth = quarterHips + hipEase;
+        const finalQuarterWaist = quarterWaist + waistEase + (isFront ? 0 : 2.5);
+
+        ctx.clearRect(0,0,w,h);
+        drawGrid(ctx,w,h);
+        ctx.save();
+        ctx.translate(30,40);
+
+        const points = {
+            waistSide: { x: 0, y: centerWaistRaise },
+            waistCenter: { x: blockWidth + centerShift, y: isFront ? 0.5 : 0 },
+            hipSide: { x: 0, y: crotchDepth * 0.3 + centerWaistRaise },
+            hipCenter: { x: blockWidth + centerShift, y: crotchDepth * 0.3 },
+            crotchSide: { x: sideShift, y: crotchDepth + centerWaistRaise },
+            crotchPoint: { x: blockWidth + centerShift + crotchExtension, y: crotchDepth },
+            hemSide: { x: sideShift + 4, y: waistToFloor },
+            hemCenter: { x: blockWidth + centerShift - 4, y: waistToFloor }
+        };
+        points.waistCenter.x = points.waistSide.x + finalQuarterWaist;
+
+        ctx.beginPath();
+        ctx.moveTo(points.waistSide.x * scale, points.waistSide.y * scale);
+        ctx.lineTo(points.hemSide.x * scale, points.hemSide.y * scale);
+        ctx.lineTo(points.hemCenter.x * scale, points.hemCenter.y * scale);
+        ctx.quadraticCurveTo((points.crotchPoint.x + points.hemCenter.x)/2.2 * scale, (points.crotchPoint.y + points.hemCenter.y)*0.3 * scale, points.crotchPoint.x * scale, points.crotchPoint.y * scale);
+        ctx.bezierCurveTo((points.crotchPoint.x - crotchExtension*0.8)*scale, points.crotchPoint.y*scale, points.waistCenter.x*scale, (points.crotchPoint.y - crotchDepth*0.5)*scale, points.waistCenter.x*scale, points.waistCenter.y*scale);
+        ctx.lineTo(points.waistSide.x * scale, points.waistSide.y * scale);
+        ctx.closePath();
+        ctx.strokeStyle = '#2c5282';
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(44,82,130,0.05)';
+        ctx.fill();
+
+        createDimension(ctx, points.waistSide.x * scale, points.waistSide.y * scale, points.waistCenter.x * scale, points.waistSide.y * scale, -8, `${finalQuarterWaist.toFixed(1)} سم`, scale);
+        createDimension(ctx, points.waistSide.x * scale, points.waistSide.y * scale, points.waistSide.x * scale, points.hemSide.y * scale, -10, `${waistToFloor.toFixed(1)} سم`, scale);
+        createDimension(ctx, points.crotchPoint.x * scale, points.crotchPoint.y * scale, points.crotchPoint.x * scale, points.hemCenter.y * scale, 10, `${inlegLength.toFixed(1)} سم`, scale);
+        createDimension(ctx, points.crotchSide.x * scale, points.crotchPoint.y * scale, points.crotchPoint.x * scale, points.crotchPoint.y * scale, 12, `${(blockWidth + crotchExtension + sideShift).toFixed(1)} سم`, scale);
+
+        const grainX = (points.hemSide.x + points.hemCenter.x)/2 * scale;
+        ctx.beginPath(); ctx.moveTo(grainX, 10); ctx.lineTo(grainX, waistToFloor * scale - 10); ctx.strokeStyle = '#000'; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(grainX - 5, 10); ctx.lineTo(grainX, 5); ctx.lineTo(grainX + 5, 10); ctx.fill();
+
+        ctx.fillStyle = '#1e3c72';
+        ctx.font = "bold 16px 'Tajawal'";
+        ctx.fillText(isFront ? "البنطلون الأمامي (قص 2)" : "البنطلون الخلفي (قص 2)", 10, 30);
+        ctx.restore();
+    }
+
+    // ========================== بناء الواجهة ==========================
+    let currentType = "women";
+    let currentSystem = "eu";
+    let currentSize = 38;
+
+    function getSizeList() {
+        if (currentType === "women") {
+            if (currentSystem === "eu") return [32,34,36,38,40,42,44,46,48,50,52,54,56];
+            if (currentSystem === "us") return [0,2,4,6,8,10,12,14,16,18,20];
+            if (currentSystem === "arab") return [32,34,36,38,40,42,44,46,48,50,52,54,56];
+            if (currentSystem === "asian") return [28,30,32,34,36,38,40,42,44,46,48,50,52];
+        } else if (currentType === "men") {
+            if (currentSystem === "eu") return [44,46,48,50,52,54,56,58,60];
+            if (currentSystem === "us") return [34,36,38,40,42,44,46,48,50];
+            if (currentSystem === "arab") return [44,46,48,50,52,54,56,58,60];
+            if (currentSystem === "asian") return [40,42,44,46,48,50,52,54,56];
+        } else {
+            if (currentSystem === "eu") return Array.from({length:17}, (_,i)=>i+1);
+            if (currentSystem === "us") return Array.from({length:16}, (_,i)=>i+2);
+            if (currentSystem === "arab") return Array.from({length:17}, (_,i)=>i+1);
+            if (currentSystem === "asian") return Array.from({length:17}, (_,i)=>i+1);
+        }
+        return [];
+    }
+
+    function updateAllDrawings() {
+        let meas;
+        if (currentType === "women") meas = getWomenMeasurements(currentSystem, currentSize);
+        else if (currentType === "men") meas = getMenMeasurements(currentSystem, currentSize);
+        else meas = getKidsMeasurements(currentSystem, currentSize);
+
+        // إضافة خاصية inlegLength و waistToFloor للمقاسات إذا لم تكن موجودة
+        if (!meas.inlegLength) meas.inlegLength = meas.legLength * 0.6;
+        if (!meas.waistToFloor) meas.waistToFloor = meas.legLength;
+        if (!meas.pieceLength) meas.pieceLength = meas.backLength;
+
+        const frontCanvas = document.getElementById('frontCanvas');
+        const backCanvas = document.getElementById('backCanvas');
+        const sleeveCanvas = document.getElementById('sleeveCanvas');
+        const skirtCanvas = document.getElementById('skirtCanvas');
+        const pantsCanvas = document.getElementById('pantsCanvas');
+
+        if (frontCanvas) drawFrontBodice(frontCanvas.getContext('2d'), 550, 500, meas, currentType);
+        if (backCanvas) drawBackBodice(backCanvas.getContext('2d'), 550, 500, meas, currentType);
+        if (sleeveCanvas) drawSleeve(sleeveCanvas.getContext('2d'), 400, 400, meas);
+        if (skirtCanvas) drawSkirt(skirtCanvas.getContext('2d'), 500, 450, meas, currentType);
+        if (pantsCanvas) drawPants(pantsCanvas.getContext('2d'), 550, 550, meas, currentType, true);
+
+        document.getElementById("info-bar").style.display = "flex";
+        document.getElementById("type-name").innerText = currentType==="women"?"نساء":(currentType==="men"?"رجال":"أطفال");
+        document.getElementById("size-value").innerText = currentSize + (currentType==="kids"?" (الفئة)":"");
+        document.getElementById("system-name").innerText = {eu:"أوروبي",us:"أمريكي",arab:"عربي",asian:"آسيوي"}[currentSystem];
+    }
+
+    function buildSizeList() {
+        const sizes = getSizeList();
+        const container = document.getElementById("sizes-container");
+        container.innerHTML = sizes.map(s => `<div class="size-option ${s === currentSize ? 'selected' : ''}" data-size="${s}">${s} ${currentType === "kids" ? "الفئة" : ""}</div>`).join("");
+        document.querySelectorAll(".size-option").forEach(opt => opt.addEventListener("click", () => {
+            currentSize = parseInt(opt.dataset.size);
+            buildSizeList();
+            updateAllDrawings();
+        }));
+    }
+
+    function switchType(type) {
+        currentType = type;
+        if (currentType === "women") currentSize = currentSystem==="eu"?38: currentSystem==="us"?8: currentSystem==="arab"?38:34;
+        else if (currentType === "men") currentSize = currentSystem==="eu"?48: currentSystem==="us"?38: currentSystem==="arab"?48:44;
+        else currentSize = 1;
+        buildSizeList();
+        updateAllDrawings();
+    }
+
+    function switchSystem(sys) {
+        currentSystem = sys;
+        if (currentType === "women") currentSize = sys==="eu"?38: sys==="us"?8: sys==="arab"?38:34;
+        else if (currentType === "men") currentSize = sys==="eu"?48: sys==="us"?38: sys==="arab"?48:44;
+        else currentSize = 1;
+        buildSizeList();
+        updateAllDrawings();
+    }
+
+    // إنشاء بطاقات الرسم في الـ DOM
+    const patternsGrid = document.getElementById("patterns-grid");
+    patternsGrid.innerHTML = `
+        <div class="pattern-card"><div class="card-header"><i class="fas fa-tshirt"></i> <h3>الكورساج الأمامي</h3></div><div class="pattern-canvas-container"><canvas id="frontCanvas" width="550" height="500"></canvas></div></div>
+        <div class="pattern-card"><div class="card-header"><i class="fas fa-tshirt"></i> <h3>الكورساج الخلفي</h3></div><div class="pattern-canvas-container"><canvas id="backCanvas" width="550" height="500"></canvas></div></div>
+        <div class="pattern-card"><div class="card-header"><i class="fas fa-hand-peace"></i> <h3>الكم الأساسي</h3></div><div class="pattern-canvas-container"><canvas id="sleeveCanvas" width="400" height="400"></canvas></div></div>
+        <div class="pattern-card"><div class="card-header"><i class="fas fa-female"></i> <h3>التنورة الأساسية</h3></div><div class="pattern-canvas-container"><canvas id="skirtCanvas" width="500" height="450"></canvas></div></div>
+        <div class="pattern-card"><div class="card-header"><i class="fas fa-vest-patches"></i> <h3>البنطلون الأمامي</h3></div><div class="pattern-canvas-container"><canvas id="pantsCanvas" width="550" height="550"></canvas></div></div>
+    `;
+
+    document.querySelectorAll(".type-btn").forEach(btn => btn.addEventListener("click", () => {
+        document.querySelectorAll(".type-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        switchType(btn.dataset.type);
+    }));
+    document.getElementById("size-system").addEventListener("change", e => switchSystem(e.target.value));
+    buildSizeList();
+    updateAllDrawings();
+</script>
+</body>
+</html>

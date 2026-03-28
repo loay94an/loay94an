@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>موسوعة الأجيال – مدارس رسم الباترون العالمية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary: #2c5282;
+            --primary-light: #4299c1;
+            --secondary: #48bb78;
+            --accent: #ed8936;
+            --gray-light: #f7fafc;
+            --gray: #cbd5e0;
+            --dark: #2d3748;
+            --white: #ffffff;
+            --shadow: 0 2px 4px rgba(0,0,0,0.05);
+            --radius: 10px;
+            --bg-page: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+        }
+        body.dark {
+            --primary: #4299c1;
+            --primary-light: #63b3ed;
+            --secondary: #68d391;
+            --gray-light: #334155;
+            --gray: #475569;
+            --white: #1e293b;
+            --bg-page: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f1f5f9;
+            --border-color: #334155;
+        }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg-page);
+            color: var(--text-color);
+            direction: rtl;
+            padding: 1rem;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .header h1 {
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .header-controls {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+        .lang-select, .theme-toggle {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 40px;
+            padding: 0.4rem 0.8rem;
+            color: white;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+        }
+        .theme-toggle {
+            width: 38px;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .selection-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1rem 1.2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+        }
+        .form-group {
+            flex: 1;
+            min-width: 140px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            font-size: 0.85rem;
+            color: var(--primary);
+        }
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--white);
+            color: var(--text-color);
+            font-family: 'Tajawal', sans-serif;
+        }
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .btn {
+            padding: 0.4rem 0.9rem;
+            background: var(--gray-light);
+            border: 1px solid var(--border-color);
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: var(--text-color);
+            transition: all 0.2s;
+        }
+        .btn.active {
+            background: var(--secondary);
+            border-color: var(--secondary);
+            color: white;
+        }
+        .size-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            max-height: 100px;
+            overflow-y: auto;
+            padding: 0.5rem;
+            background: var(--gray-light);
+            border-radius: 10px;
+            margin-top: 0.5rem;
+        }
+        .size-option {
+            padding: 0.25rem 0.8rem;
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: 0.2s;
+        }
+        .size-option.selected {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .tables-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+        .card-header {
+            background: var(--primary);
+            color: white;
+            padding: 0.6rem 1rem;
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-content {
+            padding: 0.8rem;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+        th, td {
+            padding: 0.5rem 0.3rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th {
+            background: var(--gray-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .info-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+        .formula-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1rem;
+            max-width: 280px;
+            z-index: 1000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+        .encyclopedia-card {
+            margin-top: 1.5rem;
+        }
+        .encyclopedia-content {
+            padding: 1.5rem;
+            line-height: 1.8;
+            font-size: 0.95rem;
+            max-height: 800px;
+            overflow-y: auto;
+        }
+        .encyclopedia-content h2 {
+            color: var(--primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+        .encyclopedia-content h3 {
+            color: var(--accent);
+            margin-top: 1.2rem;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        .encyclopedia-content h4 {
+            margin-top: 1rem;
+            margin-bottom: 0.3rem;
+            color: var(--primary-light);
+        }
+        .encyclopedia-content ul, .encyclopedia-content ol {
+            margin-right: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .encyclopedia-content li {
+            margin-bottom: 0.3rem;
+        }
+        .encyclopedia-content hr {
+            margin: 1rem 0;
+        }
+        .export-btn {
+            padding: 0.4rem 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 0.7rem;
+            color: var(--gray);
+        }
+        @media (max-width: 700px) {
+            .tables-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-drafting-compass"></i> <span id="app-title">موسوعة الأجيال – مدارس رسم الباترون العالمية</span></h1>
+        <div class="header-controls">
+            <select id="lang-select" class="lang-select">
+                <option value="ar">العربية</option>
+                <option value="en">English</option>
+                <option value="es">Español</option>
+                <option value="de">Deutsch</option>
+            </select>
+            <button id="theme-toggle" class="theme-toggle"><i class="fas fa-moon"></i></button>
+        </div>
+    </div>
+
+    <div class="selection-card">
+        <div class="row">
+            <div class="form-group">
+                <label id="system-label">نظام المقاسات</label>
+                <select id="size-system">
+                    <option value="eu">🇪🇺 EU</option>
+                    <option value="us">🇺🇸 US</option>
+                    <option value="arab">🇸🇦 Arab</option>
+                    <option value="asian">🇯🇵 Asian</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label id="gender-label">الجنس</label>
+                <div class="btn-group" id="gender-buttons">
+                    <button class="btn active" data-gender="women">نساء</button>
+                    <button class="btn" data-gender="men">رجال</button>
+                    <button class="btn" data-gender="kids">أطفال</button>
+                    <button class="btn" data-gender="infant">رضع</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label id="unit-label">الوحدة</label>
+                <div class="btn-group" id="unit-buttons">
+                    <button class="btn active" data-unit="cm">سم</button>
+                    <button class="btn" data-unit="in">إنش</button>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label id="size-number-label">رقم المقاس</label>
+            <div id="size-buttons-container" class="size-buttons"></div>
+        </div>
+        <div class="row">
+            <div class="form-group">
+                <label id="school-label">مدرسة الرسم</label>
+                <select id="school-select">
+                    <option value="german">🇩🇪 الألمانية (M. Müller & Sohn)</option>
+                    <option value="italian">🇮🇹 الإيطالية (Sartorial)</option>
+                    <option value="french">🇫🇷 الفرنسية (ESMOD)</option>
+                    <option value="american">🇺🇸 الأمريكية (Armstrong)</option>
+                    <option value="flat">📐 المسطح (للمبتدئين)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label id="sleeve-type-label">نوع الكم</label>
+                <select id="sleeve-type">
+                    <option value="basic">أساسي (قطعة واحدة)</option>
+                    <option value="twopiece">تايلور (قطعتين)</option>
+                    <option value="raglan">ريكلان (راجلان)</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex:0.4; display: flex; align-items: center; justify-content: flex-start;">
+                <button id="export-excel-btn" class="export-btn" style="margin-top: 1.2rem;"><i class="fas fa-file-excel"></i> <span id="export-text">Excel</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tables-container" class="tables-container"></div>
+
+    <!-- الموسوعة: المحتوى التعليمي المفصل -->
+    <div class="card encyclopedia-card">
+        <div class="card-header">
+            <span><i class="fas fa-book-open"></i> <span id="encyclopedia-title">موسوعة رسم الباترون الأساسي: الأنواع، الفروقات، القواعد، وأسرار الاحتراف</span></span>
+        </div>
+        <div class="encyclopedia-content" id="encyclopedia-content">
+            <!-- سيتم ملؤه بالمحتوى من النص المقدم -->
+        </div>
+    </div>
+
+    <div class="footer">
+        <p id="footer-text">جميع الحسابات وفق المدارس العالمية – اضغط على ℹ️ لعرض المعادلة | المحتوى التعليمي يغطي جميع طرق الرسم وأسرار الاحتراف</p>
+    </div>
+</div>
+
+<script>
+    // ======================== بيانات المقاسات (موسعة) ========================
+    const womenData = {
+        34: { chest: 84, waist: 66, hip: 92, backWidth: 34, shoulderLength: 12.2, backLength: 37.5, sleeveLength: 56, armCirc: 27, cuffCirc: 15.8, neckCirc: 35, waistToHip: 18, waistToKnee: 57, legLength: 98, skirtLength: 58, chestLength: 42, armholeCirc: 41, waistToArmpit: 27.5, shoulderToBust: 23.5, bustPointDist: 17.5, armholeDepth: 20 },
+        36: { chest: 88, waist: 70, hip: 96, backWidth: 35, shoulderLength: 12.7, backLength: 38.5, sleeveLength: 57, armCirc: 28.5, cuffCirc: 16.2, neckCirc: 36.5, waistToHip: 18.5, waistToKnee: 57.5, legLength: 99, skirtLength: 59, chestLength: 43, armholeCirc: 42.5, waistToArmpit: 28, shoulderToBust: 24, bustPointDist: 18, armholeDepth: 20.8 },
+        38: { chest: 92, waist: 74, hip: 100, backWidth: 36, shoulderLength: 13.2, backLength: 39.5, sleeveLength: 57, armCirc: 29.5, cuffCirc: 16.8, neckCirc: 37.5, waistToHip: 19, waistToKnee: 58, legLength: 100, skirtLength: 60, chestLength: 44, armholeCirc: 43.5, waistToArmpit: 28.8, shoulderToBust: 24.5, bustPointDist: 18.5, armholeDepth: 21.5 },
+        40: { chest: 96, waist: 78, hip: 104, backWidth: 37, shoulderLength: 13.6, backLength: 40.5, sleeveLength: 57.5, armCirc: 30.5, cuffCirc: 17.2, neckCirc: 38.5, waistToHip: 19.5, waistToKnee: 58.5, legLength: 100, skirtLength: 60, chestLength: 45, armholeCirc: 44.5, waistToArmpit: 29.2, shoulderToBust: 25, bustPointDist: 19, armholeDepth: 22 },
+        42: { chest: 100, waist: 82, hip: 108, backWidth: 38, shoulderLength: 14, backLength: 41, sleeveLength: 58, armCirc: 31.5, cuffCirc: 17.8, neckCirc: 39.5, waistToHip: 20, waistToKnee: 59, legLength: 101, skirtLength: 61, chestLength: 46, armholeCirc: 45.5, waistToArmpit: 30, shoulderToBust: 25.5, bustPointDist: 19.5, armholeDepth: 22.5 }
+    };
+    const menData = {
+        44: { chest: 88, waist: 78, hip: 94, backWidth: 35.5, shoulderLength: 14, backLength: 43, sleeveLength: 61, armCirc: 30, cuffCirc: 18, neckCirc: 38, waistToHip: 19.5, waistToKnee: 60, legLength: 104, pantsLength: 102, chestLength: 44, armholeCirc: 43, waistToArmpit: 30, shoulderToChest: 24.5, chestPointDist: 18, armholeDepth: 21 },
+        46: { chest: 92, waist: 82, hip: 98, backWidth: 36.5, shoulderLength: 14.3, backLength: 43.5, sleeveLength: 61.5, armCirc: 31, cuffCirc: 18.5, neckCirc: 39, waistToHip: 20, waistToKnee: 60.5, legLength: 105, pantsLength: 103, chestLength: 44.5, armholeCirc: 44, waistToArmpit: 30.5, shoulderToChest: 25, chestPointDist: 18.5, armholeDepth: 21.5 },
+        48: { chest: 96, waist: 86, hip: 102, backWidth: 37.5, shoulderLength: 14.6, backLength: 44, sleeveLength: 62, armCirc: 32, cuffCirc: 19, neckCirc: 40, waistToHip: 20.5, waistToKnee: 61, legLength: 106, pantsLength: 104, chestLength: 45, armholeCirc: 45, waistToArmpit: 31, shoulderToChest: 25.5, chestPointDist: 19, armholeDepth: 22 },
+        50: { chest: 100, waist: 90, hip: 106, backWidth: 38.5, shoulderLength: 15, backLength: 44.5, sleeveLength: 62.5, armCirc: 33, cuffCirc: 19.5, neckCirc: 41, waistToHip: 21, waistToKnee: 61.5, legLength: 107, pantsLength: 105, chestLength: 46, armholeCirc: 46, waistToArmpit: 31.5, shoulderToChest: 26, chestPointDist: 19.5, armholeDepth: 22.8 }
+    };
+    const kidsData = {
+        2: { chest: 54, waist: 52, hip: 57, backWidth: 24, shoulderLength: 8.5, backLength: 23, sleeveLength: 32, armCirc: 18.5, cuffCirc: 14, neckCirc: 27, waistToHip: 13, waistToKnee: 32, legLength: 54, skirtLength: 32, chestLength: 24, armholeCirc: 29, waistToArmpit: 17, shoulderToBust: 13.5, bustPointDist: 10.5, armholeDepth: 14.5 },
+        4: { chest: 58, waist: 54, hip: 60, backWidth: 25, shoulderLength: 9, backLength: 26, sleeveLength: 36, armCirc: 19.5, cuffCirc: 14.5, neckCirc: 28, waistToHip: 14, waistToKnee: 36, legLength: 62, skirtLength: 36, chestLength: 26, armholeCirc: 30, waistToArmpit: 18, shoulderToBust: 14.5, bustPointDist: 11, armholeDepth: 15.5 },
+        6: { chest: 62, waist: 56, hip: 64, backWidth: 26, shoulderLength: 9.5, backLength: 29, sleeveLength: 40, armCirc: 20.5, cuffCirc: 15, neckCirc: 29, waistToHip: 15, waistToKnee: 40, legLength: 70, skirtLength: 40, chestLength: 28, armholeCirc: 31, waistToArmpit: 19, shoulderToBust: 15.5, bustPointDist: 11.5, armholeDepth: 16.5 }
+    };
+    const infantData = {
+        3: { chest: 44, waist: 43, hip: 46, backWidth: 18, shoulderLength: 7, backLength: 20, sleeveLength: 24, armCirc: 17, cuffCirc: 13, neckCirc: 28, waistToHip: 11, waistToKnee: 28, legLength: 48, skirtLength: 30, chestLength: 21, armholeCirc: 28, waistToArmpit: 15, shoulderToBust: 10, bustPointDist: 8, armholeDepth: 13 },
+        6: { chest: 48, waist: 45, hip: 49, backWidth: 19, shoulderLength: 7.5, backLength: 22, sleeveLength: 27, armCirc: 18, cuffCirc: 14, neckCirc: 30, waistToHip: 12, waistToKnee: 30, legLength: 54, skirtLength: 32, chestLength: 22, armholeCirc: 30, waistToArmpit: 16, shoulderToBust: 11, bustPointDist: 8.5, armholeDepth: 14 },
+        9: { chest: 52, waist: 48, hip: 53, backWidth: 20, shoulderLength: 8, backLength: 24, sleeveLength: 30, armCirc: 19, cuffCirc: 14.5, neckCirc: 32, waistToHip: 13, waistToKnee: 32, legLength: 60, skirtLength: 34, chestLength: 23, armholeCirc: 32, waistToArmpit: 17, shoulderToBust: 12, bustPointDist: 9, armholeDepth: 15 }
+    };
+
+    let currentGender = 'women', currentSystem = 'eu', currentUnit = 'cm', currentLang = 'ar', currentSleeveType = 'basic', currentSchool = 'german';
+    let currentSize = 38;
+
+    function getMeasurements() {
+        let data;
+        if (currentGender === 'women') data = womenData[currentSize] || womenData[38];
+        else if (currentGender === 'men') data = menData[currentSize] || menData[48];
+        else if (currentGender === 'kids') data = kidsData[currentSize] || kidsData[4];
+        else data = infantData[currentSize] || infantData[6];
+        return { ...data };
+    }
+
+    function getSizeList() {
+        if (currentGender === 'women') return [34,36,38,40,42];
+        if (currentGender === 'men') return [44,46,48,50];
+        if (currentGender === 'kids') return [2,4,6];
+        return [3,6,9];
+    }
+
+    function mapSizeBySystem(rawSize) {
+        if (currentSystem === 'us' && currentGender === 'women') return {34:4,36:6,38:8,40:10,42:12}[rawSize] || rawSize;
+        if (currentSystem === 'arab' && currentGender === 'women') return rawSize + 4;
+        if (currentSystem === 'asian' && currentGender === 'women') return rawSize - 26;
+        return rawSize;
+    }
+
+    function formatDim(v) {
+        if (v === undefined) return '—';
+        let val = currentUnit === 'in' ? v / 2.54 : v;
+        let unitSym = currentUnit === 'cm' ? (currentLang === 'ar' ? 'سم' : 'cm') : (currentLang === 'ar' ? 'إنش' : 'in');
+        return val.toFixed(1) + ' ' + unitSym;
+    }
+
+    function computeSchoolValues(meas) {
+        const chest = meas.chest, neck = meas.neckCirc, backLen = meas.backLength;
+        let neckWidth, armholeDepth, frontNeckDrop, backNeckDrop = 2.2, shoulderSlope;
+        switch (currentSchool) {
+            case 'german':
+                neckWidth = (chest / 20) + 2.2;
+                armholeDepth = (chest / 10) + 10.8;
+                frontNeckDrop = neck / 5.2;
+                shoulderSlope = 4.5;
+                break;
+            case 'italian':
+                neckWidth = neck / 6;
+                armholeDepth = (chest / 4) - 2;
+                frontNeckDrop = neck / 5.5;
+                shoulderSlope = 4.2;
+                break;
+            case 'french':
+                neckWidth = (neck / 24) + 1.8;
+                armholeDepth = backLen / 2;
+                frontNeckDrop = neck / 5;
+                shoulderSlope = 4.8;
+                break;
+            case 'american':
+                neckWidth = (neck / 6) + 0.7;
+                armholeDepth = (chest / 4) - 1.2;
+                frontNeckDrop = neck / 5;
+                shoulderSlope = 4.3;
+                break;
+            default:
+                neckWidth = 7.8;
+                armholeDepth = 19.5;
+                frontNeckDrop = 8;
+                shoulderSlope = 3.5;
+        }
+        return { neckWidth, armholeDepth, frontNeckDrop, backNeckDrop, shoulderSlope, patternWidth: (chest / 2) + 3.5, patternHeight: backLen + 1.8 };
+    }
+
+    function computePattern(meas) {
+        const s = computeSchoolValues(meas);
+        const chestQ = meas.chest / 4, waistQ = meas.waist / 4, hipQ = meas.hip / 4;
+        const sleeveWidth = (meas.chest / 5) + 3.5;
+        const sleeveCapHeight = s.armholeDepth * 0.82;
+        const bustDist = meas.bustPointDist || meas.chestPointDist || 18;
+        return {
+            "طول الظهر": { value: meas.backLength, formula: `قياس مباشر: ${meas.backLength.toFixed(1)}` },
+            "عرض الكتف": { value: meas.shoulderLength, formula: `قياس مباشر: ${meas.shoulderLength.toFixed(1)}` },
+            "عرض حردة الرقبة": { value: s.neckWidth, formula: `حسب مدرسة ${currentSchool}` },
+            "نزول الرقبة الأمامية": { value: s.frontNeckDrop, formula: `حسب المدرسة` },
+            "عمق حفرة الإبط": { value: s.armholeDepth, formula: `حسب المدرسة` },
+            "عرض الصدر ÷ 4": { value: chestQ, formula: `${meas.chest} ÷ 4 = ${chestQ.toFixed(1)}` },
+            "عرض الخصر ÷ 4": { value: waistQ, formula: `${meas.waist} ÷ 4 = ${waistQ.toFixed(1)}` },
+            "عرض الورك ÷ 4": { value: hipQ, formula: `${meas.hip} ÷ 4 = ${hipQ.toFixed(1)}` },
+            "عرض الكم": { value: sleeveWidth, formula: `(${meas.chest}÷5)+3.5 = ${sleeveWidth.toFixed(1)}` },
+            "ارتفاع رأس الكم": { value: sleeveCapHeight, formula: `عمق الإبط ×0.82 = ${sleeveCapHeight.toFixed(1)}` },
+            "طول الكم": { value: meas.sleeveLength, formula: `قياس مباشر` },
+            "ميل الكتف": { value: s.shoulderSlope, formula: `حسب المدرسة` },
+            "المسافة بين الثديين/الصدر": { value: bustDist, formula: `مقاس` }
+        };
+    }
+
+    function renderTables() {
+        const meas = getMeasurements();
+        const pattern = computePattern(meas);
+        const bodyKeys = ["عرض الظهر", "طول الكتف", "طول الظهر", "طول الكم", "محيط الذراع", "محيط الأسوارة", "محيط الرقبة", "محيط الصدر", "محيط الخصر", "محيط الورك", "من الخصر إلى الورك", "من الخصر إلى الركبة", "طول الساق", "طول التنورة/البنطلون", "محيط الإبط"];
+        const bodyVals = [meas.backWidth, meas.shoulderLength, meas.backLength, meas.sleeveLength, meas.armCirc, meas.cuffCirc, meas.neckCirc, meas.chest, meas.waist, meas.hip, meas.waistToHip, meas.waistToKnee, meas.legLength, meas.skirtLength || meas.pantsLength || meas.skirtLength, meas.armholeCirc];
+        
+        const bodyHtml = `<div class="card"><div class="card-header">المقاسات التفصيلية (القياسات الأساسية)</div><div class="card-content"><table><thead><tr><th>القياس</th><th>القيمة (${currentUnit === 'cm' ? 'سم' : 'إنش'})</th></tr></thead><tbody>${bodyKeys.map((k, i) => `<tr><td>${k}</td><td><strong>${formatDim(bodyVals[i])}</strong></td></tr>`).join('')}</tbody></table></div></div>`;
+        
+        const patternHtml = `<div class="card"><div class="card-header">مقاسات الباترون الأساسي (ربع الباترون)</div><div class="card-content"><table><thead><tr><th>القياس</th><th>القيمة</th><th>المعادلة / المرجع</th></tr></thead><tbody>${Object.entries(pattern).map(([k, { value, formula }]) => `<tr><td>${k}</td><td><strong>${formatDim(value)}</strong></td><td><button class="info-btn" data-info="${formula.replace(/"/g, '&quot;')}"><i class="fas fa-info-circle"></i></button></td></tr>`).join('')}</tbody></table></div></div>`;
+        
+        document.getElementById('tables-container').innerHTML = bodyHtml + patternHtml;
+        document.querySelectorAll('.info-btn').forEach(btn => btn.addEventListener('click', (e) => {
+            const popup = document.createElement('div'); popup.className = 'formula-popup';
+            popup.innerHTML = `<div><strong>المعادلة / المرجع:</strong><br>${btn.dataset.info}</div><button style="margin-top:10px;" class="btn">إغلاق</button>`;
+            document.body.appendChild(popup);
+            popup.querySelector('button').onclick = () => popup.remove();
+            setTimeout(() => popup.remove(), 5000);
+        }));
+    }
+
+    function buildSizeButtons() {
+        const sizes = getSizeList();
+        const container = document.getElementById('size-buttons-container');
+        container.innerHTML = sizes.map(s => `<div class="size-option ${s === currentSize ? 'selected' : ''}" data-size="${s}">${mapSizeBySystem(s)}</div>`).join('');
+        document.querySelectorAll('.size-option').forEach(opt => opt.addEventListener('click', () => { currentSize = parseInt(opt.dataset.size); buildSizeButtons(); renderTables(); }));
+    }
+
+    function updateUI() {
+        const t = { ar: { unitCm: "سم", unitIn: "إنش" }, en: { unitCm: "cm", unitIn: "in" }, es: { unitCm: "cm", unitIn: "pulg" }, de: { unitCm: "cm", unitIn: "zoll" } }[currentLang];
+        document.getElementById('app-title').innerText = currentLang === 'ar' ? "موسوعة الأجيال – مدارس رسم الباترون العالمية" : (currentLang === 'en' ? "Al-Ajyal Encyclopedia – Pattern Drafting Schools" : "Enciclopedia Al-Ajyall – Escuelas de Patronaje");
+        document.getElementById('system-label').innerText = currentLang === 'ar' ? "نظام المقاسات" : "Size System";
+        document.getElementById('gender-label').innerText = currentLang === 'ar' ? "الجنس" : "Gender";
+        document.getElementById('unit-label').innerText = currentLang === 'ar' ? "الوحدة" : "Unit";
+        document.getElementById('size-number-label').innerText = currentLang === 'ar' ? "رقم المقاس" : "Size Number";
+        document.getElementById('school-label').innerText = currentLang === 'ar' ? "مدرسة الرسم" : "Drafting School";
+        document.getElementById('sleeve-type-label').innerText = currentLang === 'ar' ? "نوع الكم" : "Sleeve Type";
+        document.getElementById('encyclopedia-title').innerHTML = currentLang === 'ar' ? "موسوعة رسم الباترون الأساسي: الأنواع، الفروقات، القواعد، وأسرار الاحتراف" : "Encyclopedia of Basic Pattern Drafting: Types, Differences, Rules, and Pro Secrets";
+        document.getElementById('footer-text').innerHTML = currentLang === 'ar' ? "جميع الحسابات وفق المدارس العالمية – اضغط على ℹ️ لعرض المعادلة | المحتوى التعليمي يغطي جميع طرق الرسم وأسرار الاحتراف" : "All calculations according to global schools – click ℹ️ for formula | Educational content covers all drafting methods and pro secrets";
+        document.getElementById('export-text').innerText = currentLang === 'ar' ? "Excel" : "Excel";
+        
+        const genderMap = { women: { ar: 'نساء', en: 'Women', es: 'Mujeres', de: 'Frauen' }, men: { ar: 'رجال', en: 'Men', es: 'Hombres', de: 'Männer' }, kids: { ar: 'أطفال', en: 'Kids', es: 'Niños', de: 'Kinder' }, infant: { ar: 'رضع', en: 'Infant', es: 'Bebés', de: 'Säuglinge' } };
+        document.querySelectorAll('#gender-buttons .btn').forEach(btn => { btn.innerText = genderMap[btn.dataset.gender][currentLang] || btn.dataset.gender; });
+        document.querySelectorAll('#unit-buttons .btn').forEach(btn => btn.innerText = btn.dataset.unit === 'cm' ? t.unitCm : t.unitIn);
+        buildSizeButtons();
+        renderTables();
+    }
+
+    function exportToExcel() {
+        const meas = getMeasurements(); const pattern = computePattern(meas);
+        const data = [["القياس", "القيمة (الباترون)", "المعادلة"]];
+        Object.entries(pattern).forEach(([k, { value, formula }]) => data.push([k, formatDim(value), formula]));
+        const ws = XLSX.utils.aoa_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "باترون");
+        XLSX.writeFile(wb, `pattern_${currentGender}_${currentSize}.xlsx`);
+    }
+
+    // المحتوى التعليمي المفصل (من النص المقدم)
+    function loadEncyclopediaContent() {
+        const content = `
+            <h2>مقدمة: أهمية الباترون الأساسي في صناعة الأزياء</h2>
+            <p>يُعد الباترون الأساسي (الكورساج) حجر الأساس في عالم تصميم الأزياء وصناعة الملابس، فهو المخطط الهندسي الذي تتحول بواسطته الأفكار إلى قطعة ملبوسة قابلة للتنفيذ. مهما كان التصميم جميلًا على الورق، لن ينجح على الجسم إلا إذا كان الباترون مضبوطًا من حيث القياسات، التوازن، وخطوط القص وحركة القماش على الجسم. وتكمن أهمية الباترون في أنه يحدد الشكل النهائي للقطعة، طريقة توزيع القماش، نقاط التركيب والخياطة، والتفاصيل الفنية والجمالية. كما أنه يضمن الراحة، الملاءمة، وتوحيد الإنتاج، ويقلل من الأخطاء والهدر في الوقت والتكلفة.</p>
+            
+            <h2>أولاً: نظرة عامة على الباترون الأساسي وأنواعه</h2>
+            <h3>تعريف الباترون الأساسي (الكورساج)</h3>
+            <p>الباترون الأساسي هو نموذج ورقي أو رقمي يُرسم بناءً على مقاسات الجسم الحقيقية أو القياسية، ويُستخدم كقاعدة يتم تعديلها لاحقًا لإخراج أي موديل. يُعتبر الباترون الأساسي بمثابة "الحمض النووي" لأي قطعة ملبوسة.</p>
+            <h3>أنواع الباترون الأساسي</h3>
+            <ul>
+                <li><strong>الباترون المسطح (Flat Pattern):</strong> يُرسم على الورق بالاعتماد على القياسات، ويُستخدم كأساس لتطوير التصاميم.</li>
+                <li><strong>الباترون بالبنس (Darted Pattern):</strong> يحتوي على بنسات لضبط البروزات والانحناءات.</li>
+                <li><strong>الباترون المجسم (Draping):</strong> يُنفذ مباشرة على المانيكان باستخدام القماش.</li>
+                <li><strong>الباترون الصناعي:</strong> مُعد للإنتاج التجاري ويشمل بدلات الخياطة وعلامات التطابق.</li>
+                <li><strong>الباترون الرقمي:</strong> يُنشأ باستخدام برامج متخصصة ويوفر دقة عالية.</li>
+            </ul>
+            <h3>الأدوات الأساسية لرسم الباترون</h3>
+            <ul>
+                <li>ورق باترون أو ورق كرافت</li>
+                <li>شريط قياس مرن (مازورة)</li>
+                <li>مسطرة مستقيمة وطويلة</li>
+                <li>مسطرة منحنية (فرنش كيرف)</li>
+                <li>قلم رصاص وأقلام ألوان</li>
+                <li>مقص حاد للورق</li>
+                <li>دبابيس، عجلة روليت، كربون للنقل</li>
+                <li>جهاز قياس ميل الكتف (للمحترفين)</li>
+            </ul>
+            
+            <h2>ثانياً: الطريقة الإيطالية لرسم الباترون (Italian Pattern)</h2>
+            <p>تُعد الطريقة الإيطالية من أشهر وأدق طرق رسم الباترون الأساسي، وتتميز بالتركيز على إبراز القامة وتحديد منحنيات الجسم بدقة عالية، مع تحقيق تناسق مثالي بين القطع المختلفة للملابس. يشتهر الباترون الإيطالي بالقصات المعاصرة والأنيقة، ويُستخدم في صناعة الملابس الراقية والبدلات والفساتين ذات القصات المميزة.</p>
+            <h3>القواعد والمعادلات المستخدمة</h3>
+            <ul>
+                <li>عرض الرقبة = محيط الرقبة ÷ 5</li>
+                <li>عمق الرقبة = محيط الرقبة ÷ 5 + 1 سم</li>
+                <li>عمق حفرة الإبط = (محيط الصدر ÷ 6) + 5 سم</li>
+                <li>ميل الكتف = 2-4 سم حسب الجسم</li>
+                <li>توزيع البنسات بدقة حسب المسافات بين النقاط الأساسية</li>
+            </ul>
+            
+            <h2>ثالثاً: الطريقة الفرنسية لرسم الباترون (French Pattern)</h2>
+            <p>تتميز الطريقة الفرنسية بالدقة والأناقة والتفصيل الدقيق، مع التركيز على التماثل والتناسق في التصميم. تعتمد على القصات المنحنية والتفاصيل المعقدة لإبراز جمالية القطعة، وتُستخدم بكثرة في الأزياء الكلاسيكية والراقية.</p>
+            <h3>القواعد والمعادلات المستخدمة</h3>
+            <ul>
+                <li>عرض الرقبة = محيط الرقبة ÷ 5</li>
+                <li>عمق الرقبة = محيط الرقبة ÷ 5 + 0.5 إلى 1 سم</li>
+                <li>عمق حفرة الإبط = (محيط الصدر ÷ 6) + 5 سم (مع تعديلات)</li>
+                <li>ميل الكتف = 2-3 سم</li>
+                <li>تصريف البنسات إلى مواقع مختلفة حسب التصميم</li>
+            </ul>
+            
+            <h2>رابعاً: الطريقة الألمانية لرسم الباترون (German Pattern)</h2>
+            <p>تُعرف الطريقة الألمانية بالاعتماد على القواعد الهندسية الصارمة والدقة في الحسابات، مع التركيز على البساطة والعملية. تُستخدم بكثرة في الملابس العملية والقطع التي تتطلب راحة في الحركة.</p>
+            <h3>القواعد والمعادلات المستخدمة</h3>
+            <ul>
+                <li>عرض الرقبة = محيط الرقبة ÷ 5</li>
+                <li>عمق الرقبة = محيط الرقبة ÷ 5 + 1 سم</li>
+                <li>عمق حفرة الإبط = (محيط الصدر ÷ 6) + 5 سم (مع زيادة الراحة)</li>
+                <li>ميل الكتف = 2-3 سم</li>
+                <li>توزيع متوازن للبنسات مع إمكانية الدمج</li>
+            </ul>
+            
+            <h2>خامساً: الطريقة الأمريكية لرسم الباترون (American Pattern)</h2>
+            <p>تتميز الطريقة الأمريكية بالاعتماد على الجداول القياسية للمقاسات وتبسيط خطوات الرسم، مع التركيز على سهولة التعلم والتطبيق. تُستخدم بكثرة في صناعة الملابس الجاهزة والإنتاج الضخم.</p>
+            <h3>القواعد والمعادلات المستخدمة</h3>
+            <ul>
+                <li>عرض الرقبة = محيط الرقبة ÷ 5</li>
+                <li>عمق الرقبة = محيط الرقبة ÷ 5 + 1 سم</li>
+                <li>عمق حفرة الإبط = (محيط الصدر ÷ 6) + 5 سم</li>
+                <li>ميل الكتف = 2-3 سم</li>
+                <li>تقليل البنسات أو دمجها لتسهيل التنفيذ</li>
+            </ul>
+            
+            <h2>سادساً: الباترون المسطح (Flat Pattern) والباترون بالبنس (Darted Pattern)</h2>
+            <p><strong>الباترون المسطح:</strong> الطريقة الأكثر شيوعًا، تعتمد على رسم القطعة على ورق مسطح باستخدام القياسات الدقيقة، ويُستخدم كأساس لتطوير أي تصميم.</p>
+            <p><strong>الباترون بالبنس:</strong> يحتوي على بنسات واضحة لضبط البروزات والانحناءات، ويُستخدم لتحقيق ملاءمة مثالية للقطعة مع الجسم، خاصة في الفساتين الضيقة وملابس السهرة.</p>
+            
+            <h2>سابعاً: تفاصيل دقيقة وأسرار احترافية</h2>
+            <ul>
+                <li><strong>التعامل مع البنسات:</strong> يجب ألا يصل رأس بنسة الصدر إلى أعلى نقطة بروز بل يقف قبلها بمقدار 2-3 سم. يمكن تصريف البنسات إلى مواقع مختلفة باستخدام طرق التدوير أو القص.</li>
+                <li><strong>حردة الرقبة:</strong> عرض الرقبة = محيط الرقبة ÷ 5، العمق = نفس المعادلة + 0.5 إلى 1 سم. أنواع الحردات: دائرية، مربعة، سبعة، سابرينا.</li>
+                <li><strong>حردة الجيرو:</strong> عمق الحردة = (محيط الصدر ÷ 6) + 5 سم. يجب مطابقة طول قاعدة الكم مع طول حردة الإبط لضمان تركيب الكم بدون شد.</li>
+                <li><strong>ميل الكتف:</strong> يُقاس الفرق بين نقطة الرقبة ونقطة الكتف (عادة 2-4 سم). جهاز ميل الكتف يساعد في الدقة.</li>
+                <li><strong>أسس التوازن:</strong> يجب أن يتساوى طول الجنب، خط الصدر، وخط الخصر بين الأمام والخلف. مراجعة التوازن قبل القص النهائي.</li>
+                <li><strong>أخطاء شائعة وحلولها:</strong> عدم دقة القياسات، نسيان مقدار الراحة، رسم الحردات بخطوط حادة، عدم مطابقة الأمام مع الخلف، اختلاف طول ضلعي البنس. الحل: التدقيق، استخدام المسطرة الفرنسية، التجربة على قماش تجريبي.</li>
+            </ul>
+            
+            <h2>ثامناً: تدريج المقاسات (Grading) وتأثيره على الباترون</h2>
+            <p>تدريج المقاسات هو عملية تحويل الباترون الأساسي من مقاس واحد إلى مجموعة من المقاسات المختلفة مع الحفاظ على تناسق وتوازن جميع التفاصيل في كل مقاس. يجب تحديد نقاط التدرج (الكتف، الصدر، الخصر، الورك) وإضافة أو خصم القيم حسب جدول التدرج مع الحفاظ على التناسق.</p>
+            
+            <h2>تاسعاً: مصادر ودورات عربية ومراجع عملية</h2>
+            <ul>
+                <li>دبلومة الفاشون والباترون (كرييتف أونلاين كورسيس)</li>
+                <li>دورات منصة معارف (شرح الباترون الإيطالي، الفرنسي، المسطح)</li>
+                <li>قنوات يوتيوب متخصصة: Italian patron studio، Sewing queens، joh fashion</li>
+                <li>كتب متخصصة: "رسم الباترون الأساسي للكورساج" للدكتورة حنان الأشقر، و"كتاب الباترون الإيطالي" مترجم pdf</li>
+            </ul>
+            
+            <h2>خاتمة: كيف تختار الطريقة الأنسب لرسم الباترون؟</h2>
+            <p>اختيار الطريقة يعتمد على هدف التصميم، مستوى الخبرة، نوع القماش، الوقت المتاح، والتفاصيل المطلوبة. إتقان رسم الباترون الأساسي هو الخطوة الأولى نحو احتراف تصميم الأزياء. ابدأ بالأساسيات، تدرب باستمرار، وراجع التوازن والدقة في كل خطوة. تذكر أن الباترون هو اللغة التي يفهمها القماش، وكلما أتقنت هذه اللغة، زادت قدرتك على الإبداع وصناعة قطع تليق بالذوق وتناسب الجسم وتُنفذ بدقة واحتراف.</p>
+        `;
+        document.getElementById('encyclopedia-content').innerHTML = content;
+    }
+
+    function switchGender(gender) { currentGender = gender; currentSize = getSizeList()[0]; buildSizeButtons(); renderTables(); }
+    function switchUnit(unit) { currentUnit = unit; renderTables(); }
+
+    document.querySelectorAll('#gender-buttons .btn').forEach(btn => btn.addEventListener('click', () => switchGender(btn.dataset.gender)));
+    document.querySelectorAll('#unit-buttons .btn').forEach(btn => btn.addEventListener('click', () => switchUnit(btn.dataset.unit)));
+    document.getElementById('size-system').addEventListener('change', e => { currentSystem = e.target.value; buildSizeButtons(); renderTables(); });
+    document.getElementById('sleeve-type').addEventListener('change', e => { currentSleeveType = e.target.value; renderTables(); });
+    document.getElementById('school-select').addEventListener('change', e => { currentSchool = e.target.value; renderTables(); });
+    document.getElementById('lang-select').addEventListener('change', e => { currentLang = e.target.value; updateUI(); loadEncyclopediaContent(); });
+    document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
+    
+    function init() {
+        updateUI();
+        loadEncyclopediaContent();
+        if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark');
+        document.getElementById('theme-toggle').addEventListener('click', () => { document.body.classList.toggle('dark'); localStorage.setItem('darkMode', document.body.classList.contains('dark')); });
+    }
+    init();
+</script>
+</body>
+</html>

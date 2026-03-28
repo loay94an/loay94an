@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>حاسبة المقاسات الأوروبية للملابس الجاهزة</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-dark: #1a472a;
+            --primary: #2e7d32;
+            --primary-light: #4caf50;
+            --secondary: #ff9800;
+            --secondary-dark: #f57c00;
+            --accent: #9c27b0;
+            --bg-light: #f5f5f5;
+            --bg-white: #ffffff;
+            --text-dark: #212121;
+            --text-gray: #757575;
+            --border: #e0e0e0;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8f0e8 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            direction: rtl;
+        }
+
+        /* الهيدر */
+        .header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        /* الحاوية الرئيسية */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* بطاقة الاختيار */
+        .selection-card {
+            background: var(--bg-white);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .selection-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-right: 4px solid var(--secondary);
+            padding-right: 1rem;
+        }
+
+        .selection-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group select {
+            padding: 0.8rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+
+        /* أزرار النوع */
+        .type-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .type-btn {
+            flex: 1;
+            padding: 0.8rem 1.5rem;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .type-btn:hover {
+            border-color: var(--primary);
+            background: rgba(46, 125, 50, 0.05);
+        }
+
+        .type-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* حاوية المقاسات */
+        .sizes-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 0.5rem;
+            background: var(--bg-light);
+            border-radius: var(--radius-sm);
+        }
+
+        .size-option {
+            padding: 0.5rem 1rem;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .size-option:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .size-option.selected {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* بطاقات النتائج */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .result-card {
+            background: var(--bg-white);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-header {
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card-header h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .card-content {
+            padding: 1.5rem;
+            overflow-x: auto;
+        }
+
+        /* الجداول */
+        .measurement-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .measurement-table th,
+        .measurement-table td {
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .measurement-table th {
+            background: var(--bg-light);
+            font-weight: 600;
+            color: var(--primary);
+            position: sticky;
+            top: 0;
+        }
+
+        .measurement-table tr:hover {
+            background: rgba(46, 125, 50, 0.05);
+        }
+
+        .measurement-table td:first-child,
+        .measurement-table th:first-child {
+            text-align: right;
+            font-weight: 600;
+            position: sticky;
+            right: 0;
+            background: var(--bg-white);
+        }
+
+        .measurement-table tr:hover td:first-child {
+            background: rgba(46, 125, 50, 0.05);
+        }
+
+        /* ملخص المعلومات */
+        .info-summary {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .info-summary span {
+            font-weight: bold;
+            color: var(--secondary);
+        }
+
+        /* رسالة فارغة */
+        .empty-message {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-gray);
+            background: var(--bg-white);
+            border-radius: var(--radius);
+            margin-top: 2rem;
+        }
+
+        .empty-message i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* الفوتر */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            background: var(--primary-dark);
+            color: white;
+            margin-top: 3rem;
+        }
+
+        /* تنسيق للجوال */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .measurement-table {
+                font-size: 0.8rem;
+            }
+            
+            .measurement-table th,
+            .measurement-table td {
+                padding: 0.5rem 0.3rem;
+            }
+            
+            .card-header h3 {
+                font-size: 1rem;
+            }
+            
+            .info-summary {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        /* شريط التمرير */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-light);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 3px;
+        }
+
+        /* تأثيرات إضافية */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-card {
+            animation: fadeIn 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>
+            <i class="fas fa-chart-line"></i>
+            حاسبة المقاسات الأوروبية للملابس الجاهزة
+        </h1>
+        <p>نظام متكامل لحساب المقاسات حسب المواصفات الأوروبية القياسية</p>
+    </div>
+
+    <div class="container">
+        <!-- بطاقة الاختيار -->
+        <div class="selection-card">
+            <div class="selection-title">
+                <i class="fas fa-sliders-h"></i>
+                اختيار النوع والمقاس
+            </div>
+            
+            <div class="selection-group">
+                <div class="form-group">
+                    <label><i class="fas fa-users"></i> النوع</label>
+                    <div class="type-buttons">
+                        <button class="type-btn active" data-type="women">
+                            <i class="fas fa-female"></i> نساء
+                        </button>
+                        <button class="type-btn" data-type="men">
+                            <i class="fas fa-male"></i> رجال
+                        </button>
+                        <button class="type-btn" data-type="kids">
+                            <i class="fas fa-child"></i> أطفال
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-ruler"></i> رقم المقاس</label>
+                    <div id="sizes-list" class="sizes-container">
+                        <!-- سيتم ملؤه ديناميكياً -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- معلومات مختصرة -->
+        <div id="info-summary" class="info-summary" style="display: none;">
+            <div><i class="fas fa-tag"></i> النوع: <span id="selected-type">نساء</span></div>
+            <div><i class="fas fa-ruler"></i> المقاس: <span id="selected-size">34</span></div>
+            <div><i class="fas fa-chart-simple"></i> المعيار: <span>المقاسات الأوروبية (EU)</span></div>
+        </div>
+
+        <!-- نتائج الحساب -->
+        <div id="results-container" class="results-grid">
+            <!-- سيتم ملؤه ديناميكياً -->
+        </div>
+    </div>
+
+    <div class="footer">
+        <p><i class="fas fa-copyright"></i> 2024 حاسبة المقاسات الأوروبية | نظام الباترون الأساسي</p>
+        <p style="font-size: 0.8rem; opacity: 0.8;">جميع المقاسات وفق المعايير الأوروبية القياسية (EU Standard)</p>
+    </div>
+
+    <script>
+        // قاعدة بيانات المقاسات الأوروبية للنساء (EU 34-50)
+        const womenSizes = {
+            34: { صدر: 80, خصر: 62, ورك: 86, طول_ظهر: 38, طول_ذراع: 56, عرض_كتف: 36, دوران_رقبة: 34, طول: null },
+            36: { صدر: 84, خصر: 66, ورك: 90, طول_ظهر: 39, طول_ذراع: 57, عرض_كتف: 37, دوران_رقبة: 35, طول: null },
+            38: { صدر: 88, خصر: 70, ورك: 94, طول_ظهر: 40, طول_ذراع: 58, عرض_كتف: 38, دوران_رقبة: 36, طول: null },
+            40: { صدر: 92, خصر: 74, ورك: 98, طول_ظهر: 41, طول_ذراع: 59, عرض_كتف: 39, دوران_رقبة: 37, طول: null },
+            42: { صدر: 96, خصر: 78, ورك: 102, طول_ظهر: 42, طول_ذراع: 60, عرض_كتف: 40, دوران_رقبة: 38, طول: null },
+            44: { صدر: 100, خصر: 82, ورك: 106, طول_ظهر: 43, طول_ذراع: 61, عرض_كتف: 41, دوران_رقبة: 39, طول: null },
+            46: { صدر: 104, خصر: 86, ورك: 110, طول_ظهر: 44, طول_ذراع: 62, عرض_كتف: 42, دوران_رقبة: 40, طول: null },
+            48: { صدر: 108, خصر: 90, ورك: 114, طول_ظهر: 45, طول_ذراع: 63, عرض_كتف: 43, دوران_رقبة: 41, طول: null },
+            50: { صدر: 112, خصر: 94, ورك: 118, طول_ظهر: 46, طول_ذراع: 64, عرض_كتف: 44, دوران_رقبة: 42, طول: null }
+        };
+
+        // قاعدة بيانات المقاسات الأوروبية للرجال (EU 44-60)
+        const menSizes = {
+            44: { صدر: 88, خصر: 76, ورك: 92, طول_ظهر: 43, طول_ذراع: 61, عرض_كتف: 42, دوران_رقبة: 38, طول: null },
+            46: { صدر: 92, خصر: 80, ورك: 96, طول_ظهر: 44, طول_ذراع: 62, عرض_كتف: 43, دوران_رقبة: 39, طول: null },
+            48: { صدر: 96, خصر: 84, ورك: 100, طول_ظهر: 45, طول_ذراع: 63, عرض_كتف: 44, دوران_رقبة: 40, طول: null },
+            50: { صدر: 100, خصر: 88, ورك: 104, طول_ظهر: 46, طول_ذراع: 64, عرض_كتف: 45, دوران_رقبة: 41, طول: null },
+            52: { صدر: 104, خصر: 92, ورك: 108, طول_ظهر: 47, طول_ذراع: 65, عرض_كتف: 46, دوران_رقبة: 42, طول: null },
+            54: { صدر: 108, خصر: 96, ورك: 112, طول_ظهر: 48, طول_ذراع: 66, عرض_كتف: 47, دوران_رقبة: 43, طول: null },
+            56: { صدر: 112, خصر: 100, ورك: 116, طول_ظهر: 49, طول_ذراع: 67, عرض_كتف: 48, دوران_رقبة: 44, طول: null },
+            58: { صدر: 116, خصر: 104, ورك: 120, طول_ظهر: 50, طول_ذراع: 68, عرض_كتف: 49, دوران_رقبة: 45, طول: null },
+            60: { صدر: 120, خصر: 108, ورك: 124, طول_ظهر: 51, طول_ذراع: 69, عرض_كتف: 50, دوران_رقبة: 46, طول: null }
+        };
+
+        // قاعدة بيانات المقاسات للأطفال (العمر سنة - 14 سنة، الطول 80-164)
+        const kidsSizes = {
+            80: { صدر: 52, خصر: 51, ورك: 54, طول_ظهر: 22, طول_ذراع: 28, عرض_كتف: 24, دوران_رقبة: 26, طول: 80, عمر: "1 سنة" },
+            86: { صدر: 54, خصر: 52, ورك: 56, طول_ظهر: 23, طول_ذراع: 30, عرض_كتف: 25, دوران_رقبة: 27, طول: 86, عمر: "1.5 سنة" },
+            92: { صدر: 56, خصر: 53, ورك: 58, طول_ظهر: 24, طول_ذراع: 32, عرض_كتف: 26, دوران_رقبة: 28, طول: 92, عمر: "2 سنة" },
+            98: { صدر: 58, خصر: 54, ورك: 60, طول_ظهر: 25, طول_ذراع: 34, عرض_كتف: 27, دوران_رقبة: 29, طول: 98, عمر: "3 سنة" },
+            104: { صدر: 60, خصر: 55, ورك: 62, طول_ظهر: 26, طول_ذراع: 36, عرض_كتف: 28, دوران_رقبة: 30, طول: 104, عمر: "4 سنة" },
+            110: { صدر: 62, خصر: 56, ورك: 64, طول_ظهر: 27, طول_ذراع: 38, عرض_كتف: 29, دوران_رقبة: 31, طول: 110, عمر: "5 سنة" },
+            116: { صدر: 64, خصر: 57, ورك: 66, طول_ظهر: 28, طول_ذراع: 40, عرض_كتف: 30, دوران_رقبة: 32, طول: 116, عمر: "6 سنة" },
+            122: { صدر: 66, خصر: 58, ورك: 68, طول_ظهر: 29, طول_ذراع: 42, عرض_كتف: 31, دوران_رقبة: 33, طول: 122, عمر: "7 سنة" },
+            128: { صدر: 68, خصر: 60, ورك: 70, طول_ظهر: 30, طول_ذراع: 44, عرض_كتف: 32, دوران_رقبة: 34, طول: 128, عمر: "8 سنة" },
+            134: { صدر: 70, خصر: 62, ورك: 72, طول_ظهر: 31, طول_ذراع: 46, عرض_كتف: 33, دوران_رقبة: 35, طول: 134, عمر: "9 سنة" },
+            140: { صدر: 72, خصر: 64, ورك: 74, طول_ظهر: 32, طول_ذراع: 48, عرض_كتف: 34, دوران_رقبة: 36, طول: 140, عمر: "10 سنة" },
+            146: { صدر: 76, خصر: 66, ورك: 78, طول_ظهر: 33, طول_ذراع: 50, عرض_كتف: 35, دوران_رقبة: 37, طول: 146, عمر: "11 سنة" },
+            152: { صدر: 80, خصر: 68, ورك: 82, طول_ظهر: 34, طول_ذراع: 52, عرض_كتف: 36, دوران_رقبة: 38, طول: 152, عمر: "12 سنة" },
+            158: { صدر: 84, خصر: 70, ورك: 86, طول_ظهر: 35, طول_ذراع: 54, عرض_كتف: 37, دوران_رقبة: 39, طول: 158, عمر: "13 سنة" },
+            164: { صدر: 88, خصر: 72, ورك: 90, طول_ظهر: 36, طول_ذراع: 56, عرض_كتف: 38, دوران_رقبة: 40, طول: 164, عمر: "14 سنة" }
+        };
+
+        // حالة التطبيق
+        let currentType = "women";
+        let currentSize = 34;
+
+        // دوال حساب الباترون الأساسي
+        function calculatePattern(measurements, type) {
+            const bust = measurements.صدر;
+            const waist = measurements.خصر;
+            const hip = measurements.ورك;
+            const backLength = measurements.طول_ظهر;
+            const shoulderWidth = measurements.عرض_كتف;
+            const neckCirc = measurements.دوران_رقبة;
+            const armLength = measurements.طول_ذراع || 56;
+            
+            // الحسابات الأساسية
+            const armholeHeight = (bust / 4) - 2; // ارتفاع حفرة الجيرو
+            const frontNeckDrop = neckCirc / 5; // نزول الرقبة الأمامية
+            const backNeckDrop = neckCirc / 20; // نزول الرقبة الخلفية
+            const neckWidth = (neckCirc / 5) + 1; // عرض حردة الرقبة
+            
+            const bustQuarter = bust / 4; // عرض الصدر ÷ 4
+            const waistQuarter = waist / 4; // عرض الخصر ÷ 4
+            const hipQuarter = hip / 4; // عرض الورك ÷ 4
+            
+            const hipHeight = type === "women" ? 20 : 22; // ارتفاع الورك (للنساء 20 سم، للرجال 22 سم)
+            
+            const pantsLength = type === "women" ? 102 : 108; // طول البنطلون
+            const thighCirc = bust * 0.55; // محيط الفخذ
+            const crotchHeight = type === "women" ? 28 : 30; // ارتفاع السرج
+            
+            const frontCrotchWidth = (bust / 16) + 2; // عرض خط السرج الأمامي
+            const backCrotchWidth = (bust / 12) + 3; // عرض خط السرج الخلفي
+            
+            const skirtLength = 60; // طول التنورة إلى الركبة
+            
+            const sleeveWidth = (bust / 5) + 3; // عرض الكم
+            const sleeveLength = armLength + 4; // طول الكم
+            const sleeveCapHeight = (armholeHeight * 0.8); // ارتفاع رأس الكم
+            const cuffWidth = sleeveWidth * 0.7; // عرض الأسوارة
+            
+            const shoulderSlope = 4; // ميل الكتف (سم)
+            const dartWidth = type === "women" ? 3 : 2.5; // عرض البنسة
+            
+            return {
+                "طول الظهر": backLength,
+                "عرض الكتف": shoulderWidth,
+                "عرض حردة الرقبة": neckWidth.toFixed(1),
+                "نزول الرقبة الأمامية": frontNeckDrop.toFixed(1),
+                "نزول الرقبة الخلفية": backNeckDrop.toFixed(1),
+                "ارتفاع حفرة الجيرو": armholeHeight.toFixed(1),
+                "عرض الصدر ÷ 4": bustQuarter.toFixed(1),
+                "عرض الظهر": (bustQuarter - 2).toFixed(1),
+                "عرض الخصر ÷ 4": waistQuarter.toFixed(1),
+                "عرض الورك ÷ 4": hipQuarter.toFixed(1),
+                "ارتفاع الورك": hipHeight,
+                "طول البنطلون": pantsLength,
+                "محيط الفخذ": thighCirc.toFixed(1),
+                "ارتفاع السرج": crotchHeight,
+                "عرض خط السرج الأمامي": frontCrotchWidth.toFixed(1),
+                "عرض خط السرج الخلفي": backCrotchWidth.toFixed(1),
+                "طول التنورة إلى الركبة": skirtLength,
+                "عرض الكم": sleeveWidth.toFixed(1),
+                "طول الكم": sleeveLength.toFixed(1),
+                "ارتفاع رأس الكم": sleeveCapHeight.toFixed(1),
+                "عرض الأسوارة": cuffWidth.toFixed(1),
+                "ميل الكتف": shoulderSlope,
+                "عرض البنسة": dartWidth,
+                "عمق الرقبة الخلفية": (backNeckDrop + 1).toFixed(1),
+                "بنسة الصدر (للنساء)": type === "women" ? "3 سم" : "غير مطلوب"
+            };
+        }
+
+        // عرض المقاسات حسب النوع
+        function updateSizesList() {
+            const sizesContainer = document.getElementById("sizes-list");
+            let sizes = [];
+            
+            if (currentType === "women") {
+                sizes = Object.keys(womenSizes).map(Number);
+            } else if (currentType === "men") {
+                sizes = Object.keys(menSizes).map(Number);
+            } else {
+                sizes = Object.keys(kidsSizes).map(Number);
+            }
+            
+            sizesContainer.innerHTML = sizes.map(size => `
+                <div class="size-option ${size === currentSize ? 'selected' : ''}" data-size="${size}">
+                    ${size} ${currentType === "kids" ? "سم" : ""}
+                </div>
+            `).join("");
+            
+            // إضافة مستمعات الأحداث
+            document.querySelectorAll(".size-option").forEach(option => {
+                option.addEventListener("click", () => {
+                    currentSize = parseInt(option.dataset.size);
+                    updateSizesList();
+                    updateResults();
+                });
+            });
+        }
+        
+        // تحديث النتائج
+        function updateResults() {
+            let measurements;
+            let typeName = "";
+            
+            if (currentType === "women") {
+                measurements = womenSizes[currentSize];
+                typeName = "نساء";
+            } else if (currentType === "men") {
+                measurements = menSizes[currentSize];
+                typeName = "رجال";
+            } else {
+                measurements = kidsSizes[currentSize];
+                typeName = "أطفال";
+            }
+            
+            if (!measurements) return;
+            
+            // تحديث الملخص
+            document.getElementById("info-summary").style.display = "flex";
+            document.getElementById("selected-type").textContent = typeName;
+            document.getElementById("selected-size").textContent = currentSize + (currentType === "kids" ? " سم" : "");
+            
+            // حساب جدول المقاسات التفصيلية
+            const basicMeasurements = [
+                { name: "محيط الصدر", value: measurements.صدر, unit: "سم" },
+                { name: "محيط الخصر", value: measurements.خصر, unit: "سم" },
+                { name: "محيط الورك", value: measurements.ورك, unit: "سم" },
+                { name: "الطول الكلي", value: measurements.طول || (currentType === "kids" ? "حسب العمر" : "قياسي"), unit: measurements.طول ? "سم" : "" },
+                { name: "طول الظهر", value: measurements.طول_ظهر, unit: "سم" },
+                { name: "طول الذراع", value: measurements.طول_ذراع, unit: "سم" },
+                { name: "عرض الكتف", value: measurements.عرض_كتف, unit: "سم" },
+                { name: "دوران الرقبة", value: measurements.دوران_رقبة, unit: "سم" }
+            ];
+            
+            // إضافة عمر للأطفال
+            if (currentType === "kids" && measurements.عمر) {
+                basicMeasurements.push({ name: "العمر", value: measurements.عمر, unit: "" });
+            }
+            
+            // حساب مقاسات الباترون
+            const patternMeasurements = calculatePattern(measurements, currentType);
+            
+            // إنشاء الجداول
+            const resultsContainer = document.getElementById("results-container");
+            resultsContainer.innerHTML = `
+                <div class="result-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-simple"></i>
+                        <h3>المقاسات التفصيلية الأساسية</h3>
+                    </div>
+                    <div class="card-content">
+                        <table class="measurement-table">
+                            <thead>
+                                <tr><th>القياس</th><th>القيمة</th><th>الوحدة</th></tr>
+                            </thead>
+                            <tbody>
+                                ${basicMeasurements.map(m => `
+                                    <tr><td>${m.name}</td><td><strong>${m.value}</strong></td><td>${m.unit}</td></tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="card-header">
+                        <i class="fas fa-drafting-compass"></i>
+                        <h3>جدول الباترون الأساسي للرسم</h3>
+                    </div>
+                    <div class="card-content">
+                        <table class="measurement-table">
+                            <thead>
+                                <tr><th>القياس</th><th>القيمة</th><th>ملاحظات</th></tr>
+                            </thead>
+                            <tbody>
+                                ${Object.entries(patternMeasurements).map(([key, value]) => `
+                                    <tr>
+                                        <td>${key}</td>
+                                        <td><strong>${value}</strong></td>
+                                        <td>${typeof value === 'number' ? 'سم' : ''}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // تغيير النوع
+        function changeType(type) {
+            currentType = type;
+            
+            // تحديث الأزرار
+            document.querySelectorAll(".type-btn").forEach(btn => {
+                btn.classList.remove("active");
+                if (btn.dataset.type === type) {
+                    btn.classList.add("active");
+                }
+            });
+            
+            // تعيين المقاس الافتراضي
+            if (type === "women") {
+                currentSize = 34;
+            } else if (type === "men") {
+                currentSize = 44;
+            } else {
+                currentSize = 80;
+            }
+            
+            updateSizesList();
+            updateResults();
+        }
+        
+        // تهيئة التطبيق
+        function init() {
+            // إضافة مستمعات الأحداث لأزرار النوع
+            document.querySelectorAll(".type-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    changeType(btn.dataset.type);
+                });
+            });
+            
+            // عرض المقاسات الافتراضية
+            updateSizesList();
+            updateResults();
+        }
+        
+        // بدء التطبيق
+        init();
+    </script>
+</body>
+</html>

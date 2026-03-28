@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>نظام الكورساج المتكامل - رسم البترون العلوي والسفلي والكم</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #f0f4fa; font-family: 'Cairo', sans-serif; padding: 0.8rem; color: #1e293b; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: linear-gradient(120deg, #1e2f3f, #2c4a6e); color: white; padding: 1rem; text-align: center; }
+        .header h1 { font-size: 1.4rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap; }
+        .header h1 i { font-size: 1.2rem; color: #facc15; }
+        .header p { font-size: 0.7rem; opacity: 0.85; margin-top: 0.3rem; }
+        .app-grid { display: flex; flex-direction: column; gap: 1rem; padding: 1rem; }
+        .inputs-panel, .results-panel { background: white; border-radius: 1rem; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .section-title { font-size: 1.1rem; font-weight: 700; border-right: 4px solid #c49a6c; padding-right: 0.7rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.4rem; }
+        .selector-group { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; background: transparent; padding: 0; }
+        .selector-card { flex: 1 1 auto; min-width: 110px; background: #f8fafc; border-radius: 0.8rem; padding: 0.4rem 0.6rem; border: 1px solid #e2e8f0; }
+        .selector-card .label { font-weight: 600; margin-bottom: 0.4rem; font-size: 0.7rem; display: flex; align-items: center; gap: 0.3rem; }
+        .options-container { display: flex; flex-wrap: wrap; gap: 0.3rem; max-height: 80px; overflow-y: auto; }
+        .option-btn { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 1.2rem; padding: 0.25rem 0.6rem; font-size: 0.65rem; font-weight: 500; cursor: pointer; white-space: nowrap; }
+        .option-btn.active { background: #c49a6c; border-color: #b87a4a; color: white; }
+        .measure-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.6rem; margin: 0.8rem 0 1rem; }
+        .measure-field { background: #fefefc; border-radius: 0.8rem; padding: 0.3rem 0.4rem; border: 1px solid #edf2f7; position: relative; }
+        .measure-field label { font-weight: 600; font-size: 0.7rem; color: #4b5563; display: flex; justify-content: space-between; align-items: center; }
+        .measure-field input { width: 100%; padding: 0.4rem 0.3rem; border: 1px solid #e2e8f0; border-radius: 0.6rem; font-family: monospace; font-size: 0.75rem; }
+        .help-icon { cursor: pointer; color: #c49a6c; font-size: 0.7rem; margin-right: 0.3rem; }
+        .btn-calc { background: linear-gradient(95deg, #1e2f3f, #2c4a6e); color: white; border: none; padding: 0.6rem; width: 100%; border-radius: 1rem; font-weight: 700; font-size: 0.85rem; margin-top: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
+        .badge-school { background: #eef2ff; padding: 0.2rem 0.7rem; border-radius: 1.5rem; display: inline-block; font-size: 0.7rem; font-weight: bold; margin-bottom: 0.8rem; }
+        .ease-table, .method-steps { background: #f9fafc; padding: 0.6rem; border-radius: 0.8rem; margin: 0.8rem 0; font-size: 0.75rem; }
+        table { width: 100%; font-size: 0.7rem; }
+        td { padding: 0.3rem 0.1rem; }
+        .pattern-instruction { background: #fffbee; border-radius: 0.8rem; padding: 0.8rem; border-right: 3px solid #c49a6c; font-size: 0.75rem; }
+        .pattern-instruction ul, .pattern-instruction ol { padding-right: 1rem; margin: 0.4rem 0; }
+        .pattern-instruction li { margin-bottom: 0.3rem; }
+        .calc-highlight { background: #fff0e0; padding: 0.05rem 0.2rem; border-radius: 0.2rem; font-weight: bold; }
+        .footer-note { font-size: 0.6rem; text-align: center; margin-top: 0.8rem; color: #6c7a89; }
+        .tooltip-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; visibility: hidden; opacity: 0; transition: 0.2s; }
+        .tooltip-modal.active { visibility: visible; opacity: 1; }
+        .tooltip-content { background: white; border-radius: 1rem; padding: 1rem; max-width: 90%; width: 280px; text-align: center; }
+        .tooltip-content p { font-size: 0.8rem; margin-bottom: 0.5rem; }
+        .tooltip-content button { background: #c49a6c; border: none; padding: 0.3rem 1rem; border-radius: 1.5rem; color: white; cursor: pointer; }
+        @media (min-width: 768px) {
+            .app-grid { flex-direction: row; gap: 1.5rem; }
+            .inputs-panel { flex: 1.2; }
+            .results-panel { flex: 2.2; }
+            .options-container { flex-wrap: wrap; max-height: none; overflow: visible; }
+            .option-btn { font-size: 0.7rem; padding: 0.3rem 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-cut"></i> نظام الكورساج المتكامل <i class="fas fa-tshirt"></i></h1>
+        <p>اختر النظام والجنس والمقاس والمدرسة – تعليمات رسم البترون (علوي، كم، سفلي)</p>
+    </div>
+
+    <div class="app-grid">
+        <div class="inputs-panel">
+            <div class="section-title"><i class="fas fa-sliders-h"></i> تحديد المقاسات</div>
+            <div class="selector-group">
+                <div class="selector-card"><div class="label"><i class="fas fa-globe-asia"></i> الدولة</div><div id="countryOptions" class="options-container"></div></div>
+                <div class="selector-card"><div class="label"><i class="fas fa-user-friends"></i> الجنس</div><div id="genderOptions" class="options-container"></div></div>
+                <div class="selector-card"><div class="label"><i class="fas fa-ruler-combined"></i> المقاس</div><div id="sizeOptions" class="options-container"></div></div>
+                <div class="selector-card"><div class="label"><i class="fas fa-palette"></i> المدرسة</div><div id="schoolOptions" class="options-container"></div></div>
+            </div>
+
+            <div class="section-title"><i class="fas fa-vector-square"></i> مقاسات الجسم (سم) <span style="font-size:0.7rem;">اضغط على ℹ️ للتعليمات</span></div>
+            <div class="measure-grid" id="measureGrid"></div>
+            <button id="applyBtn" class="btn-calc"><i class="fas fa-sync-alt"></i> تحديث النتائج والتعليمات</button>
+            <div class="footer-note">يمكن تعديل القياسات يدويًا ثم التحديث. جميع المصطلحات بالعربية.</div>
+        </div>
+
+        <div class="results-panel">
+            <div><div class="section-title"><i class="fas fa-school"></i> المدرسة وطريقة العمل</div><div id="schoolResult"></div></div>
+            <div><div class="section-title"><i class="fas fa-drafting-compass"></i> تعليمات رسم البترون (علوي، كم، سفلي)</div><div id="patternInstructions"></div></div>
+        </div>
+    </div>
+</div>
+
+<div id="helpModal" class="tooltip-modal">
+    <div class="tooltip-content">
+        <p id="helpText"></p>
+        <button onclick="closeHelp()">إغلاق</button>
+    </div>
+</div>
+
+<script>
+    // ======================= قاعدة بيانات المقاسات الكاملة (جميع الأنظمة) =======================
+    // تم إضافة جميع القياسات الجديدة (عرض الصدر، عرض الظهر، نقطة الصدر، طول الكم، محيط العضد، المرفق، الرسغ، طول التنورة، محيط الفخذ، الركبة، الكاحل)
+    // مع الحفاظ على البيانات الأصلية لكل نظام
+    const sizeSystems = {
+        eu: {
+            women: {
+                sizes: ["34","36","38","40","42","44","46"],
+                measurements: {
+                    "34": { chest:82, waist:64, hip:90, frontWaistLen:41, backWaistLen:39, shoulder:11.5, armholeDepth:20, neck:35, chestWidth:32, backWidth:34, bustPoint:23, sleeveLength:56, bicep:28, elbow:25, wrist:16, skirtLength:60, thigh:52, knee:36, ankle:30 },
+                    "36": { chest:86, waist:68, hip:94, frontWaistLen:41.5, backWaistLen:39.5, shoulder:12, armholeDepth:20.5, neck:36, chestWidth:33, backWidth:35, bustPoint:23.5, sleeveLength:57, bicep:29, elbow:26, wrist:16.5, skirtLength:61, thigh:54, knee:37, ankle:31 },
+                    "38": { chest:90, waist:72, hip:98, frontWaistLen:42, backWaistLen:40, shoulder:12.5, armholeDepth:21, neck:37, chestWidth:34, backWidth:36, bustPoint:24, sleeveLength:58, bicep:30, elbow:27, wrist:17, skirtLength:62, thigh:56, knee:38, ankle:32 },
+                    "40": { chest:94, waist:76, hip:102, frontWaistLen:42.5, backWaistLen:40.5, shoulder:13, armholeDepth:21.5, neck:38, chestWidth:35, backWidth:37, bustPoint:24.5, sleeveLength:59, bicep:31, elbow:28, wrist:17.5, skirtLength:63, thigh:58, knee:39, ankle:33 },
+                    "42": { chest:98, waist:80, hip:106, frontWaistLen:43, backWaistLen:41, shoulder:13.5, armholeDepth:22, neck:39, chestWidth:36, backWidth:38, bustPoint:25, sleeveLength:60, bicep:32, elbow:29, wrist:18, skirtLength:64, thigh:60, knee:40, ankle:34 },
+                    "44": { chest:102, waist:84, hip:110, frontWaistLen:43.5, backWaistLen:41.5, shoulder:14, armholeDepth:22.5, neck:40, chestWidth:37, backWidth:39, bustPoint:25.5, sleeveLength:61, bicep:33, elbow:30, wrist:18.5, skirtLength:65, thigh:62, knee:41, ankle:35 },
+                    "46": { chest:106, waist:88, hip:114, frontWaistLen:44, backWaistLen:42, shoulder:14.5, armholeDepth:23, neck:41, chestWidth:38, backWidth:40, bustPoint:26, sleeveLength:62, bicep:34, elbow:31, wrist:19, skirtLength:66, thigh:64, knee:42, ankle:36 }
+                }
+            },
+            men: {
+                sizes: ["46","48","50","52","54","56"],
+                measurements: {
+                    "46": { chest:92, waist:80, hip:96, frontWaistLen:44, backWaistLen:43, shoulder:13, armholeDepth:23, neck:39, chestWidth:36, backWidth:38, bustPoint:26, sleeveLength:62, bicep:32, elbow:28, wrist:18, skirtLength:68, thigh:54, knee:40, ankle:34 },
+                    "48": { chest:96, waist:84, hip:100, frontWaistLen:44.5, backWaistLen:43.5, shoulder:13.5, armholeDepth:23.5, neck:40, chestWidth:37, backWidth:39, bustPoint:26.5, sleeveLength:63, bicep:33, elbow:29, wrist:18.5, skirtLength:69, thigh:56, knee:41, ankle:35 },
+                    "50": { chest:100, waist:88, hip:104, frontWaistLen:45, backWaistLen:44, shoulder:14, armholeDepth:24, neck:41, chestWidth:38, backWidth:40, bustPoint:27, sleeveLength:64, bicep:34, elbow:30, wrist:19, skirtLength:70, thigh:58, knee:42, ankle:36 },
+                    "52": { chest:104, waist:92, hip:108, frontWaistLen:45.5, backWaistLen:44.5, shoulder:14.5, armholeDepth:24.5, neck:42, chestWidth:39, backWidth:41, bustPoint:27.5, sleeveLength:65, bicep:35, elbow:31, wrist:19.5, skirtLength:71, thigh:60, knee:43, ankle:37 },
+                    "54": { chest:108, waist:96, hip:112, frontWaistLen:46, backWaistLen:45, shoulder:15, armholeDepth:25, neck:43, chestWidth:40, backWidth:42, bustPoint:28, sleeveLength:66, bicep:36, elbow:32, wrist:20, skirtLength:72, thigh:62, knee:44, ankle:38 },
+                    "56": { chest:112, waist:100, hip:116, frontWaistLen:46.5, backWaistLen:45.5, shoulder:15.5, armholeDepth:25.5, neck:44, chestWidth:41, backWidth:43, bustPoint:28.5, sleeveLength:67, bicep:37, elbow:33, wrist:20.5, skirtLength:73, thigh:64, knee:45, ankle:39 }
+                }
+            },
+            kids: {
+                sizes: ["4-5ans","6-7ans","8-9ans","10-11ans","12-13ans"],
+                measurements: {
+                    "4-5ans": { chest:56, waist:54, hip:62, frontWaistLen:30, backWaistLen:29, shoulder:8, armholeDepth:14, neck:28, chestWidth:22, backWidth:24, bustPoint:16, sleeveLength:38, bicep:20, elbow:18, wrist:13, skirtLength:40, thigh:38, knee:26, ankle:22 },
+                    "6-7ans": { chest:62, waist:58, hip:68, frontWaistLen:33, backWaistLen:32, shoulder:9, armholeDepth:15.5, neck:30, chestWidth:24, backWidth:26, bustPoint:18, sleeveLength:42, bicep:22, elbow:19, wrist:14, skirtLength:45, thigh:42, knee:28, ankle:24 },
+                    "8-9ans": { chest:68, waist:62, hip:74, frontWaistLen:36, backWaistLen:35, shoulder:10, armholeDepth:17, neck:32, chestWidth:26, backWidth:28, bustPoint:20, sleeveLength:46, bicep:24, elbow:20, wrist:15, skirtLength:50, thigh:46, knee:30, ankle:26 },
+                    "10-11ans": { chest:74, waist:66, hip:80, frontWaistLen:39, backWaistLen:38, shoulder:11, armholeDepth:18.5, neck:34, chestWidth:28, backWidth:30, bustPoint:22, sleeveLength:50, bicep:26, elbow:22, wrist:16, skirtLength:55, thigh:50, knee:32, ankle:28 },
+                    "12-13ans": { chest:80, waist:70, hip:86, frontWaistLen:41, backWaistLen:40, shoulder:12, armholeDepth:20, neck:36, chestWidth:30, backWidth:32, bustPoint:24, sleeveLength:54, bicep:28, elbow:24, wrist:17, skirtLength:60, thigh:54, knee:34, ankle:30 }
+                }
+            }
+        },
+        us: {
+            women: { sizes: ["2","4","6","8","10","12","14"], measurements: {
+                "2": { chest:82, waist:64, hip:90, frontWaistLen:41, backWaistLen:39, shoulder:11.5, armholeDepth:20, neck:35, chestWidth:32, backWidth:34, bustPoint:23, sleeveLength:56, bicep:28, elbow:25, wrist:16, skirtLength:60, thigh:52, knee:36, ankle:30 },
+                "4": { chest:86, waist:68, hip:94, frontWaistLen:41.5, backWaistLen:39.5, shoulder:12, armholeDepth:20.5, neck:36, chestWidth:33, backWidth:35, bustPoint:23.5, sleeveLength:57, bicep:29, elbow:26, wrist:16.5, skirtLength:61, thigh:54, knee:37, ankle:31 },
+                "6": { chest:90, waist:72, hip:98, frontWaistLen:42, backWaistLen:40, shoulder:12.5, armholeDepth:21, neck:37, chestWidth:34, backWidth:36, bustPoint:24, sleeveLength:58, bicep:30, elbow:27, wrist:17, skirtLength:62, thigh:56, knee:38, ankle:32 },
+                "8": { chest:94, waist:76, hip:102, frontWaistLen:42.5, backWaistLen:40.5, shoulder:13, armholeDepth:21.5, neck:38, chestWidth:35, backWidth:37, bustPoint:24.5, sleeveLength:59, bicep:31, elbow:28, wrist:17.5, skirtLength:63, thigh:58, knee:39, ankle:33 },
+                "10": { chest:98, waist:80, hip:106, frontWaistLen:43, backWaistLen:41, shoulder:13.5, armholeDepth:22, neck:39, chestWidth:36, backWidth:38, bustPoint:25, sleeveLength:60, bicep:32, elbow:29, wrist:18, skirtLength:64, thigh:60, knee:40, ankle:34 },
+                "12": { chest:102, waist:84, hip:110, frontWaistLen:43.5, backWaistLen:41.5, shoulder:14, armholeDepth:22.5, neck:40, chestWidth:37, backWidth:39, bustPoint:25.5, sleeveLength:61, bicep:33, elbow:30, wrist:18.5, skirtLength:65, thigh:62, knee:41, ankle:35 },
+                "14": { chest:106, waist:88, hip:114, frontWaistLen:44, backWaistLen:42, shoulder:14.5, armholeDepth:23, neck:41, chestWidth:38, backWidth:40, bustPoint:26, sleeveLength:62, bicep:34, elbow:31, wrist:19, skirtLength:66, thigh:64, knee:42, ankle:36 }
+            }},
+            men: { sizes: ["XS","S","M","L","XL","XXL"], measurements: {
+                "XS": { chest:88, waist:76, hip:92, frontWaistLen:43, backWaistLen:42, shoulder:12.5, armholeDepth:22.5, neck:38, chestWidth:34, backWidth:36, bustPoint:24.5, sleeveLength:60, bicep:30, elbow:27, wrist:17, skirtLength:65, thigh:52, knee:38, ankle:32 },
+                "S": { chest:92, waist:80, hip:96, frontWaistLen:44, backWaistLen:43, shoulder:13, armholeDepth:23, neck:39, chestWidth:35, backWidth:37, bustPoint:25, sleeveLength:61, bicep:31, elbow:28, wrist:17.5, skirtLength:66, thigh:54, knee:39, ankle:33 },
+                "M": { chest:98, waist:86, hip:102, frontWaistLen:45, backWaistLen:44, shoulder:14, armholeDepth:24, neck:40, chestWidth:36, backWidth:38, bustPoint:25.5, sleeveLength:62, bicep:32, elbow:29, wrist:18, skirtLength:67, thigh:56, knee:40, ankle:34 },
+                "L": { chest:104, waist:92, hip:108, frontWaistLen:46, backWaistLen:45, shoulder:15, armholeDepth:25, neck:41, chestWidth:37, backWidth:39, bustPoint:26, sleeveLength:63, bicep:33, elbow:30, wrist:18.5, skirtLength:68, thigh:58, knee:41, ankle:35 },
+                "XL": { chest:110, waist:98, hip:114, frontWaistLen:47, backWaistLen:46, shoulder:16, armholeDepth:26, neck:42, chestWidth:38, backWidth:40, bustPoint:26.5, sleeveLength:64, bicep:34, elbow:31, wrist:19, skirtLength:69, thigh:60, knee:42, ankle:36 },
+                "XXL": { chest:116, waist:104, hip:120, frontWaistLen:48, backWaistLen:47, shoulder:17, armholeDepth:27, neck:43, chestWidth:39, backWidth:41, bustPoint:27, sleeveLength:65, bicep:35, elbow:32, wrist:19.5, skirtLength:70, thigh:62, knee:43, ankle:37 }
+            }},
+            kids: { sizes: ["4","5","6","7","8","10","12"], measurements: {
+                "4": { chest:56, waist:54, hip:62, frontWaistLen:30, backWaistLen:29, shoulder:8, armholeDepth:14, neck:28, chestWidth:22, backWidth:24, bustPoint:16, sleeveLength:38, bicep:20, elbow:18, wrist:13, skirtLength:40, thigh:38, knee:26, ankle:22 },
+                "5": { chest:58, waist:56, hip:64, frontWaistLen:31, backWaistLen:30, shoulder:8.5, armholeDepth:14.5, neck:29, chestWidth:23, backWidth:25, bustPoint:17, sleeveLength:40, bicep:21, elbow:18.5, wrist:13.5, skirtLength:42, thigh:40, knee:27, ankle:23 },
+                "6": { chest:62, waist:58, hip:68, frontWaistLen:33, backWaistLen:32, shoulder:9, armholeDepth:15.5, neck:30, chestWidth:24, backWidth:26, bustPoint:18, sleeveLength:42, bicep:22, elbow:19, wrist:14, skirtLength:45, thigh:42, knee:28, ankle:24 },
+                "7": { chest:65, waist:60, hip:71, frontWaistLen:34.5, backWaistLen:33.5, shoulder:9.5, armholeDepth:16.2, neck:31, chestWidth:25, backWidth:27, bustPoint:19, sleeveLength:44, bicep:23, elbow:19.5, wrist:14.5, skirtLength:48, thigh:44, knee:29, ankle:25 },
+                "8": { chest:68, waist:62, hip:74, frontWaistLen:36, backWaistLen:35, shoulder:10, armholeDepth:17, neck:32, chestWidth:26, backWidth:28, bustPoint:20, sleeveLength:46, bicep:24, elbow:20, wrist:15, skirtLength:50, thigh:46, knee:30, ankle:26 },
+                "10": { chest:74, waist:66, hip:80, frontWaistLen:39, backWaistLen:38, shoulder:11, armholeDepth:18.5, neck:34, chestWidth:28, backWidth:30, bustPoint:22, sleeveLength:50, bicep:26, elbow:22, wrist:16, skirtLength:55, thigh:50, knee:32, ankle:28 },
+                "12": { chest:80, waist:70, hip:86, frontWaistLen:41, backWaistLen:40, shoulder:12, armholeDepth:20, neck:36, chestWidth:30, backWidth:32, bustPoint:24, sleeveLength:54, bicep:28, elbow:24, wrist:17, skirtLength:60, thigh:54, knee:34, ankle:30 }
+            }}
+        },
+        uk: {
+            women: { sizes: ["6","8","10","12","14","16","18"], measurements: {
+                "6": { chest:82, waist:64, hip:90, frontWaistLen:41, backWaistLen:39, shoulder:11.5, armholeDepth:20, neck:35, chestWidth:32, backWidth:34, bustPoint:23, sleeveLength:56, bicep:28, elbow:25, wrist:16, skirtLength:60, thigh:52, knee:36, ankle:30 },
+                "8": { chest:86, waist:68, hip:94, frontWaistLen:41.5, backWaistLen:39.5, shoulder:12, armholeDepth:20.5, neck:36, chestWidth:33, backWidth:35, bustPoint:23.5, sleeveLength:57, bicep:29, elbow:26, wrist:16.5, skirtLength:61, thigh:54, knee:37, ankle:31 },
+                "10": { chest:90, waist:72, hip:98, frontWaistLen:42, backWaistLen:40, shoulder:12.5, armholeDepth:21, neck:37, chestWidth:34, backWidth:36, bustPoint:24, sleeveLength:58, bicep:30, elbow:27, wrist:17, skirtLength:62, thigh:56, knee:38, ankle:32 },
+                "12": { chest:94, waist:76, hip:102, frontWaistLen:42.5, backWaistLen:40.5, shoulder:13, armholeDepth:21.5, neck:38, chestWidth:35, backWidth:37, bustPoint:24.5, sleeveLength:59, bicep:31, elbow:28, wrist:17.5, skirtLength:63, thigh:58, knee:39, ankle:33 },
+                "14": { chest:98, waist:80, hip:106, frontWaistLen:43, backWaistLen:41, shoulder:13.5, armholeDepth:22, neck:39, chestWidth:36, backWidth:38, bustPoint:25, sleeveLength:60, bicep:32, elbow:29, wrist:18, skirtLength:64, thigh:60, knee:40, ankle:34 },
+                "16": { chest:102, waist:84, hip:110, frontWaistLen:43.5, backWaistLen:41.5, shoulder:14, armholeDepth:22.5, neck:40, chestWidth:37, backWidth:39, bustPoint:25.5, sleeveLength:61, bicep:33, elbow:30, wrist:18.5, skirtLength:65, thigh:62, knee:41, ankle:35 },
+                "18": { chest:106, waist:88, hip:114, frontWaistLen:44, backWaistLen:42, shoulder:14.5, armholeDepth:23, neck:41, chestWidth:38, backWidth:40, bustPoint:26, sleeveLength:62, bicep:34, elbow:31, wrist:19, skirtLength:66, thigh:64, knee:42, ankle:36 }
+            }},
+            men: { sizes: ["XS","S","M","L","XL","XXL"], measurements: {
+                "XS": { chest:88, waist:76, hip:92, frontWaistLen:43, backWaistLen:42, shoulder:12.5, armholeDepth:22.5, neck:38, chestWidth:34, backWidth:36, bustPoint:24.5, sleeveLength:60, bicep:30, elbow:27, wrist:17, skirtLength:65, thigh:52, knee:38, ankle:32 },
+                "S": { chest:92, waist:80, hip:96, frontWaistLen:44, backWaistLen:43, shoulder:13, armholeDepth:23, neck:39, chestWidth:35, backWidth:37, bustPoint:25, sleeveLength:61, bicep:31, elbow:28, wrist:17.5, skirtLength:66, thigh:54, knee:39, ankle:33 },
+                "M": { chest:98, waist:86, hip:102, frontWaistLen:45, backWaistLen:44, shoulder:14, armholeDepth:24, neck:40, chestWidth:36, backWidth:38, bustPoint:25.5, sleeveLength:62, bicep:32, elbow:29, wrist:18, skirtLength:67, thigh:56, knee:40, ankle:34 },
+                "L": { chest:104, waist:92, hip:108, frontWaistLen:46, backWaistLen:45, shoulder:15, armholeDepth:25, neck:41, chestWidth:37, backWidth:39, bustPoint:26, sleeveLength:63, bicep:33, elbow:30, wrist:18.5, skirtLength:68, thigh:58, knee:41, ankle:35 },
+                "XL": { chest:110, waist:98, hip:114, frontWaistLen:47, backWaistLen:46, shoulder:16, armholeDepth:26, neck:42, chestWidth:38, backWidth:40, bustPoint:26.5, sleeveLength:64, bicep:34, elbow:31, wrist:19, skirtLength:69, thigh:60, knee:42, ankle:36 },
+                "XXL": { chest:116, waist:104, hip:120, frontWaistLen:48, backWaistLen:47, shoulder:17, armholeDepth:27, neck:43, chestWidth:39, backWidth:41, bustPoint:27, sleeveLength:65, bicep:35, elbow:32, wrist:19.5, skirtLength:70, thigh:62, knee:43, ankle:37 }
+            }},
+            kids: { sizes: ["4-5ans","6-7ans","8-9ans","10-11ans","12-13ans"], measurements: {
+                "4-5ans": { chest:56, waist:54, hip:62, frontWaistLen:30, backWaistLen:29, shoulder:8, armholeDepth:14, neck:28, chestWidth:22, backWidth:24, bustPoint:16, sleeveLength:38, bicep:20, elbow:18, wrist:13, skirtLength:40, thigh:38, knee:26, ankle:22 },
+                "6-7ans": { chest:62, waist:58, hip:68, frontWaistLen:33, backWaistLen:32, shoulder:9, armholeDepth:15.5, neck:30, chestWidth:24, backWidth:26, bustPoint:18, sleeveLength:42, bicep:22, elbow:19, wrist:14, skirtLength:45, thigh:42, knee:28, ankle:24 },
+                "8-9ans": { chest:68, waist:62, hip:74, frontWaistLen:36, backWaistLen:35, shoulder:10, armholeDepth:17, neck:32, chestWidth:26, backWidth:28, bustPoint:20, sleeveLength:46, bicep:24, elbow:20, wrist:15, skirtLength:50, thigh:46, knee:30, ankle:26 },
+                "10-11ans": { chest:74, waist:66, hip:80, frontWaistLen:39, backWaistLen:38, shoulder:11, armholeDepth:18.5, neck:34, chestWidth:28, backWidth:30, bustPoint:22, sleeveLength:50, bicep:26, elbow:22, wrist:16, skirtLength:55, thigh:50, knee:32, ankle:28 },
+                "12-13ans": { chest:80, waist:70, hip:86, frontWaistLen:41, backWaistLen:40, shoulder:12, armholeDepth:20, neck:36, chestWidth:30, backWidth:32, bustPoint:24, sleeveLength:54, bicep:28, elbow:24, wrist:17, skirtLength:60, thigh:54, knee:34, ankle:30 }
+            }}
+        },
+        jp: {
+            women: { sizes: ["5","7","9","11","13","15","17"], measurements: {
+                "5": { chest:80, waist:62, hip:88, frontWaistLen:40.5, backWaistLen:38.5, shoulder:11, armholeDepth:19.5, neck:34, chestWidth:31, backWidth:33, bustPoint:22, sleeveLength:55, bicep:27, elbow:24, wrist:15.5, skirtLength:59, thigh:50, knee:35, ankle:29 },
+                "7": { chest:84, waist:66, hip:92, frontWaistLen:41, backWaistLen:39, shoulder:11.5, armholeDepth:20, neck:35, chestWidth:32, backWidth:34, bustPoint:22.5, sleeveLength:56, bicep:28, elbow:25, wrist:16, skirtLength:60, thigh:52, knee:36, ankle:30 },
+                "9": { chest:88, waist:70, hip:96, frontWaistLen:41.5, backWaistLen:39.5, shoulder:12, armholeDepth:20.5, neck:36, chestWidth:33, backWidth:35, bustPoint:23, sleeveLength:57, bicep:29, elbow:26, wrist:16.5, skirtLength:61, thigh:54, knee:37, ankle:31 },
+                "11": { chest:92, waist:74, hip:100, frontWaistLen:42, backWaistLen:40, shoulder:12.5, armholeDepth:21, neck:37, chestWidth:34, backWidth:36, bustPoint:23.5, sleeveLength:58, bicep:30, elbow:27, wrist:17, skirtLength:62, thigh:56, knee:38, ankle:32 },
+                "13": { chest:96, waist:78, hip:104, frontWaistLen:42.5, backWaistLen:40.5, shoulder:13, armholeDepth:21.5, neck:38, chestWidth:35, backWidth:37, bustPoint:24, sleeveLength:59, bicep:31, elbow:28, wrist:17.5, skirtLength:63, thigh:58, knee:39, ankle:33 },
+                "15": { chest:100, waist:82, hip:108, frontWaistLen:43, backWaistLen:41, shoulder:13.5, armholeDepth:22, neck:39, chestWidth:36, backWidth:38, bustPoint:24.5, sleeveLength:60, bicep:32, elbow:29, wrist:18, skirtLength:64, thigh:60, knee:40, ankle:34 },
+                "17": { chest:104, waist:86, hip:112, frontWaistLen:43.5, backWaistLen:41.5, shoulder:14, armholeDepth:22.5, neck:40, chestWidth:37, backWidth:39, bustPoint:25, sleeveLength:61, bicep:33, elbow:30, wrist:18.5, skirtLength:65, thigh:62, knee:41, ankle:35 }
+            }},
+            men: { sizes: ["S","M","L","XL","XXL"], measurements: {
+                "S": { chest:90, waist:78, hip:94, frontWaistLen:43.5, backWaistLen:42.5, shoulder:12.8, armholeDepth:22.8, neck:38.5, chestWidth:34.5, backWidth:36.5, bustPoint:24, sleeveLength:61, bicep:30.5, elbow:27.5, wrist:17.5, skirtLength:66, thigh:53, knee:38.5, ankle:32.5 },
+                "M": { chest:96, waist:84, hip:100, frontWaistLen:44.5, backWaistLen:43.5, shoulder:13.5, armholeDepth:23.5, neck:39.5, chestWidth:35.5, backWidth:37.5, bustPoint:25, sleeveLength:62, bicep:31.5, elbow:28.5, wrist:18, skirtLength:67, thigh:55, knee:39.5, ankle:33.5 },
+                "L": { chest:102, waist:90, hip:106, frontWaistLen:45.5, backWaistLen:44.5, shoulder:14.2, armholeDepth:24.2, neck:40.5, chestWidth:36.5, backWidth:38.5, bustPoint:26, sleeveLength:63, bicep:32.5, elbow:29.5, wrist:18.5, skirtLength:68, thigh:57, knee:40.5, ankle:34.5 },
+                "XL": { chest:108, waist:96, hip:112, frontWaistLen:46.5, backWaistLen:45.5, shoulder:15, armholeDepth:25, neck:41.5, chestWidth:37.5, backWidth:39.5, bustPoint:27, sleeveLength:64, bicep:33.5, elbow:30.5, wrist:19, skirtLength:69, thigh:59, knee:41.5, ankle:35.5 },
+                "XXL": { chest:114, waist:102, hip:118, frontWaistLen:47.5, backWaistLen:46.5, shoulder:15.8, armholeDepth:25.8, neck:42.5, chestWidth:38.5, backWidth:40.5, bustPoint:28, sleeveLength:65, bicep:34.5, elbow:31.5, wrist:19.5, skirtLength:70, thigh:61, knee:42.5, ankle:36.5 }
+            }},
+            kids: { sizes: ["100","110","120","130","140","150"], measurements: {
+                "100": { chest:54, waist:52, hip:60, frontWaistLen:29, backWaistLen:28, shoulder:7.5, armholeDepth:13.5, neck:27, chestWidth:21, backWidth:23, bustPoint:15, sleeveLength:36, bicep:19, elbow:17, wrist:12.5, skirtLength:38, thigh:36, knee:25, ankle:21 },
+                "110": { chest:58, waist:55, hip:64, frontWaistLen:31, backWaistLen:30, shoulder:8.2, armholeDepth:14.2, neck:28.5, chestWidth:22.5, backWidth:24.5, bustPoint:16, sleeveLength:40, bicep:20.5, elbow:18, wrist:13, skirtLength:42, thigh:39, knee:27, ankle:22.5 },
+                "120": { chest:64, waist:60, hip:70, frontWaistLen:34, backWaistLen:33, shoulder:9, armholeDepth:15.5, neck:30, chestWidth:24, backWidth:26, bustPoint:17.5, sleeveLength:44, bicep:22, elbow:19, wrist:14, skirtLength:46, thigh:42, knee:28.5, ankle:24 },
+                "130": { chest:70, waist:64, hip:76, frontWaistLen:37, backWaistLen:36, shoulder:10, armholeDepth:17, neck:32, chestWidth:26, backWidth:28, bustPoint:19, sleeveLength:48, bicep:24, elbow:20, wrist:15, skirtLength:50, thigh:46, knee:30, ankle:26 },
+                "140": { chest:76, waist:68, hip:82, frontWaistLen:40, backWaistLen:39, shoulder:11, armholeDepth:18.5, neck:34, chestWidth:28, backWidth:30, bustPoint:21, sleeveLength:52, bicep:26, elbow:22, wrist:16, skirtLength:55, thigh:50, knee:32, ankle:28 },
+                "150": { chest:82, waist:72, hip:88, frontWaistLen:42, backWaistLen:41, shoulder:12, armholeDepth:20, neck:36, chestWidth:30, backWidth:32, bustPoint:23, sleeveLength:56, bicep:28, elbow:24, wrist:17, skirtLength:60, thigh:54, knee:34, ankle:30 }
+            }}
+        },
+        ar: {
+            women: { sizes: ["XS (34)","S (36)","M (38)","L (40)","XL (42)","XXL (44)","3XL (46)"], measurements: {
+                "XS (34)": { chest:82, waist:64, hip:90, frontWaistLen:41, backWaistLen:39, shoulder:11.5, armholeDepth:20, neck:35, chestWidth:32, backWidth:34, bustPoint:23, sleeveLength:56, bicep:28, elbow:25, wrist:16, skirtLength:60, thigh:52, knee:36, ankle:30 },
+                "S (36)": { chest:86, waist:68, hip:94, frontWaistLen:41.5, backWaistLen:39.5, shoulder:12, armholeDepth:20.5, neck:36, chestWidth:33, backWidth:35, bustPoint:23.5, sleeveLength:57, bicep:29, elbow:26, wrist:16.5, skirtLength:61, thigh:54, knee:37, ankle:31 },
+                "M (38)": { chest:90, waist:72, hip:98, frontWaistLen:42, backWaistLen:40, shoulder:12.5, armholeDepth:21, neck:37, chestWidth:34, backWidth:36, bustPoint:24, sleeveLength:58, bicep:30, elbow:27, wrist:17, skirtLength:62, thigh:56, knee:38, ankle:32 },
+                "L (40)": { chest:94, waist:76, hip:102, frontWaistLen:42.5, backWaistLen:40.5, shoulder:13, armholeDepth:21.5, neck:38, chestWidth:35, backWidth:37, bustPoint:24.5, sleeveLength:59, bicep:31, elbow:28, wrist:17.5, skirtLength:63, thigh:58, knee:39, ankle:33 },
+                "XL (42)": { chest:98, waist:80, hip:106, frontWaistLen:43, backWaistLen:41, shoulder:13.5, armholeDepth:22, neck:39, chestWidth:36, backWidth:38, bustPoint:25, sleeveLength:60, bicep:32, elbow:29, wrist:18, skirtLength:64, thigh:60, knee:40, ankle:34 },
+                "XXL (44)": { chest:102, waist:84, hip:110, frontWaistLen:43.5, backWaistLen:41.5, shoulder:14, armholeDepth:22.5, neck:40, chestWidth:37, backWidth:39, bustPoint:25.5, sleeveLength:61, bicep:33, elbow:30, wrist:18.5, skirtLength:65, thigh:62, knee:41, ankle:35 },
+                "3XL (46)": { chest:106, waist:88, hip:114, frontWaistLen:44, backWaistLen:42, shoulder:14.5, armholeDepth:23, neck:41, chestWidth:38, backWidth:40, bustPoint:26, sleeveLength:62, bicep:34, elbow:31, wrist:19, skirtLength:66, thigh:64, knee:42, ankle:36 }
+            }},
+            men: { sizes: ["XS (46)","S (48)","M (50)","L (52)","XL (54)","XXL (56)"], measurements: {
+                "XS (46)": { chest:92, waist:80, hip:96, frontWaistLen:44, backWaistLen:43, shoulder:13, armholeDepth:23, neck:39, chestWidth:35, backWidth:37, bustPoint:25, sleeveLength:61, bicep:31, elbow:28, wrist:17.5, skirtLength:66, thigh:54, knee:39, ankle:33 },
+                "S (48)": { chest:96, waist:84, hip:100, frontWaistLen:44.5, backWaistLen:43.5, shoulder:13.5, armholeDepth:23.5, neck:40, chestWidth:36, backWidth:38, bustPoint:25.5, sleeveLength:62, bicep:32, elbow:29, wrist:18, skirtLength:67, thigh:56, knee:40, ankle:34 },
+                "M (50)": { chest:100, waist:88, hip:104, frontWaistLen:45, backWaistLen:44, shoulder:14, armholeDepth:24, neck:41, chestWidth:37, backWidth:39, bustPoint:26, sleeveLength:63, bicep:33, elbow:30, wrist:18.5, skirtLength:68, thigh:58, knee:41, ankle:35 },
+                "L (52)": { chest:104, waist:92, hip:108, frontWaistLen:45.5, backWaistLen:44.5, shoulder:14.5, armholeDepth:24.5, neck:42, chestWidth:38, backWidth:40, bustPoint:26.5, sleeveLength:64, bicep:34, elbow:31, wrist:19, skirtLength:69, thigh:60, knee:42, ankle:36 },
+                "XL (54)": { chest:108, waist:96, hip:112, frontWaistLen:46, backWaistLen:45, shoulder:15, armholeDepth:25, neck:43, chestWidth:39, backWidth:41, bustPoint:27, sleeveLength:65, bicep:35, elbow:32, wrist:19.5, skirtLength:70, thigh:62, knee:43, ankle:37 },
+                "XXL (56)": { chest:112, waist:100, hip:116, frontWaistLen:46.5, backWaistLen:45.5, shoulder:15.5, armholeDepth:25.5, neck:44, chestWidth:40, backWidth:42, bustPoint:27.5, sleeveLength:66, bicep:36, elbow:33, wrist:20, skirtLength:71, thigh:64, knee:44, ankle:38 }
+            }},
+            kids: { sizes: ["صغير (4-5)","وسط (6-7)","كبير (8-9)","أكبر (10-11)","كبير جداً (12-13)"], measurements: {
+                "صغير (4-5)": { chest:56, waist:54, hip:62, frontWaistLen:30, backWaistLen:29, shoulder:8, armholeDepth:14, neck:28, chestWidth:22, backWidth:24, bustPoint:16, sleeveLength:38, bicep:20, elbow:18, wrist:13, skirtLength:40, thigh:38, knee:26, ankle:22 },
+                "وسط (6-7)": { chest:62, waist:58, hip:68, frontWaistLen:33, backWaistLen:32, shoulder:9, armholeDepth:15.5, neck:30, chestWidth:24, backWidth:26, bustPoint:18, sleeveLength:42, bicep:22, elbow:19, wrist:14, skirtLength:45, thigh:42, knee:28, ankle:24 },
+                "كبير (8-9)": { chest:68, waist:62, hip:74, frontWaistLen:36, backWaistLen:35, shoulder:10, armholeDepth:17, neck:32, chestWidth:26, backWidth:28, bustPoint:20, sleeveLength:46, bicep:24, elbow:20, wrist:15, skirtLength:50, thigh:46, knee:30, ankle:26 },
+                "أكبر (10-11)": { chest:74, waist:66, hip:80, frontWaistLen:39, backWaistLen:38, shoulder:11, armholeDepth:18.5, neck:34, chestWidth:28, backWidth:30, bustPoint:22, sleeveLength:50, bicep:26, elbow:22, wrist:16, skirtLength:55, thigh:50, knee:32, ankle:28 },
+                "كبير جداً (12-13)": { chest:80, waist:70, hip:86, frontWaistLen:41, backWaistLen:40, shoulder:12, armholeDepth:20, neck:36, chestWidth:30, backWidth:32, bustPoint:24, sleeveLength:54, bicep:28, elbow:24, wrist:17, skirtLength:60, thigh:54, knee:34, ankle:30 }
+            }}
+        }
+    };
+
+    // المدارس (بالمصطلحات العربية)
+    const schoolsList = [
+        { id: "french", name: "🇫🇷 الفرنسية (مولاج)" },
+        { id: "italian", name: "🇮🇹 الإيطالية (هندسية)" },
+        { id: "american", name: "🇺🇸 الأمريكية (جاهزة)" },
+        { id: "german", name: "🇩🇪 الألمانية (مولر)" },
+        { id: "japanese", name: "🇯🇵 اليابانية (باترون سحري)" },
+        { id: "british", name: "🇬🇧 البريطانية (سافيل رو)" }
+    ];
+
+    const schoolsData = {
+        french: { name: "الفرنسية (مولاج)", easeChest: { min:2, max:4, desc:"ضيق 2-4 سم" }, easeWaist:{ min:0, max:2, desc:"0-2 سم" }, philosophy:"دقة تشريحية، تشكيل على المانيكان", steps: ["تثبيت أشرطة","تشكيل بانة الصدر","تفريغ الباترون","تركيب متعدد"] },
+        italian: { name: "الإيطالية (هندسية)", easeChest: { min:5, max:7, desc:"5-7 سم" }, easeWaist:{ min:4, max:6, desc:"4-6 سم" }, philosophy:"قص معماري، بلوكات دقيقة", steps: ["بناء البلوك","إضافة بانات","تعديل","تشطيبات"] },
+        american: { name: "الأمريكية (جاهزة)", easeChest: { min:8, max:12, desc:"8-12 سم" }, easeWaist:{ min:6, max:10, desc:"6-10 سم" }, philosophy:"إنتاج ضخم، مقاسات موحدة", steps: ["اختيار البلوك","تعديل بانات","قص آلي","تشطيب"] },
+        german: { name: "الألمانية (مولر)", easeChest: { min:6, max:8, desc:"6-8 سم" }, easeWaist:{ min:4, max:5, desc:"4-5 سم" }, philosophy:"معادلات رياضية", steps: ["حساب عرض","تحديد عمق الإبط","توزيع البانات","رسم باترون"] },
+        japanese: { name: "اليابانية (باترون سحري)", easeChest: { min:12, max:20, desc:"12-20+ سم" }, easeWaist:{ min:8, max:15, desc:"8-15 سم" }, philosophy:"تحوير ثلاثي الأبعاد", steps: ["تحوير الباترون","فتحات واستدارة","استخدام المانيكان","تفريغ معقد"] },
+        british: { name: "البريطانية (سافيل رو)", easeChest: { min:4, max:6, desc:"4-6 سم" }, easeWaist:{ min:2, max:4, desc:"2-4 سم" }, philosophy:"هيكلية يدوية", steps: ["أخذ قياسات","بناء كانفاس","تركيب أولي","تشطيب يدوي"] }
+    };
+
+    // قائمة المقاسات الموسعة مع الشرح
+    const measureFields = [
+        { id: "chest", label: "محيط الصدر", key: "chest", help: "يقاس حول أوسع جزء من الصدر، مع إبقاء شريط القياس أفقيًا." },
+        { id: "chestWidth", label: "عرض الصدر", key: "chestWidth", help: "يقاس أفقياً بين الإبطين من الأمام." },
+        { id: "backWidth", label: "عرض الظهر", key: "backWidth", help: "يقاس أفقياً بين الإبطين من الخلف." },
+        { id: "bustPoint", label: "نقطة الصدر", key: "bustPoint", help: "المسافة من عظمة الترقوة إلى أعلى نقطة في الصدر." },
+        { id: "waist", label: "محيط الخصر", key: "waist", help: "يقاس حول أضيق جزء من الخصر." },
+        { id: "hip", label: "محيط الورك", key: "hip", help: "يقاس حول أوسع جزء من الأرداف." },
+        { id: "frontWaistLen", label: "طول الجذع الأمامي", key: "frontWaistLen", help: "من عظمة الترقوة إلى الخصر من الأمام." },
+        { id: "backWaistLen", label: "طول الجذع الخلفي", key: "backWaistLen", help: "من فقرة الرقبة السابعة إلى الخصر من الخلف." },
+        { id: "shoulder", label: "عرض الكتف", key: "shoulder", help: "من عظمة الرقبة إلى طرف الكتف." },
+        { id: "armholeDepth", label: "عمق فتحة الإبط", key: "armholeDepth", help: "من خط الكتف إلى خط الإبط." },
+        { id: "neck", label: "محيط العنق", key: "neck", help: "يقاس حول قاعدة العنق." },
+        { id: "sleeveLength", label: "طول الكم", key: "sleeveLength", help: "من طرف الكتف إلى الرسغ." },
+        { id: "bicep", label: "محيط العضد", key: "bicep", help: "يقاس حول أوسع جزء من العضد." },
+        { id: "elbow", label: "محيط المرفق", key: "elbow", help: "يقاس حول المرفق مع ثني الذراع قليلاً." },
+        { id: "wrist", label: "محيط الرسغ", key: "wrist", help: "يقاس حول الرسغ." },
+        { id: "skirtLength", label: "طول التنورة/البنطلون", key: "skirtLength", help: "من الخصر إلى الطول المطلوب." },
+        { id: "thigh", label: "محيط الفخذ", key: "thigh", help: "يقاس حول أوسع جزء من الفخذ." },
+        { id: "knee", label: "محيط الركبة", key: "knee", help: "يقاس حول الركبة." },
+        { id: "ankle", label: "محيط الكاحل", key: "ankle", help: "يقاس حول الكاحل." }
+    ];
+
+    let currentCountry = "eu", currentGender = "women", currentSize = "38", currentSchool = "french";
+
+    function buildOptions(containerId, items, selectedValue, onClick) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = "";
+        items.forEach(item => {
+            const btn = document.createElement("div");
+            btn.className = "option-btn" + (item.value === selectedValue ? " active" : "");
+            btn.textContent = item.label;
+            btn.dataset.value = item.value;
+            btn.addEventListener("click", () => {
+                onClick(item.value);
+                document.querySelectorAll(`#${containerId} .option-btn`).forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+            });
+            container.appendChild(btn);
+        });
+    }
+
+    function updateSizeOptionsUI() {
+        const sys = sizeSystems[currentCountry][currentGender];
+        const sizes = sys.sizes;
+        const items = sizes.map(sz => ({ value: sz, label: sz }));
+        buildOptions("sizeOptions", items, currentSize, (val) => {
+            currentSize = val;
+            refreshMeasurements();
+            updateAll();
+        });
+    }
+
+    function refreshMeasurements() {
+        const measurements = sizeSystems[currentCountry][currentGender].measurements[currentSize];
+        if (measurements) {
+            for (let field of measureFields) {
+                const input = document.getElementById(field.id);
+                if (input) input.value = measurements[field.key] || 0;
+            }
+        }
+    }
+
+    function getCurrentMeasurements() {
+        let vals = {};
+        for (let field of measureFields) {
+            const input = document.getElementById(field.id);
+            vals[field.key] = input ? parseFloat(input.value) || 0 : 0;
+        }
+        return vals;
+    }
+
+    function getEaseValues(schoolId) {
+        const school = schoolsData[schoolId];
+        let chestEase = (school.easeChest.min + school.easeChest.max) / 2;
+        let waistEase = (school.easeWaist.min + school.easeWaist.max) / 2;
+        if (schoolId === 'japanese') chestEase = 16;
+        if (schoolId === 'american') chestEase = 10;
+        if (schoolId === 'german') chestEase = 7;
+        if (schoolId === 'italian') chestEase = 6;
+        if (schoolId === 'british') chestEase = 5;
+        if (schoolId === 'french') chestEase = 3;
+        return { chestEase, waistEase };
+    }
+
+    function renderSchoolResults(measurements) {
+        const school = schoolsData[currentSchool];
+        const { chestEase, waistEase } = getEaseValues(currentSchool);
+        const chestFinal = measurements.chest + chestEase;
+        const waistFinal = measurements.waist + waistEase;
+        const halfChest = chestFinal / 2;
+        const frontWidth = (halfChest * 0.48).toFixed(1);
+        const backWidth = (halfChest * 0.52).toFixed(1);
+        let stepsHtml = school.steps.map(s => `<li>${s}</li>`).join('');
+        let html = `
+            <div><span class="badge-school">${school.name} | ${currentGender==='women'?'نساء':currentGender==='men'?'رجال':'أطفال'} | ${currentSize} (${currentCountry.toUpperCase()})</span></div>
+            <div class="ease-table">
+                <h4>بدلات الارتياح المطبقة</h4>
+                <table><tr><td>محيط الصدر</td><td>${measurements.chest}+${chestEase.toFixed(1)}=<strong>${chestFinal.toFixed(1)}</strong></td><td>${school.easeChest.desc}</td></tr>
+                <tr><td>محيط الخصر</td><td>${measurements.waist}+${waistEase.toFixed(1)}=<strong>${waistFinal.toFixed(1)}</strong></td><td>${school.easeWaist.desc}</td></tr>
+                <tr><td>نصف محيط الصدر</td><td colspan="2"><strong>${halfChest.toFixed(1)}</strong> (أمام ${frontWidth} / خلف ${backWidth})</td></tr></table>
+            </div>
+            <div style="background:#fef5ea; padding:0.5rem; border-radius:0.6rem;"><strong>الفلسفة:</strong> ${school.philosophy}</div>
+            <div class="method-steps"><h4>خطوات تنفيذ الكورساج حسب المدرسة</h4><ul>${stepsHtml}</ul></div>
+        `;
+        document.getElementById("schoolResult").innerHTML = html;
+    }
+
+    function renderPatternInstructions(measurements) {
+        const school = schoolsData[currentSchool];
+        const { chestEase, waistEase } = getEaseValues(currentSchool);
+        const chestFinal = measurements.chest + chestEase;
+        const halfChestFinal = chestFinal / 2;
+        const waistFinal = measurements.waist + waistEase;
+        const halfWaistFinal = waistFinal / 2;
+        const bustDiff = measurements.chest - measurements.waist;
+        const frontDart = Math.max(0, bustDiff * 0.35).toFixed(1);
+        const backDart = Math.max(0, bustDiff * 0.25).toFixed(1);
+        const neckWidth = (measurements.neck / 6).toFixed(1);
+        const neckDepthFront = (measurements.neck / 12).toFixed(1);
+        const neckDepthBack = (measurements.neck / 16).toFixed(1);
+        const bustPoint = measurements.bustPoint;
+        const armholeCurve = (measurements.armholeDepth / 3).toFixed(1);
+        const sleeveCap = (measurements.armholeDepth * 0.7).toFixed(1);
+        const sleeveWidth = (measurements.bicep + 6).toFixed(1);
+        const skirtFrontDart = (halfWaistFinal - (measurements.hip/4)).toFixed(1);
+        
+        let html = `
+            <div class="pattern-instruction">
+                <p><strong>📐 الباترون العلوي (الكورساج):</strong></p>
+                <ol style="font-size:0.7rem;">
+                    <li>مستطيل عرض ${halfChestFinal.toFixed(1)} × ارتفاع ${measurements.frontWaistLen}</li>
+                    <li>خط الصدر: ${measurements.armholeDepth} سم من الأعلى</li>
+                    <li>خط العنق الأمامي: عرض ${neckWidth} / عمق ${neckDepthFront}</li>
+                    <li>خط العنق الخلفي: عرض ${neckWidth} / عمق ${neckDepthBack}</li>
+                    <li>خط الكتف: ${measurements.shoulder} سم + ميلان 2.5</li>
+                    <li>فتحة الإبط: منحنى مع ${armholeCurve} سم داخل</li>
+                    <li>بانة الصدر: عرض ${frontDart} سم عند نقطة الصدر ${bustPoint}</li>
+                    <li>بانات الخصر: الفرق ${(halfChestFinal - halfWaistFinal).toFixed(1)} سم يوزع أمام ${frontDart} / خلف ${backDart}</li>
+                </ol>
+                <p><strong>🧵 رسم الكم:</strong></p>
+                <ol style="font-size:0.7rem;">
+                    <li>طول الكم: ${measurements.sleeveLength} سم</li>
+                    <li>عرض الكم (أعلى): ${sleeveWidth} سم (محيط العضد ${measurements.bicep} + بدلات)</li>
+                    <li>ارتفاع كبة الكم: ${sleeveCap} سم (70% من عمق فتحة الإبط)</li>
+                    <li>محيط المرفق: ${measurements.elbow} سم، محيط الرسغ: ${measurements.wrist} سم</li>
+                </ol>
+                <p><strong>👗 الباترون السفلي (تنورة/بنطلون):</strong></p>
+                <ol style="font-size:0.7rem;">
+                    <li>طول التنورة/البنطلون: ${measurements.skirtLength} سم</li>
+                    <li>عرض الأمام: محيط الورك/4 + بدل = ${(measurements.hip/4 + 2).toFixed(1)} سم</li>
+                    <li>بانة الخصر الأمامية: ${Math.max(0, skirtFrontDart).toFixed(1)} سم</li>
+                    <li>محيط الفخذ: ${measurements.thigh} سم، الركبة: ${measurements.knee} سم، الكاحل: ${measurements.ankle} سم</li>
+                </ol>
+                <p><strong>📌 ملاحظات:</strong> بدلات الخياطة ${currentSchool === 'japanese' ? '0.7' : '1.2'} سم. جميع البانات (السهام) حسب المدرسة ${school.name}.</p>
+            </div>
+        `;
+        document.getElementById("patternInstructions").innerHTML = html;
+    }
+
+    function updateAll() {
+        const measurements = getCurrentMeasurements();
+        renderSchoolResults(measurements);
+        renderPatternInstructions(measurements);
+    }
+
+    function onCountryChange(val) { currentCountry = val; updateSizeAndRefresh(); }
+    function onGenderChange(val) { currentGender = val; updateSizeAndRefresh(); }
+    function onSchoolChange(val) { currentSchool = val; updateAll(); }
+    function updateSizeAndRefresh() {
+        const sizes = sizeSystems[currentCountry][currentGender].sizes;
+        currentSize = sizes[Math.floor(sizes.length/2)];
+        updateSizeOptionsUI();
+        refreshMeasurements();
+        updateAll();
+    }
+
+    function showHelp(text) {
+        document.getElementById("helpText").innerText = text;
+        document.getElementById("helpModal").classList.add("active");
+    }
+    window.closeHelp = function() {
+        document.getElementById("helpModal").classList.remove("active");
+    };
+
+    function init() {
+        const countries = [{value:"eu",label:"🇪🇺 EU"},{value:"us",label:"🇺🇸 US"},{value:"uk",label:"🇬🇧 UK"},{value:"jp",label:"🇯🇵 JP"},{value:"ar",label:"🇸🇦 AR"}];
+        buildOptions("countryOptions", countries, currentCountry, onCountryChange);
+        const genders = [{value:"women",label:"👩 نساء"},{value:"men",label:"👨 رجال"},{value:"kids",label:"🧒 أطفال"}];
+        buildOptions("genderOptions", genders, currentGender, onGenderChange);
+        const schoolItems = schoolsList.map(s => ({ value: s.id, label: s.name }));
+        buildOptions("schoolOptions", schoolItems, currentSchool, onSchoolChange);
+        updateSizeOptionsUI();
+        let html = "";
+        for (let field of measureFields) {
+            html += `<div class="measure-field">
+                        <label>${field.label} <span class="help-icon" data-help="${field.help}"><i class="fas fa-info-circle"></i></span></label>
+                        <input type="number" step="0.5" id="${field.id}" value="0">
+                    </div>`;
+        }
+        document.getElementById("measureGrid").innerHTML = html;
+        refreshMeasurements();
+        document.querySelectorAll(".help-icon").forEach(icon => {
+            icon.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const helpText = icon.getAttribute("data-help");
+                if (helpText) showHelp(helpText);
+            });
+        });
+        document.getElementById("applyBtn").addEventListener("click", updateAll);
+        updateAll();
+    }
+    init();
+</script>
+</body>
+</html>

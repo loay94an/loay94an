@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>موسوعة الأجيال – نظام التفصيل الذكي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bezier-js@6.1.0/bezier.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #2c5282; --secondary: #48bb78; --accent: #ed8936;
+            --gray-light: #f7fafc; --gray: #cbd5e0; --dark: #2d3748;
+            --white: #ffffff; --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --radius: 12px;
+        }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            color: var(--dark); direction: rtl; line-height: 1.5;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
+        .header {
+            background: linear-gradient(135deg, #1e3c72, #2c5282);
+            color: white; padding: 2rem 1.5rem; border-radius: var(--radius);
+            margin-bottom: 2rem; text-align: center;
+        }
+        .header h1 { font-size: 1.8rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 0.75rem; }
+        .selection-card {
+            background: var(--white); border-radius: var(--radius); padding: 1.5rem;
+            margin-bottom: 2rem; box-shadow: var(--shadow);
+        }
+        .row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: flex-end; }
+        .form-group { flex: 1; min-width: 180px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
+        .form-group select, .form-group input {
+            width: 100%; padding: 0.75rem; border: 2px solid var(--gray);
+            border-radius: 10px; font-family: 'Tajawal', sans-serif; font-size: 1rem;
+            background: white; cursor: pointer;
+        }
+        .checkbox-group { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+        .type-buttons { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .type-btn {
+            flex: 1; padding: 0.75rem 1rem; border: 2px solid var(--gray);
+            background: var(--white); border-radius: 10px; cursor: pointer;
+            font-weight: 600; transition: 0.2s; display: flex;
+            align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        .type-btn.active { background: var(--secondary); border-color: var(--secondary); color: white; }
+        .sizes-grid {
+            display: flex; flex-wrap: wrap; gap: 0.75rem; max-height: 180px;
+            overflow-y: auto; padding: 0.5rem; background: var(--gray-light);
+            border-radius: 10px;
+        }
+        .size-option {
+            padding: 0.5rem 1rem; background: white; border: 1px solid var(--gray);
+            border-radius: 30px; cursor: pointer; transition: 0.2s; font-weight: 500;
+        }
+        .size-option:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+        .size-option.selected { background: var(--primary); color: white; border-color: var(--primary); }
+        .measurements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 0.5rem;
+            background: var(--gray-light);
+            border-radius: var(--radius);
+        }
+        .measurement-item {
+            background: white;
+            padding: 0.75rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: var(--shadow);
+        }
+        .measurement-item label { flex: 1; font-weight: 600; }
+        .measurement-item input {
+            width: 100px; padding: 0.5rem; border: 1px solid var(--gray);
+            border-radius: 6px; text-align: center;
+        }
+        .fabrics-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem; margin-top: 1rem;
+        }
+        .fabric-card {
+            background: white; border-radius: 10px; overflow: hidden; cursor: pointer;
+            border: 2px solid transparent; transition: 0.2s;
+        }
+        .fabric-card.selected { border-color: var(--secondary); }
+        .fabric-card img { width: 100%; height: 120px; object-fit: cover; }
+        .fabric-card .info { padding: 0.75rem; text-align: center; }
+        .fabric-card .name { font-weight: bold; }
+        .control-buttons {
+            display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem; background: var(--primary); color: white;
+            border: none; border-radius: 8px; cursor: pointer; font-weight: 600;
+            transition: 0.2s; display: inline-flex; align-items: center; gap: 0.5rem;
+        }
+        .btn:hover { transform: translateY(-2px); background: #1a3a5f; }
+        .btn-secondary { background: var(--accent); }
+        .btn-success { background: var(--secondary); }
+        .info-bar {
+            background: linear-gradient(90deg, var(--primary), #4299c1);
+            color: white; padding: 1rem 1.5rem; border-radius: 10px; margin-bottom: 2rem;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+        }
+        .patterns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .pattern-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        .pattern-card .card-header {
+            background: var(--accent);
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .pattern-canvas-container {
+            background: #fafafa;
+            padding: 1rem;
+            text-align: center;
+            overflow-x: auto;
+        }
+        canvas {
+            background: white;
+            box-shadow: var(--shadow);
+            border-radius: 8px;
+            max-width: 100%;
+            height: auto;
+        }
+        .price-summary {
+            background: var(--white); border-radius: var(--radius); padding: 1rem;
+            margin-top: 1rem; text-align: center; font-size: 1.2rem;
+        }
+        .footer {
+            text-align: center; padding: 2rem; margin-top: 2rem;
+            color: var(--dark); border-top: 1px solid var(--gray);
+        }
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .patterns-grid { grid-template-columns: 1fr; }
+            .measurements-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-drafting-compass"></i> موسوعة الأجيال – نظام التفصيل الذكي</h1>
+        <p>اختر النوع، الموديل، القماش – ورسم الباترون مباشرة مع الأبعاد الدقيقة</p>
+    </div>
+
+    <div class="selection-card">
+        <div class="row">
+            <div class="form-group">
+                <label><i class="fas fa-tag"></i> اللغة</label>
+                <select id="lang-select">
+                    <option value="ar">العربية</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-chart-line"></i> الوحدة</label>
+                <select id="unit-select">
+                    <option value="cm">سم (cm)</option>
+                    <option value="in">إنش (in)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-arrows-alt"></i> مقياس الرسم</label>
+                <input type="range" id="scale-range" min="0.5" max="3" step="0.1" value="1.5">
+                <span id="scale-value">1.5</span>
+            </div>
+        </div>
+
+        <div class="type-buttons" id="type-buttons">
+            <button class="type-btn active" data-gender="male">رجال</button>
+            <button class="type-btn" data-gender="female">نساء</button>
+            <button class="type-btn" data-gender="children">أطفال</button>
+        </div>
+
+        <div class="row">
+            <div class="form-group">
+                <label><i class="fas fa-ruler"></i> المقاس</label>
+                <div id="sizes-container" class="sizes-grid"></div>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-tshirt"></i> الموديل</label>
+                <select id="style-select"></select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label><i class="fas fa-cut"></i> القماش</label>
+            <div id="fabrics-container" class="fabrics-grid"></div>
+        </div>
+
+        <div class="price-summary" id="price-summary">السعر: 0 ر.س</div>
+
+        <div class="measurements-grid" id="measurements-grid"></div>
+
+        <div class="control-buttons">
+            <button class="btn btn-success" id="generate-btn"><i class="fas fa-pencil-ruler"></i> رسم الباترون</button>
+            <button class="btn btn-secondary" id="export-png"><i class="fas fa-download"></i> تصدير PNG</button>
+            <button class="btn btn-secondary" id="print-btn"><i class="fas fa-print"></i> طباعة</button>
+        </div>
+    </div>
+
+    <div id="info-bar" class="info-bar" style="display: none;">
+        <div><i class="fas fa-tag"></i> <span id="type-name"></span></div>
+        <div><i class="fas fa-ruler"></i> <span id="size-value"></span></div>
+        <div><i class="fas fa-chart-simple"></i> <span id="unit-name"></span></div>
+    </div>
+
+    <div class="patterns-grid" id="patterns-grid"></div>
+
+    <div class="footer">
+        <p>© 2025 – نظام التفصيل الذكي – موسوعة الأجيال</p>
+    </div>
+</div>
+
+<script>
+    // ======================== بيانات من constants.txt (محولة إلى JS) ========================
+    const STANDARD_SIZES = {
+        'S': { height: 165, chest: 88, waist: 72, hips: 94, shoulderWidth: 38, armLength: 58, neckCircumference: 36, backLength: 40, waistToHip: 18, waistToFloor: 100 },
+        'M': { height: 170, chest: 96, waist: 80, hips: 102, shoulderWidth: 40, armLength: 60, neckCircumference: 38, backLength: 42, waistToHip: 20, waistToFloor: 102 },
+        'L': { height: 175, chest: 104, waist: 88, hips: 110, shoulderWidth: 42, armLength: 62, neckCircumference: 40, backLength: 44, waistToHip: 22, waistToFloor: 104 },
+        'XL': { height: 180, chest: 112, waist: 98, hips: 118, shoulderWidth: 44, armLength: 64, neckCircumference: 42, backLength: 46, waistToHip: 24, waistToFloor: 106 }
+    };
+    const CHILDREN_SIZES = {
+        '4Y': { height: 104, chest: 56, waist: 53, hips: 60, shoulderWidth: 26, armLength: 36, neckCircumference: 26, backLength: 25, waistToHip: 10, waistToFloor: 60 },
+        '6Y': { height: 116, chest: 60, waist: 56, hips: 64, shoulderWidth: 28, armLength: 40, neckCircumference: 28, backLength: 27, waistToHip: 11, waistToFloor: 68 },
+        '8Y': { height: 128, chest: 64, waist: 59, hips: 68, shoulderWidth: 30, armLength: 44, neckCircumference: 30, backLength: 29, waistToHip: 12, waistToFloor: 76 }
+    };
+    const FABRICS = [
+        { id: 'cotton-egyptian', name: 'قطن مصري فاخر', image: 'https://images.unsplash.com/photo-1598300056393-54d61434984f?auto=format&fit=crop&q=80&w=300', baseMultiplier: 1.2 },
+        { id: 'silk-satin', name: 'حرير ساتان', image: 'https://images.unsplash.com/photo-1612450630138-c64e525a7404?auto=format&fit=crop&q=80&w=300', baseMultiplier: 1.5 },
+        { id: 'velvet-lux', name: 'مخمل فاخر', image: 'https://images.unsplash.com/photo-1543857778-c4a1a3e0b2eb?auto=format&fit=crop&q=80&w=300', baseMultiplier: 1.8 },
+        { id: 'wool-merino', name: 'صوف ميرينو', image: 'https://images.unsplash.com/photo-1579621970583-05f3e3de78d8?auto=format&fit=crop&q=80&w=300', baseMultiplier: 1.4 },
+        { id: 'linen-pure', name: 'كتان طبيعي', image: 'https://images.unsplash.com/photo-1620799140408-ed5341cd2431?auto=format&fit=crop&q=80&w=300', baseMultiplier: 1.3 }
+    ];
+    const STYLES = {
+        male: [
+            { id: 'shirt', name: 'قميص كلاسيك', basePrice: 200, patternType: 'shirt' },
+            { id: 'pants', name: 'بنطلون رسمي', basePrice: 180, patternType: 'pants' },
+            { id: 'suit', name: 'بدلة كاملة', basePrice: 800, patternType: 'suit' }
+        ],
+        female: [
+            { id: 'dress', name: 'فستان يومي', basePrice: 300, patternType: 'dress' },
+            { id: 'evening_gown', name: 'فستان سهرة', basePrice: 1200, patternType: 'dress' },
+            { id: 'abaya', name: 'عباية', basePrice: 350, patternType: 'abaya' },
+            { id: 'skirt', name: 'تنورة', basePrice: 150, patternType: 'skirt' }
+        ],
+        children: [
+            { id: 'kids_suit', name: 'بدلة أطفال', basePrice: 300, patternType: 'suit' },
+            { id: 'kids_dress', name: 'فستان أطفال', basePrice: 200, patternType: 'dress' },
+            { id: 'kids_casual', name: 'طقم كاجوال', basePrice: 150, patternType: 't-shirt' }
+        ]
+    };
+
+    // ======================== ترجمات ========================
+    const TRANSLATIONS = {
+        ar: {
+            male: 'رجال', female: 'نساء', children: 'أطفال',
+            size: 'المقاس', style: 'الموديل', fabric: 'القماش',
+            price: 'السعر', sar: 'ر.س', generate: 'رسم الباترون'
+        },
+        en: {
+            male: 'Men', female: 'Women', children: 'Children',
+            size: 'Size', style: 'Style', fabric: 'Fabric',
+            price: 'Price', sar: 'SAR', generate: 'Generate Pattern'
+        }
+    };
+
+    // ======================== دوال الرسم (مبسطة لكن احترافية) ========================
+    let currentGender = 'male';
+    let currentSizeKey = 'M';
+    let currentFabric = FABRICS[0];
+    let currentStyle = STYLES.male[0];
+    let currentUnit = 'cm';
+    let userScale = 1.5;
+    let currentLang = 'ar';
+
+    function getMeasurements() {
+        let sizeData = currentGender === 'children' ? CHILDREN_SIZES[currentSizeKey] : STANDARD_SIZES[currentSizeKey];
+        if (!sizeData) sizeData = STANDARD_SIZES['M'];
+        return sizeData;
+    }
+
+    function formatDim(value) {
+        if (currentUnit === 'in') return (value / 2.54).toFixed(2) + ' in';
+        return value.toFixed(1) + ' سم';
+    }
+
+    function drawGrid(ctx, w, h, step=20) {
+        ctx.save();
+        ctx.strokeStyle = '#e9ecef';
+        ctx.lineWidth = 0.5;
+        for(let x=0; x<w; x+=step) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+        for(let y=0; y<h; y+=step) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+        ctx.restore();
+    }
+
+    function drawBodice(ctx, w, h, isFront, measurements) {
+        const { chest, waist, backLength, shoulderWidth, neckCircumference } = measurements;
+        const bustEase = 2, waistEase = 2.5;
+        const qBust = chest/4 + bustEase;
+        const qWaist = waist/4 + waistEase;
+        const armholeDepth = chest/10 + 10.5;
+        const neckWidth = neckCircumference/6;
+        const neckDrop = isFront ? neckCircumference/5 : neckCircumference/20;
+        const shoulderSlope = 4.5;
+        ctx.save();
+        ctx.translate(30,40);
+        ctx.beginPath();
+        ctx.moveTo(0, backLength*userScale);
+        ctx.lineTo(0, neckDrop*userScale);
+        ctx.quadraticCurveTo(neckWidth*0.7*userScale, neckDrop*0.8*userScale, neckWidth*userScale, 0);
+        ctx.lineTo(shoulderWidth/2*userScale, shoulderSlope*userScale);
+        ctx.quadraticCurveTo((shoulderWidth/2+qBust)*0.6*userScale, (shoulderSlope+armholeDepth)*0.5*userScale, qBust*userScale, armholeDepth*userScale);
+        ctx.quadraticCurveTo(qBust*userScale, (armholeDepth+backLength)*0.4*userScale, qWaist*userScale, backLength*userScale);
+        ctx.lineTo(0, backLength*userScale);
+        ctx.closePath();
+        ctx.strokeStyle = "#2c5282";
+        ctx.stroke();
+        ctx.fillStyle = "rgba(44,82,130,0.05)";
+        ctx.fill();
+        // خطوط مساعدة
+        ctx.beginPath(); ctx.moveTo(0, armholeDepth*userScale); ctx.lineTo(qBust*userScale, armholeDepth*userScale);
+        ctx.strokeStyle = "#e53e3e"; ctx.setLineDash([5,5]); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, backLength*userScale); ctx.lineTo(qWaist*userScale, backLength*userScale); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "#1e3c72"; ctx.font = "bold 16px 'Tajawal'";
+        ctx.fillText(isFront ? "الأمامي" : "الخلفي", 10, 30);
+        ctx.fillStyle = "#666"; ctx.font = "12px 'Tajawal'";
+        ctx.fillText("على ثنية القماش", 10, 55);
+        ctx.restore();
+    }
+
+    function drawSkirt(ctx, w, h, measurements) {
+        const { waist, hips, waistToHip, backLength } = measurements;
+        const qWaist = waist/4 + 1;
+        const qHip = hips/4 + 1.5;
+        ctx.save();
+        ctx.translate(30,40);
+        ctx.beginPath();
+        ctx.moveTo(0, backLength*userScale);
+        ctx.lineTo(0, 0);
+        ctx.lineTo(qWaist*userScale, 0);
+        ctx.quadraticCurveTo(qWaist*userScale, waistToHip*0.4*userScale, qHip*userScale, waistToHip*userScale);
+        ctx.lineTo(qHip*userScale, backLength*userScale);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.fillStyle = "rgba(44,82,130,0.05)";
+        ctx.fill();
+        ctx.fillStyle = "#1e3c72"; ctx.font = "bold 16px 'Tajawal'";
+        ctx.fillText("التنورة", 10, 30);
+        ctx.fillStyle = "#666"; ctx.font = "12px 'Tajawal'";
+        ctx.fillText("قص 1 على الثنية", 10, 55);
+        ctx.restore();
+    }
+
+    function drawPants(ctx, w, h, measurements, isFront = true) {
+        const { waist, hips, waistToFloor } = measurements;
+        const qWaist = waist/4 + 0.5;
+        const qHip = hips/4 + (isFront?0.5:1.5);
+        const crotchDepth = waistToFloor * 0.3;
+        const frontCrotch = waist/8;
+        const backCrotch = waist/6;
+        ctx.save();
+        ctx.translate(30,40);
+        ctx.beginPath();
+        ctx.moveTo(0, waistToFloor*userScale);
+        ctx.lineTo(0, 0);
+        ctx.lineTo(qWaist*userScale, 0);
+        ctx.lineTo((isFront?frontCrotch:backCrotch)*userScale, crotchDepth*userScale);
+        ctx.lineTo(qHip*userScale, waistToFloor*userScale);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.fillStyle = "rgba(44,82,130,0.05)";
+        ctx.fill();
+        ctx.fillStyle = "#1e3c72"; ctx.font = "bold 16px 'Tajawal'";
+        ctx.fillText(isFront?"البنطلون الأمامي":"البنطلون الخلفي", 10, 30);
+        ctx.fillStyle = "#666"; ctx.font = "12px 'Tajawal'";
+        ctx.fillText(isFront?"قص 2":"قص 2 (على ثنية)", 10, 55);
+        ctx.restore();
+    }
+
+    function drawAllPatterns() {
+        const measurements = getMeasurements();
+        const grid = document.getElementById("patterns-grid");
+        let patternsHtml = '';
+        if (currentStyle.patternType === 'skirt') {
+            patternsHtml = `<div class="pattern-card"><div class="card-header"><i class="fas fa-female"></i> التنورة</div><div class="pattern-canvas-container"><canvas id="skirtCanvas" width="500" height="500"></canvas></div></div>`;
+        } else if (currentStyle.patternType === 'pants') {
+            patternsHtml = `
+                <div class="pattern-card"><div class="card-header"><i class="fas fa-vest-patches"></i> البنطلون الأمامي</div><div class="pattern-canvas-container"><canvas id="pantsFrontCanvas" width="500" height="500"></canvas></div></div>
+                <div class="pattern-card"><div class="card-header"><i class="fas fa-vest-patches"></i> البنطلون الخلفي</div><div class="pattern-canvas-container"><canvas id="pantsBackCanvas" width="500" height="500"></canvas></div></div>`;
+        } else {
+            patternsHtml = `
+                <div class="pattern-card"><div class="card-header"><i class="fas fa-tshirt"></i> الكورساج الأمامي</div><div class="pattern-canvas-container"><canvas id="frontCanvas" width="500" height="500"></canvas></div></div>
+                <div class="pattern-card"><div class="card-header"><i class="fas fa-tshirt"></i> الكورساج الخلفي</div><div class="pattern-canvas-container"><canvas id="backCanvas" width="500" height="500"></canvas></div></div>`;
+        }
+        grid.innerHTML = patternsHtml;
+
+        if (currentStyle.patternType === 'skirt') {
+            const ctx = document.getElementById("skirtCanvas").getContext("2d");
+            drawGrid(ctx, 500, 500);
+            drawSkirt(ctx, 500, 500, measurements);
+        } else if (currentStyle.patternType === 'pants') {
+            const ctxFront = document.getElementById("pantsFrontCanvas").getContext("2d");
+            const ctxBack = document.getElementById("pantsBackCanvas").getContext("2d");
+            drawGrid(ctxFront, 500, 500);
+            drawPants(ctxFront, 500, 500, measurements, true);
+            drawGrid(ctxBack, 500, 500);
+            drawPants(ctxBack, 500, 500, measurements, false);
+        } else {
+            const ctxFront = document.getElementById("frontCanvas").getContext("2d");
+            const ctxBack = document.getElementById("backCanvas").getContext("2d");
+            drawGrid(ctxFront, 500, 500);
+            drawBodice(ctxFront, 500, 500, true, measurements);
+            drawGrid(ctxBack, 500, 500);
+            drawBodice(ctxBack, 500, 500, false, measurements);
+        }
+    }
+
+    // ======================== تحديث الواجهة ========================
+    function updateSizeList() {
+        const sizes = currentGender === 'children' ? Object.keys(CHILDREN_SIZES) : Object.keys(STANDARD_SIZES);
+        const container = document.getElementById("sizes-container");
+        container.innerHTML = sizes.map(s => `<div class="size-option ${s===currentSizeKey?'selected':''}" data-size="${s}">${s}</div>`).join("");
+        document.querySelectorAll(".size-option").forEach(opt => opt.addEventListener("click", () => {
+            currentSizeKey = opt.dataset.size;
+            updateSizeList();
+            updateMeasurementsFields();
+            drawAllPatterns();
+            updatePrice();
+        }));
+    }
+
+    function updateStyles() {
+        const styles = STYLES[currentGender];
+        const select = document.getElementById("style-select");
+        select.innerHTML = styles.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
+        currentStyle = styles[0];
+        select.value = currentStyle.id;
+        select.addEventListener("change", (e) => {
+            currentStyle = styles.find(s => s.id === e.target.value);
+            updatePrice();
+            drawAllPatterns();
+        });
+        updatePrice();
+    }
+
+    function updateFabrics() {
+        const container = document.getElementById("fabrics-container");
+        container.innerHTML = FABRICS.map(f => `
+            <div class="fabric-card ${currentFabric.id === f.id ? 'selected' : ''}" data-id="${f.id}">
+                <img src="${f.image}" alt="${f.name}">
+                <div class="info"><div class="name">${f.name}</div></div>
+            </div>
+        `).join("");
+        document.querySelectorAll(".fabric-card").forEach(card => {
+            card.addEventListener("click", () => {
+                currentFabric = FABRICS.find(f => f.id === card.dataset.id);
+                updateFabrics();
+                updatePrice();
+            });
+        });
+    }
+
+    function updateMeasurementsFields() {
+        const m = getMeasurements();
+        const container = document.getElementById("measurements-grid");
+        const fields = [
+            { key: 'chest', label: 'محيط الصدر', value: m.chest },
+            { key: 'waist', label: 'محيط الخصر', value: m.waist },
+            { key: 'hips', label: 'محيط الورك', value: m.hips },
+            { key: 'shoulderWidth', label: 'عرض الكتف', value: m.shoulderWidth },
+            { key: 'backLength', label: 'طول الظهر', value: m.backLength },
+            { key: 'armLength', label: 'طول الكم', value: m.armLength },
+            { key: 'neckCircumference', label: 'محيط الرقبة', value: m.neckCircumference }
+        ];
+        container.innerHTML = fields.map(f => `
+            <div class="measurement-item">
+                <label>${f.label}</label>
+                <input type="number" step="0.5" value="${f.value}" data-key="${f.key}">
+            </div>
+        `).join("");
+        document.querySelectorAll(".measurement-item input").forEach(inp => {
+            inp.addEventListener("change", (e) => {
+                const key = e.target.dataset.key;
+                let meas = getMeasurements();
+                meas[key] = parseFloat(e.target.value);
+                drawAllPatterns();
+            });
+        });
+    }
+
+    function updatePrice() {
+        let basePrice = currentStyle.basePrice;
+        const multiplier = currentFabric.baseMultiplier;
+        const total = basePrice * multiplier;
+        const unit = currentLang === 'ar' ? 'ر.س' : 'SAR';
+        document.getElementById("price-summary").innerHTML = `${TRANSLATIONS[currentLang].price}: ${total.toFixed(2)} ${unit}`;
+    }
+
+    function updateLanguage() {
+        const t = TRANSLATIONS[currentLang];
+        document.querySelectorAll(".type-btn").forEach((btn, i) => {
+            const gender = btn.dataset.gender;
+            btn.innerHTML = `<i class="fas ${gender==='male'?'fa-male':gender==='female'?'fa-female':'fa-child'}"></i> ${t[gender]}`;
+        });
+        document.querySelector(".form-group label[for='size-select']").innerText = t.size;
+        document.querySelector(".form-group label[for='style-select']").innerText = t.style;
+        document.querySelector(".form-group label[for='fabric-select']").innerText = t.fabric;
+        document.getElementById("generate-btn").innerHTML = `<i class="fas fa-pencil-ruler"></i> ${t.generate}`;
+        document.getElementById("info-bar").style.display = "flex";
+        document.getElementById("type-name").innerText = t[currentGender];
+        document.getElementById("size-value").innerText = currentSizeKey;
+        document.getElementById("unit-name").innerText = currentUnit === 'cm' ? 'سم' : 'إنش';
+        updatePrice();
+    }
+
+    // ======================== أحداث ========================
+    document.querySelectorAll(".type-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".type-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            currentGender = btn.dataset.gender;
+            currentSizeKey = currentGender === 'children' ? '4Y' : 'M';
+            updateSizeList();
+            updateStyles();
+            updateMeasurementsFields();
+            drawAllPatterns();
+            updateLanguage();
+        });
+    });
+    document.getElementById("unit-select").addEventListener("change", (e) => { currentUnit = e.target.value; drawAllPatterns(); updateLanguage(); });
+    document.getElementById("scale-range").addEventListener("input", (e) => { userScale = parseFloat(e.target.value); document.getElementById("scale-value").innerText = userScale; drawAllPatterns(); });
+    document.getElementById("lang-select").addEventListener("change", (e) => { currentLang = e.target.value; updateLanguage(); });
+    document.getElementById("generate-btn").addEventListener("click", () => drawAllPatterns());
+    document.getElementById("export-png").addEventListener("click", () => {
+        const canvas = document.querySelector("canvas");
+        if(canvas){
+            const link = document.createElement("a");
+            link.download = "pattern.png";
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+    });
+    document.getElementById("print-btn").addEventListener("click", () => window.print());
+
+    // تهيئة
+    updateSizeList();
+    updateStyles();
+    updateFabrics();
+    updateMeasurementsFields();
+    drawAllPatterns();
+    updateLanguage();
+</script>
+</body>
+</html>

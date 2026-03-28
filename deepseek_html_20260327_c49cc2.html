@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>موسوعة الأجيال – نظام رسم الباترون المتطور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bezier-js@6.1.0/bezier.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary: #2c5282;
+            --primary-light: #4299c1;
+            --secondary: #48bb78;
+            --accent: #ed8936;
+            --gray-light: #f7fafc;
+            --gray: #cbd5e0;
+            --dark: #2d3748;
+            --white: #ffffff;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --radius: 16px;
+            --transition: all 0.2s ease;
+        }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            color: var(--dark);
+            direction: rtl;
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1e3c72, var(--primary));
+            color: white;
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+        /* Step indicator */
+        .steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+        .step:not(:last-child):after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: calc(50% + 20px);
+            width: calc(100% - 40px);
+            height: 2px;
+            background: var(--gray);
+            z-index: 0;
+        }
+        .step.active .step-circle {
+            background: var(--secondary);
+            color: white;
+            border-color: var(--secondary);
+        }
+        .step.completed .step-circle {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border: 2px solid var(--gray);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+            background: white;
+        }
+        .step-label {
+            font-size: 0.85rem;
+            color: var(--dark);
+        }
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+        .card-header {
+            background: var(--primary);
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+        }
+        .card-body {
+            padding: 1.5rem;
+        }
+        /* Grids */
+        .type-buttons, .size-grid, .fabrics-grid, .measurements-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .type-btn, .size-option, .fabric-card {
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .type-btn {
+            flex: 1;
+            padding: 0.75rem;
+            background: var(--gray-light);
+            border: 1px solid var(--gray);
+            border-radius: 40px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .type-btn.active {
+            background: var(--secondary);
+            border-color: var(--secondary);
+            color: white;
+        }
+        .size-option {
+            padding: 0.5rem 1rem;
+            background: white;
+            border: 1px solid var(--gray);
+            border-radius: 40px;
+        }
+        .size-option.selected {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .fabrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        }
+        .fabric-card {
+            background: white;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            overflow: hidden;
+            text-align: center;
+        }
+        .fabric-card.selected {
+            border-color: var(--secondary);
+        }
+        .fabric-card img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+        }
+        .fabric-card .info {
+            padding: 0.5rem;
+        }
+        .measurements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .measurement-item {
+            background: var(--gray-light);
+            padding: 0.75rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .measurement-item label {
+            flex: 1;
+            font-weight: 500;
+        }
+        .measurement-item input {
+            width: 100px;
+            padding: 0.5rem;
+            border: 1px solid var(--gray);
+            border-radius: 8px;
+            text-align: center;
+        }
+        .control-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+        }
+        .btn-secondary {
+            background: var(--accent);
+        }
+        .btn-success {
+            background: var(--secondary);
+        }
+        .info-bar {
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 40px;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .patterns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 1.5rem;
+        }
+        .pattern-card {
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        .pattern-canvas-container {
+            background: #fafafa;
+            padding: 1rem;
+            text-align: center;
+            overflow-x: auto;
+        }
+        canvas {
+            background: white;
+            box-shadow: var(--shadow);
+            border-radius: 8px;
+            max-width: 100%;
+            height: auto;
+        }
+        .price-summary {
+            background: var(--gray-light);
+            padding: 1rem;
+            border-radius: var(--radius);
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .profile-section {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .profile-btn {
+            background: var(--gray-light);
+            border: 1px solid var(--gray);
+            border-radius: 40px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .footer {
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            color: var(--gray);
+        }
+        @media (max-width: 768px) {
+            .patterns-grid {
+                grid-template-columns: 1fr;
+            }
+            .steps {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .step:not(:last-child):after {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-drafting-compass"></i> موسوعة الأجيال</h1>
+        <p>نظام رسم الباترون الذكي – اختر، عدل، وشاهد الباترون مباشرة</p>
+    </div>
+
+    <!-- Steps indicator (visual only) -->
+    <div class="steps">
+        <div class="step active" id="step1"><div class="step-circle">1</div><div class="step-label">النوع والمقاس</div></div>
+        <div class="step" id="step2"><div class="step-circle">2</div><div class="step-label">القياسات</div></div>
+        <div class="step" id="step3"><div class="step-circle">3</div><div class="step-label">الموديل والقماش</div></div>
+        <div class="step" id="step4"><div class="step-circle">4</div><div class="step-label">الباترون</div></div>
+    </div>
+
+    <!-- Info Bar -->
+    <div id="info-bar" class="info-bar" style="display: none;">
+        <div><i class="fas fa-tag"></i> <span id="type-name"></span></div>
+        <div><i class="fas fa-ruler"></i> <span id="size-value"></span></div>
+        <div><i class="fas fa-chart-simple"></i> <span id="unit-name"></span></div>
+        <div><i class="fas fa-chart-line"></i> مقياس الرسم: <span id="scale-value">1.5</span></div>
+    </div>
+
+    <!-- Main Card -->
+    <div class="card">
+        <div class="card-header"><i class="fas fa-sliders-h"></i> إعدادات التصميم</div>
+        <div class="card-body">
+            <div class="type-buttons" id="type-buttons">
+                <button class="type-btn active" data-type="male">رجال</button>
+                <button class="type-btn" data-type="female">نساء</button>
+                <button class="type-btn" data-type="children">أطفال</button>
+            </div>
+            <div class="size-selector">
+                <label><i class="fas fa-ruler"></i> المقاس الأوروبي</label>
+                <div id="sizes-container" class="size-grid"></div>
+            </div>
+            <div class="profile-section" id="profile-section">
+                <button class="profile-btn" id="save-profile-btn"><i class="fas fa-save"></i> حفظ الملف الشخصي</button>
+                <select id="load-profile-select" class="profile-btn" style="padding:0.5rem;">
+                    <option value="">تحميل ملف...</option>
+                </select>
+                <button class="profile-btn" id="delete-profile-btn" style="background:#e53e3e; color:white;"><i class="fas fa-trash"></i> حذف الملف</button>
+            </div>
+            <div class="row" style="display:flex; gap:1rem; flex-wrap:wrap; margin:1rem 0;">
+                <div class="form-group" style="flex:1">
+                    <label><i class="fas fa-tshirt"></i> الموديل</label>
+                    <select id="style-select" style="width:100%; padding:0.75rem; border-radius:40px;"></select>
+                </div>
+                <div class="form-group" style="flex:1">
+                    <label><i class="fas fa-chart-line"></i> الوحدة</label>
+                    <select id="unit-select" style="width:100%; padding:0.75rem; border-radius:40px;">
+                        <option value="cm">سم (cm)</option>
+                        <option value="in">إنش (in)</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex:1">
+                    <label><i class="fas fa-arrows-alt"></i> مقياس الرسم</label>
+                    <input type="range" id="scale-range" min="0.5" max="3" step="0.1" value="1.5" style="width:100%">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fabrics Section -->
+    <div class="card">
+        <div class="card-header"><i class="fas fa-cut"></i> الأقمشة المتوفرة</div>
+        <div class="card-body">
+            <div id="fabrics-container" class="fabrics-grid"></div>
+            <div class="price-summary" id="price-summary">السعر: 0 ر.س</div>
+        </div>
+    </div>
+
+    <!-- Measurements Section -->
+    <div class="card">
+        <div class="card-header"><i class="fas fa-ruler-combined"></i> المقاسات التفصيلية (19 قياس)</div>
+        <div class="card-body">
+            <div id="measurements-grid" class="measurements-grid"></div>
+            <div class="control-buttons">
+                <button class="btn btn-success" id="generate-btn"><i class="fas fa-pencil-ruler"></i> رسم الباترون</button>
+                <button class="btn btn-secondary" id="export-png"><i class="fas fa-download"></i> تصدير PNG</button>
+                <button class="btn btn-secondary" id="print-btn"><i class="fas fa-print"></i> طباعة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pattern Display -->
+    <div id="patterns-container" class="patterns-grid"></div>
+
+    <div class="footer">
+        <p>© 2025 – جميع الحقوق محفوظة – نظام رسم الباترون المتطور</p>
+    </div>
+</div>
+
+<script>
+    // ======================== البيانات ========================
+    const STANDARD_SIZES = {
+        'S': { height: 165, chest: 88, waist: 72, hips: 94, shoulderWidth: 38, armLength: 58, neckCircumference: 36, backLength: 40, waistToHip: 18, waistToFloor: 100 },
+        'M': { height: 170, chest: 96, waist: 80, hips: 102, shoulderWidth: 40, armLength: 60, neckCircumference: 38, backLength: 42, waistToHip: 20, waistToFloor: 102 },
+        'L': { height: 175, chest: 104, waist: 88, hips: 110, shoulderWidth: 42, armLength: 62, neckCircumference: 40, backLength: 44, waistToHip: 22, waistToFloor: 104 },
+        'XL': { height: 180, chest: 112, waist: 98, hips: 118, shoulderWidth: 44, armLength: 64, neckCircumference: 42, backLength: 46, waistToHip: 24, waistToFloor: 106 }
+    };
+    const CHILDREN_SIZES = {
+        '4Y': { height: 104, chest: 56, waist: 53, hips: 60, shoulderWidth: 26, armLength: 36, neckCircumference: 26, backLength: 25, waistToHip: 10, waistToFloor: 60 },
+        '6Y': { height: 116, chest: 60, waist: 56, hips: 64, shoulderWidth: 28, armLength: 40, neckCircumference: 28, backLength: 27, waistToHip: 11, waistToFloor: 68 },
+        '8Y': { height: 128, chest: 64, waist: 59, hips: 68, shoulderWidth: 30, armLength: 44, neckCircumference: 30, backLength: 29, waistToHip: 12, waistToFloor: 76 }
+    };
+    const FABRICS = [
+        { id: 'cotton-egyptian', name: 'قطن مصري', image: 'https://images.unsplash.com/photo-1598300056393-54d61434984f?auto=format&fit=crop&q=80&w=300', multiplier: 1.2 },
+        { id: 'silk-satin', name: 'حرير ساتان', image: 'https://images.unsplash.com/photo-1612450630138-c64e525a7404?auto=format&fit=crop&q=80&w=300', multiplier: 1.5 },
+        { id: 'velvet-lux', name: 'مخمل', image: 'https://images.unsplash.com/photo-1543857778-c4a1a3e0b2eb?auto=format&fit=crop&q=80&w=300', multiplier: 1.8 },
+        { id: 'wool-merino', name: 'صوف ميرينو', image: 'https://images.unsplash.com/photo-1579621970583-05f3e3de78d8?auto=format&fit=crop&q=80&w=300', multiplier: 1.4 },
+        { id: 'linen-pure', name: 'كتان', image: 'https://images.unsplash.com/photo-1620799140408-ed5341cd2431?auto=format&fit=crop&q=80&w=300', multiplier: 1.3 }
+    ];
+    const STYLES = {
+        male: [
+            { id: 'shirt', name: 'قميص كلاسيك', basePrice: 200, patternType: 'bodice' },
+            { id: 'pants', name: 'بنطلون رسمي', basePrice: 180, patternType: 'pants' },
+            { id: 'suit', name: 'بدلة كاملة', basePrice: 800, patternType: 'bodice' }
+        ],
+        female: [
+            { id: 'dress', name: 'فستان يومي', basePrice: 300, patternType: 'bodice' },
+            { id: 'evening_gown', name: 'فستان سهرة', basePrice: 1200, patternType: 'bodice' },
+            { id: 'abaya', name: 'عباية', basePrice: 350, patternType: 'bodice' },
+            { id: 'skirt', name: 'تنورة', basePrice: 150, patternType: 'skirt' }
+        ],
+        children: [
+            { id: 'kids_suit', name: 'بدلة أطفال', basePrice: 300, patternType: 'bodice' },
+            { id: 'kids_dress', name: 'فستان أطفال', basePrice: 200, patternType: 'bodice' },
+            { id: 'kids_casual', name: 'طقم كاجوال', basePrice: 150, patternType: 'bodice' }
+        ]
+    };
+
+    // ======================== الحالة ========================
+    let currentGender = 'male';
+    let currentSizeKey = 'M';
+    let currentFabric = FABRICS[0];
+    let currentStyle = STYLES.male[0];
+    let currentUnit = 'cm';
+    let userScale = 1.5;
+
+    function getMeasurements() {
+        let sizeData = currentGender === 'children' ? CHILDREN_SIZES[currentSizeKey] : STANDARD_SIZES[currentSizeKey];
+        if (!sizeData) sizeData = STANDARD_SIZES['M'];
+        // add derived values if missing
+        if (!sizeData.inlegLength) sizeData.inlegLength = sizeData.waistToFloor * 0.6;
+        if (!sizeData.armCircumference) sizeData.armCircumference = sizeData.chest * 0.35;
+        if (!sizeData.cuffCircumference) sizeData.cuffCircumference = sizeData.armCircumference * 0.8;
+        if (!sizeData.waistToKnee) sizeData.waistToKnee = sizeData.waistToFloor * 0.4;
+        return sizeData;
+    }
+
+    function formatDim(value) {
+        if (currentUnit === 'in') return (value / 2.54).toFixed(2) + ' in';
+        return value.toFixed(1) + ' سم';
+    }
+
+    // ======================== رسم الباترون ========================
+    function drawGrid(ctx, w, h, step=20) {
+        ctx.save();
+        ctx.strokeStyle = '#e9ecef';
+        ctx.lineWidth = 0.5;
+        for(let x=0; x<w; x+=step) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+        for(let y=0; y<h; y+=step) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+        ctx.restore();
+    }
+
+    function drawBodice(ctx, w, h, isFront, measurements) {
+        const { chest, waist, backLength, shoulderWidth, neckCircumference } = measurements;
+        const bustEase = 2, waistEase = 2.5;
+        const qBust = chest/4 + bustEase;
+        const qWaist = waist/4 + waistEase;
+        const armholeDepth = chest/10 + 10.5;
+        const neckWidth = neckCircumference/6;
+        const neckDrop = isFront ? neckCircumference/5 : neckCircumference/20;
+        const shoulderSlope = 4.5;
+        ctx.save();
+        ctx.translate(30,40);
+        ctx.beginPath();
+        ctx.moveTo(0, backLength*userScale);
+        ctx.lineTo(0, neckDrop*userScale);
+        ctx.quadraticCurveTo(neckWidth*0.7*userScale, neckDrop*0.8*userScale, neckWidth*userScale, 0);
+        ctx.lineTo(shoulderWidth/2*userScale, shoulderSlope*userScale);
+        ctx.quadraticCurveTo((shoulderWidth/2 + qBust)*0.6*userScale, (shoulderSlope+armholeDepth)*0.5*userScale, qBust*userScale, armholeDepth*userScale);
+        ctx.quadraticCurveTo(qBust*userScale, (armholeDepth+backLength)*0.4*userScale, qWaist*userScale, backLength*userScale);
+        ctx.lineTo(0, backLength*userScale);
+        ctx.closePath();
+        ctx.strokeStyle = "#2c5282";
+        ctx.stroke();
+        ctx.fillStyle = "rgba(44,82,130,0.05)";
+        ctx.fill();
+        // Guidelines
+        ctx.beginPath(); ctx.moveTo(0, armholeDepth*userScale); ctx.lineTo(qBust*userScale, armholeDepth*userScale);
+        ctx.strokeStyle = "#e53e3e"; ctx.setLineDash([5,5]); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, backLength*userScale); ctx.lineTo(qWaist*userScale, backLength*userScale); ctx.stroke();
+        ctx.setLineDash([]);
+        // Labels
+        ctx.fillStyle = "#e53e3e"; ctx.font = "12px 'Tajawal'";
+        ctx.fillText(`خط الصدر (${formatDim(armholeDepth)})`, qBust*userScale+5, armholeDepth*userScale);
+        ctx.fillText(`خط الخصر (${formatDim(backLength)})`, qWaist*userScale+5, backLength*userScale);
+        // Grainline
+        const grainX = qBust/2 * userScale;
+        ctx.beginPath(); ctx.moveTo(grainX, 10); ctx.lineTo(grainX, backLength*userScale-10);
+        ctx.strokeStyle="#000"; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(grainX-5,10); ctx.lineTo(grainX,5); ctx.lineTo(grainX+5,10); ctx.fillStyle="#000"; ctx.fill();
+        ctx.fillStyle = "#1e3c72"; ctx.font = "bold 16px 'Tajawal'";
+        ctx.fillText(isFront ? "الأمامي" : "الخلفي", 10, 30);
+        ctx.fillStyle = "#666"; ctx.font = "12px 'Tajawal'";
+        ctx.fillText("على ثنية القماش", 10, 55);
+        ctx.restore();
+    }
+
+    function drawSkirt(ctx, w, h, measurements) {
+        const { waist, hips, waistToHip, backLength } = measurements;
+        const qWaist = waist/4 + 1;
+        const qHip = hips/4 + 1.5;
+        ctx.save();
+        ctx.translate(30,40);
+        ctx.beginPath();
+        ctx.moveTo(0, backLength*userScale);
+        ctx.lineTo(0, 0);
+        ctx.lineTo(qWaist*userScale, 0);
+        ctx.quadraticCurveTo(qWaist*userScale, waistToHip*0.4*userScale, qHip*userScale, waistToHip*userScale);
+        ctx.lineTo(qHip*userScale, backLength*userScale);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.fillStyle = "rgba(44,82,130,0.05)";
+        ctx.fill();
+        ctx.fillStyle = "#e53e3e";
+        ctx.fillText(`خط الخصر (${formatDim(0)})`, qWaist*userScale+5, 0);
+        ctx.fillText(`خط الورك (${formatDim(waistToHip)})`, qHip*userScale+5, waistToHip*userScale);
+        ctx.fillText(`طول التنورة (${formatDim(backLength)})`, qHip*userScale+5, backLength*userScale);
+        const grainX = qWaist/2 * userScale;
+        ctx.beginPath(); ctx.moveTo(grainX, 10); ctx.lineTo(grainX, backLength*userScale-10);
+        ctx.strokeStyle="#000"; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(grainX-5,10); ctx.lineTo(grainX,5); ctx.lineTo(grainX+5,10); ctx.fill();
+        ctx.fillStyle = "#1e3c72"; ctx.font = "bold 16px 'Tajawal'";
+        ctx.fillText("التنورة", 10, 30);
+        ctx.fillStyle = "#666";
+        ctx.fillText("قص 1 على الثنية", 10, 55);
+        ctx.restore();
+    }
+
+    function drawPants(ctx, w, h, measurements, isFront = true) {
+        const { waist, hips, waistToFloor, inlegLength } = measurements;
+        const qWaist = waist/4 + 0.5;
+        const qHip = hips/4 + (isFront?0.5:1.5);
+        const crotchDepth = waistToFloor - inlegLength;
+        const frontCrotch = waist/8;
+        const backCrotch = waist/6;
+        const hemWidth = qHip - 2;
+        ctx.save();
+        ctx.translate(30,40);
+        ctx.beginPath();
+        ctx.moveTo(0, waistToFloor*userScale);
+        ctx.lineTo(0, 0);
+        ctx.lineTo(qWaist*userScale, 0);
+        ctx.lineTo((isFront?frontCrotch:backCrotch)*userScale, crotchDepth*userScale);
+        ctx.lineTo(hemWidth*userScale, waistToFloor*userScale);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.fillStyle = "rgba(44,82,130,0.05)";
+        ctx.fill();
+        ctx.fillStyle = "#e53e3e";
+        ctx.fillText(`خط الخصر (${formatDim(0)})`, qWaist*userScale+5, 0);
+        ctx.fillText(`خط الورك (${formatDim(crotchDepth*0.3)})`, qHip*userScale+5, crotchDepth*0.3*userScale);
+        ctx.fillText(`خط الحجر (${formatDim(crotchDepth)})`, (isFront?frontCrotch:backCrotch)*userScale+5, crotchDepth*userScale);
+        ctx.fillText(`طول البنطلون (${formatDim(waistToFloor)})`, hemWidth*userScale+5, waistToFloor*userScale);
+        const grainX = (qWaist+hemWidth)/2 * userScale;
+        ctx.beginPath(); ctx.moveTo(grainX, 10); ctx.lineTo(grainX, waistToFloor*userScale-10);
+        ctx.strokeStyle="#000"; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(grainX-5,10); ctx.lineTo(grainX,5); ctx.lineTo(grainX+5,10); ctx.fill();
+        ctx.fillStyle = "#1e3c72"; ctx.font = "bold 16px 'Tajawal'";
+        ctx.fillText(isFront?"البنطلون الأمامي":"البنطلون الخلفي", 10, 30);
+        ctx.fillStyle = "#666";
+        ctx.fillText(isFront?"قص 2":"قص 2 (على ثنية)", 10, 55);
+        ctx.restore();
+    }
+
+    function drawAllPatterns() {
+        const measurements = getMeasurements();
+        const grid = document.getElementById("patterns-container");
+        if (currentStyle.patternType === 'skirt') {
+            grid.innerHTML = `<div class="pattern-card"><div class="card-header"><i class="fas fa-female"></i> التنورة</div><div class="pattern-canvas-container"><canvas id="skirtCanvas" width="500" height="500"></canvas></div></div>`;
+            const ctx = document.getElementById("skirtCanvas").getContext("2d");
+            drawGrid(ctx, 500, 500);
+            drawSkirt(ctx, 500, 500, measurements);
+        } else if (currentStyle.patternType === 'pants') {
+            grid.innerHTML = `
+                <div class="pattern-card"><div class="card-header"><i class="fas fa-vest-patches"></i> البنطلون الأمامي</div><div class="pattern-canvas-container"><canvas id="pantsFrontCanvas" width="500" height="500"></canvas></div></div>
+                <div class="pattern-card"><div class="card-header"><i class="fas fa-vest-patches"></i> البنطلون الخلفي</div><div class="pattern-canvas-container"><canvas id="pantsBackCanvas" width="500" height="500"></canvas></div></div>`;
+            drawGrid(document.getElementById("pantsFrontCanvas").getContext("2d"), 500, 500);
+            drawPants(document.getElementById("pantsFrontCanvas").getContext("2d"), 500, 500, measurements, true);
+            drawGrid(document.getElementById("pantsBackCanvas").getContext("2d"), 500, 500);
+            drawPants(document.getElementById("pantsBackCanvas").getContext("2d"), 500, 500, measurements, false);
+        } else {
+            grid.innerHTML = `
+                <div class="pattern-card"><div class="card-header"><i class="fas fa-tshirt"></i> الكورساج الأمامي</div><div class="pattern-canvas-container"><canvas id="frontCanvas" width="500" height="500"></canvas></div></div>
+                <div class="pattern-card"><div class="card-header"><i class="fas fa-tshirt"></i> الكورساج الخلفي</div><div class="pattern-canvas-container"><canvas id="backCanvas" width="500" height="500"></canvas></div></div>`;
+            drawGrid(document.getElementById("frontCanvas").getContext("2d"), 500, 500);
+            drawBodice(document.getElementById("frontCanvas").getContext("2d"), 500, 500, true, measurements);
+            drawGrid(document.getElementById("backCanvas").getContext("2d"), 500, 500);
+            drawBodice(document.getElementById("backCanvas").getContext("2d"), 500, 500, false, measurements);
+        }
+        // update step indicator
+        document.querySelectorAll('.step').forEach((s,i)=>s.classList.remove('active'));
+        document.getElementById('step4').classList.add('active');
+    }
+
+    // ======================== تحديث الواجهة ========================
+    function updateSizeList() {
+        const sizes = currentGender === 'children' ? Object.keys(CHILDREN_SIZES) : Object.keys(STANDARD_SIZES);
+        const container = document.getElementById("sizes-container");
+        container.innerHTML = sizes.map(s => `<div class="size-option ${s===currentSizeKey?'selected':''}" data-size="${s}">${s}</div>`).join("");
+        document.querySelectorAll(".size-option").forEach(opt => opt.addEventListener("click", () => {
+            currentSizeKey = opt.dataset.size;
+            updateSizeList();
+            loadMeasurementsFromSize();
+            updatePrice();
+            drawAllPatterns();
+            updateInfo();
+        }));
+    }
+
+    function updateStyles() {
+        const styles = STYLES[currentGender];
+        const select = document.getElementById("style-select");
+        select.innerHTML = styles.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
+        currentStyle = styles[0];
+        select.value = currentStyle.id;
+        select.addEventListener("change", (e) => {
+            currentStyle = styles.find(s => s.id === e.target.value);
+            updatePrice();
+            drawAllPatterns();
+        });
+        updatePrice();
+    }
+
+    function updateFabrics() {
+        const container = document.getElementById("fabrics-container");
+        container.innerHTML = FABRICS.map(f => `
+            <div class="fabric-card ${currentFabric.id === f.id ? 'selected' : ''}" data-id="${f.id}">
+                <img src="${f.image}" alt="${f.name}">
+                <div class="info"><div class="name">${f.name}</div></div>
+            </div>
+        `).join("");
+        document.querySelectorAll(".fabric-card").forEach(card => {
+            card.addEventListener("click", () => {
+                currentFabric = FABRICS.find(f => f.id === card.dataset.id);
+                updateFabrics();
+                updatePrice();
+            });
+        });
+    }
+
+    function updatePrice() {
+        let basePrice = currentStyle.basePrice;
+        const multiplier = currentFabric.multiplier;
+        const total = basePrice * multiplier;
+        document.getElementById("price-summary").innerHTML = `السعر: ${total.toFixed(2)} ر.س`;
+    }
+
+    function updateInfo() {
+        document.getElementById("info-bar").style.display = "flex";
+        document.getElementById("type-name").innerText = currentGender === 'male' ? 'رجال' : (currentGender === 'female' ? 'نساء' : 'أطفال');
+        document.getElementById("size-value").innerText = currentSizeKey;
+        document.getElementById("unit-name").innerText = currentUnit === 'cm' ? 'سم' : 'إنش';
+        document.getElementById("scale-value").innerText = userScale;
+    }
+
+    // ======================== القياسات وحفظ الملفات الشخصية ========================
+    const measurementKeys = ["chest","waist","hips","shoulderWidth","armLength","neckCircumference","backLength","waistToHip","waistToFloor","height","inlegLength","armCircumference","cuffCircumference","waistToKnee"];
+    function loadMeasurementsFromSize() {
+        const m = getMeasurements();
+        const inputs = document.querySelectorAll(".measurement-item input");
+        inputs.forEach(input => {
+            const key = input.dataset.key;
+            if (m[key] !== undefined) input.value = m[key].toFixed(1);
+        });
+    }
+
+    function updateMeasurementsFromInputs() {
+        const inputs = document.querySelectorAll(".measurement-item input");
+        let m = getMeasurements();
+        inputs.forEach(input => {
+            const key = input.dataset.key;
+            m[key] = parseFloat(input.value) || 0;
+        });
+    }
+
+    function buildMeasurementFields() {
+        const container = document.getElementById("measurements-grid");
+        const m = getMeasurements();
+        const fields = [
+            { key: "chest", label: "محيط الصدر" },
+            { key: "waist", label: "محيط الخصر" },
+            { key: "hips", label: "محيط الورك" },
+            { key: "shoulderWidth", label: "عرض الكتف" },
+            { key: "armLength", label: "طول الكم" },
+            { key: "neckCircumference", label: "محيط الرقبة" },
+            { key: "backLength", label: "طول الظهر" },
+            { key: "waistToHip", label: "من الخصر للورك" },
+            { key: "waistToFloor", label: "من الخصر للأرض" },
+            { key: "height", label: "الطول الكلي" },
+            { key: "inlegLength", label: "طول الساق الداخلي" },
+            { key: "armCircumference", label: "محيط الذراع" },
+            { key: "cuffCircumference", label: "محيط الأسوارة" },
+            { key: "waistToKnee", label: "من الخصر للركبة" }
+        ];
+        container.innerHTML = fields.map(f => `
+            <div class="measurement-item">
+                <label>${f.label}</label>
+                <input type="number" step="0.5" value="${(m[f.key] || 0).toFixed(1)}" data-key="${f.key}">
+            </div>
+        `).join("");
+        document.querySelectorAll(".measurement-item input").forEach(input => {
+            input.addEventListener("change", () => {
+                updateMeasurementsFromInputs();
+                drawAllPatterns();
+            });
+        });
+    }
+
+    // حفظ الملفات الشخصية
+    function saveProfile() {
+        const profileName = prompt("أدخل اسم الملف الشخصي:", "مقاساتي");
+        if (!profileName) return;
+        const measurements = getMeasurements();
+        const profile = {
+            gender: currentGender,
+            size: currentSizeKey,
+            measurements: measurements,
+            styleId: currentStyle.id,
+            fabricId: currentFabric.id,
+            unit: currentUnit,
+            scale: userScale
+        };
+        let profiles = JSON.parse(localStorage.getItem("pattern_profiles") || "{}");
+        profiles[profileName] = profile;
+        localStorage.setItem("pattern_profiles", JSON.stringify(profiles));
+        loadProfileList();
+        alert("تم حفظ الملف بنجاح");
+    }
+
+    function loadProfileList() {
+        const profiles = JSON.parse(localStorage.getItem("pattern_profiles") || "{}");
+        const select = document.getElementById("load-profile-select");
+        select.innerHTML = '<option value="">تحميل ملف...</option>' + Object.keys(profiles).map(name => `<option value="${name}">${name}</option>`).join("");
+        select.onchange = () => {
+            if (select.value) loadProfile(select.value);
+        };
+    }
+
+    function loadProfile(name) {
+        const profiles = JSON.parse(localStorage.getItem("pattern_profiles") || "{}");
+        const prof = profiles[name];
+        if (!prof) return;
+        currentGender = prof.gender;
+        currentSizeKey = prof.size;
+        currentStyle = STYLES[currentGender].find(s => s.id === prof.styleId) || STYLES[currentGender][0];
+        currentFabric = FABRICS.find(f => f.id === prof.fabricId) || FABRICS[0];
+        currentUnit = prof.unit;
+        userScale = prof.scale;
+        document.getElementById("scale-range").value = userScale;
+        document.getElementById("unit-select").value = currentUnit;
+        document.querySelector(`.type-btn[data-type="${currentGender}"]`).click();
+        updateSizeList();
+        updateStyles();
+        updateFabrics();
+        document.getElementById("scale-value").innerText = userScale;
+        // تحديث الحقول
+        setTimeout(() => {
+            const inputs = document.querySelectorAll(".measurement-item input");
+            inputs.forEach(input => {
+                const key = input.dataset.key;
+                if (prof.measurements[key] !== undefined) input.value = prof.measurements[key].toFixed(1);
+            });
+            updateMeasurementsFromInputs();
+            drawAllPatterns();
+            updateInfo();
+        }, 100);
+    }
+
+    function deleteProfile() {
+        const select = document.getElementById("load-profile-select");
+        const name = select.value;
+        if (!name) return;
+        if (confirm(`هل تريد حذف الملف "${name}"؟`)) {
+            let profiles = JSON.parse(localStorage.getItem("pattern_profiles") || "{}");
+            delete profiles[name];
+            localStorage.setItem("pattern_profiles", JSON.stringify(profiles));
+            loadProfileList();
+        }
+    }
+
+    // ======================== أحداث ========================
+    document.querySelectorAll(".type-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".type-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            currentGender = btn.dataset.type;
+            currentSizeKey = currentGender === 'children' ? '4Y' : 'M';
+            updateSizeList();
+            buildMeasurementFields();
+            updateStyles();
+            updatePrice();
+            drawAllPatterns();
+            updateInfo();
+            document.querySelectorAll('.step').forEach((s,i)=>s.classList.remove('active'));
+            document.getElementById('step1').classList.add('active');
+        });
+    });
+    document.getElementById("unit-select").addEventListener("change", (e) => { currentUnit = e.target.value; drawAllPatterns(); updateInfo(); });
+    document.getElementById("scale-range").addEventListener("input", (e) => { userScale = parseFloat(e.target.value); document.getElementById("scale-value").innerText = userScale; drawAllPatterns(); });
+    document.getElementById("generate-btn").addEventListener("click", () => drawAllPatterns());
+    document.getElementById("export-png").addEventListener("click", () => {
+        const canvas = document.querySelector("canvas");
+        if(canvas){
+            const link = document.createElement("a");
+            link.download = "pattern.png";
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+    });
+    document.getElementById("print-btn").addEventListener("click", () => window.print());
+    document.getElementById("save-profile-btn").addEventListener("click", saveProfile);
+    document.getElementById("delete-profile-btn").addEventListener("click", deleteProfile);
+
+    // تهيئة
+    buildMeasurementFields();
+    updateSizeList();
+    updateStyles();
+    updateFabrics();
+    drawAllPatterns();
+    updateInfo();
+    loadProfileList();
+</script>
+</body>
+</html>

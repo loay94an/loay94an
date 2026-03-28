@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>موسوعة الأجيال – نظام الباترون الأساسي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+        }
+        :root {
+            --primary: #2c5282;
+            --primary-light: #4299c1;
+            --secondary: #48bb78;
+            --accent: #ed8936;
+            --gray-light: #f7fafc;
+            --gray: #cbd5e0;
+            --dark: #2d3748;
+            --white: #ffffff;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --radius: 12px;
+            --bg-page: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-color: #2d3748;
+            --border-color: #cbd5e0;
+        }
+        body.dark {
+            --primary: #4299c1;
+            --primary-light: #63b3ed;
+            --secondary: #68d391;
+            --accent: #f6ad55;
+            --gray-light: #2d3748;
+            --gray: #4a5568;
+            --dark: #f7fafc;
+            --white: #1a202c;
+            --bg-page: #1a202c;
+            --card-bg: #2d3748;
+            --text-color: #f7fafc;
+            --border-color: #4a5568;
+        }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg-page);
+            color: var(--text-color);
+            direction: rtl;
+            padding: 1rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .header h1 {
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .header-controls {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+        .lang-select, .theme-toggle {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 40px;
+            padding: 0.4rem 0.8rem;
+            color: white;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+        }
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        .selection-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: flex-end;
+        }
+        .form-group {
+            flex: 1;
+            min-width: 160px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+        }
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--white);
+            color: var(--text-color);
+            font-family: 'Tajawal', sans-serif;
+        }
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            background: var(--gray-light);
+            border: 1px solid var(--border-color);
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.2s;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+        .btn.active {
+            background: var(--secondary);
+            border-color: var(--secondary);
+            color: white;
+        }
+        .size-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            max-height: 160px;
+            overflow-y: auto;
+            padding: 0.5rem;
+            background: var(--gray-light);
+            border-radius: 10px;
+            margin-top: 0.5rem;
+        }
+        .size-option {
+            padding: 0.3rem 0.8rem;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.85rem;
+        }
+        .size-option.selected {
+            background: var(--primary);
+            color: white;
+        }
+        .tables-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        .card-header {
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-content {
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        th, td {
+            padding: 0.5rem 0.3rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th {
+            background: var(--gray-light);
+            color: var(--primary);
+        }
+        .info-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: var(--accent);
+        }
+        .formula-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1rem;
+            max-width: 300px;
+            z-index: 1000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            direction: rtl;
+        }
+        .pattern-canvas-container {
+            background: #fafafa;
+            padding: 1rem;
+            text-align: center;
+            overflow-x: auto;
+        }
+        canvas {
+            background: white;
+            box-shadow: var(--shadow);
+            border-radius: 8px;
+            max-width: 100%;
+            height: auto;
+        }
+        .export-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        .export-btn {
+            padding: 0.5rem 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 0.75rem;
+            color: var(--gray);
+        }
+        @media (max-width: 768px) {
+            .tables-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-drafting-compass"></i> <span id="app-title">موسوعة الأجيال – نظام الباترون الأساسي</span></h1>
+        <div class="header-controls">
+            <select id="lang-select" class="lang-select">
+                <option value="ar">العربية</option>
+                <option value="en">English</option>
+                <option value="es">Español</option>
+                <option value="de">Deutsch</option>
+            </select>
+            <button id="theme-toggle" class="theme-toggle"><i class="fas fa-moon"></i></button>
+        </div>
+    </div>
+
+    <div class="selection-card">
+        <div class="row">
+            <div class="form-group">
+                <label id="system-label">نظام المقاسات</label>
+                <select id="size-system">
+                    <option value="eu">🇪🇺 EU</option>
+                    <option value="us">🇺🇸 US</option>
+                    <option value="arab">🇸🇦 Arab</option>
+                    <option value="asian">🇯🇵 Asian</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label id="gender-label">الجنس</label>
+                <div class="btn-group" id="gender-buttons">
+                    <button class="btn active" data-gender="women">نساء</button>
+                    <button class="btn" data-gender="men">رجال</button>
+                    <button class="btn" data-gender="kids">أطفال</button>
+                    <button class="btn" data-gender="infant">رضع</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label id="unit-label">الوحدة</label>
+                <div class="btn-group" id="unit-buttons">
+                    <button class="btn active" data-unit="cm">سم</button>
+                    <button class="btn" data-unit="in">إنش</button>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label id="size-number-label">رقم المقاس</label>
+            <div id="size-buttons-container" class="size-buttons"></div>
+        </div>
+        <div class="row" id="calculation-methods">
+            <!-- ستضاف خيارات طريقة الحساب ديناميكياً -->
+        </div>
+    </div>
+
+    <div id="tables-container" class="tables-container"></div>
+
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-drafting-compass"></i> <span id="pattern-title">رسم الباترون الأساسي (ربع الأمامي)</span>
+        </div>
+        <div class="pattern-canvas-container">
+            <canvas id="patternCanvas" width="700" height="500" style="max-width:100%; height:auto;"></canvas>
+        </div>
+        <div class="export-buttons">
+            <button class="export-btn" id="export-pdf"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button class="export-btn" id="export-png"><i class="fas fa-image"></i> PNG</button>
+            <button class="export-btn" id="export-excel"><i class="fas fa-file-excel"></i> Excel</button>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p id="footer-text">جميع الحسابات وفق منهج فتحي خليل والمراجع العلمية – اضغط على أيقونة ℹ️ لرؤية القاعدة والمعادلة</p>
+    </div>
+</div>
+
+<script>
+    // ======================== الترجمة ========================
+    const translations = {
+        ar: {
+            appTitle: "موسوعة الأجيال – نظام الباترون الأساسي",
+            systemLabel: "نظام المقاسات",
+            genderLabel: "الجنس",
+            unitLabel: "الوحدة",
+            sizeNumberLabel: "رقم المقاس",
+            bodyTableTitle: "المقاسات التفصيلية (19 قياساً)",
+            patternTableTitle: "مقاسات الباترون الأساسي (ربع الباترون)",
+            measurement: "القياس",
+            value: "القيمة",
+            explanation: "الشرح",
+            formula: "القاعدة",
+            patternTitle: "رسم الباترون الأساسي (ربع الأمامي)",
+            footer: "جميع الحسابات وفق منهج فتحي خليل والمراجع العلمية – اضغط على أيقونة ℹ️ لرؤية القاعدة والمعادلة",
+            unitCm: "سم",
+            unitIn: "إنش",
+            methodLabel: "طريقة حساب",
+            direct: "قياس مباشر",
+            formula: "معادلة",
+            armholeDepthMethod: "ارتفاع حفرة الإبط",
+            neckDropMethod: "نزول الرقبة الأمامية",
+            backNeckDropMethod: "نزول الرقبة الخلفية",
+            shoulderSlopeMethod: "ميل الكتف"
+        },
+        en: {
+            appTitle: "Generations Encyclopedia – Basic Pattern System",
+            systemLabel: "Size System",
+            genderLabel: "Gender",
+            unitLabel: "Unit",
+            sizeNumberLabel: "Size Number",
+            bodyTableTitle: "Detailed Measurements (19 items)",
+            patternTableTitle: "Basic Pattern Measurements (Quarter Pattern)",
+            measurement: "Measurement",
+            value: "Value",
+            explanation: "Explanation",
+            formula: "Formula",
+            patternTitle: "Basic Pattern Drawing (Quarter Front)",
+            footer: "All calculations follow the scientific method – click ℹ️ to see rule and numeric formula",
+            unitCm: "cm",
+            unitIn: "in",
+            methodLabel: "Calculation method",
+            direct: "Direct measurement",
+            formula: "Formula",
+            armholeDepthMethod: "Armhole depth",
+            neckDropMethod: "Front neck drop",
+            backNeckDropMethod: "Back neck drop",
+            shoulderSlopeMethod: "Shoulder slope"
+        },
+        es: {
+            appTitle: "Enciclopedia de Generaciones – Sistema Básico de Patrones",
+            systemLabel: "Sistema de Tallas",
+            genderLabel: "Género",
+            unitLabel: "Unidad",
+            sizeNumberLabel: "Número de talla",
+            bodyTableTitle: "Medidas detalladas (19 items)",
+            patternTableTitle: "Medidas del patrón básico (Cuarto de patrón)",
+            measurement: "Medida",
+            value: "Valor",
+            explanation: "Explicación",
+            formula: "Fórmula",
+            patternTitle: "Dibujo del patrón básico (Cuarto delantero)",
+            footer: "Todos los cálculos siguen el método científico – haz clic en ℹ️ para ver la regla y fórmula numérica",
+            unitCm: "cm",
+            unitIn: "in",
+            methodLabel: "Método de cálculo",
+            direct: "Medición directa",
+            formula: "Fórmula",
+            armholeDepthMethod: "Profundidad de sisa",
+            neckDropMethod: "Caída del cuello delantero",
+            backNeckDropMethod: "Caída del cuello trasero",
+            shoulderSlopeMethod: "Inclinación del hombro"
+        },
+        de: {
+            appTitle: "Generationen-Enzyklopädie – Grundlegendes Schnittmuster-System",
+            systemLabel: "Größensystem",
+            genderLabel: "Geschlecht",
+            unitLabel: "Einheit",
+            sizeNumberLabel: "Größennummer",
+            bodyTableTitle: "Detaillierte Maße (19 Positionen)",
+            patternTableTitle: "Grundschnitt-Maße (Viertel-Schnitt)",
+            measurement: "Maß",
+            value: "Wert",
+            explanation: "Erklärung",
+            formula: "Formel",
+            patternTitle: "Grundschnitt-Zeichnung (Viertel Vorderteil)",
+            footer: "Alle Berechnungen folgen der wissenschaftlichen Methode – klicke auf ℹ️, um Regel und Zahlenformel zu sehen",
+            unitCm: "cm",
+            unitIn: "in",
+            methodLabel: "Berechnungsmethode",
+            direct: "Direkte Messung",
+            formula: "Formel",
+            armholeDepthMethod: "Armlochtiefe",
+            neckDropMethod: "Vordere Halsausschnitttiefe",
+            backNeckDropMethod: "Hintere Halsausschnitttiefe",
+            shoulderSlopeMethod: "Schulterneigung"
+        }
+    };
+
+    // ======================== بيانات المقاسات (من الكتب) ========================
+    // النساء – جدول 1-3 من إنتاج الملابس (مقاسات متوسطة)
+    const womenSizes = {
+        34: { chest: 88, waist: 69, hip: 94, backWidth: 35, shoulderLength: 12.7, backLength: 38.5, sleeveLength: 57, armCirc: 27.5, cuffCirc: 16, neckCirc: 36, waistToHip: 18, waistToKnee: 58, legLength: 100, skirtLength: 60, chestLength: 43, armholeCirc: 42, waistToArmpit: 28, shoulderToBust: 24, bustPointDist: 18, armholeDepth: 20.5 },
+        36: { chest: 92, waist: 73, hip: 98, backWidth: 36, shoulderLength: 13, backLength: 39, sleeveLength: 57, armCirc: 28.5, cuffCirc: 16.5, neckCirc: 37, waistToHip: 18.5, waistToKnee: 58, legLength: 100, skirtLength: 60, chestLength: 44, armholeCirc: 43, waistToArmpit: 28.5, shoulderToBust: 24.5, bustPointDist: 18.5, armholeDepth: 21 },
+        38: { chest: 96, waist: 77, hip: 102, backWidth: 37, shoulderLength: 13.3, backLength: 39.5, sleeveLength: 57, armCirc: 29.5, cuffCirc: 17, neckCirc: 38, waistToHip: 19, waistToKnee: 58, legLength: 100, skirtLength: 60, chestLength: 45, armholeCirc: 44, waistToArmpit: 29, shoulderToBust: 25, bustPointDist: 19, armholeDepth: 21.5 },
+        40: { chest: 100, waist: 81, hip: 106, backWidth: 38, shoulderLength: 13.6, backLength: 40, sleeveLength: 57, armCirc: 30.5, cuffCirc: 17.5, neckCirc: 39, waistToHip: 19.5, waistToKnee: 58, legLength: 100, skirtLength: 60, chestLength: 46, armholeCirc: 45, waistToArmpit: 29.5, shoulderToBust: 25.5, bustPointDist: 19.5, armholeDepth: 22 },
+        42: { chest: 104, waist: 85, hip: 110, backWidth: 39, shoulderLength: 13.9, backLength: 40.5, sleeveLength: 57, armCirc: 31.5, cuffCirc: 18, neckCirc: 40, waistToHip: 20, waistToKnee: 58, legLength: 100, skirtLength: 60, chestLength: 47, armholeCirc: 46, waistToArmpit: 30, shoulderToBust: 26, bustPointDist: 20, armholeDepth: 22.5 },
+        44: { chest: 108, waist: 89, hip: 114, backWidth: 40, shoulderLength: 14.2, backLength: 41, sleeveLength: 57, armCirc: 32.5, cuffCirc: 18.5, neckCirc: 41, waistToHip: 20.5, waistToKnee: 58, legLength: 100, skirtLength: 60, chestLength: 48, armholeCirc: 47, waistToArmpit: 30.5, shoulderToBust: 26.5, bustPointDist: 20.5, armholeDepth: 23 },
+        46: { chest: 112, waist: 93, hip: 118, backWidth: 41, shoulderLength: 14.5, backLength: 41.5, sleeveLength: 57, armCirc: 33.5, cuffCirc: 19, neckCirc: 42, waistToHip: 21, waistToKnee: 58, legLength: 100, skirtLength: 60, chestLength: 49, armholeCirc: 48, waistToArmpit: 31, shoulderToBust: 27, bustPointDist: 21, armholeDepth: 23.5 }
+    };
+    // الرجال – جدول 1-4 من إنتاج الملابس
+    const menSizes = {
+        38: { chest: 88, waist: 76, hip: 92, backWidth: 35, shoulderLength: 14, backLength: 42, sleeveLength: 60, armCirc: 30, cuffCirc: 18, neckCirc: 38, waistToHip: 20, waistToKnee: 60, legLength: 106, pantsLength: 102, chestLength: 44, armholeCirc: 42, waistToArmpit: 30, shoulderToChest: 25, chestPointDist: 18, armholeDepth: 20 },
+        40: { chest: 92, waist: 80, hip: 96, backWidth: 36, shoulderLength: 14.3, backLength: 42.5, sleeveLength: 60, armCirc: 31, cuffCirc: 18.5, neckCirc: 39, waistToHip: 20.5, waistToKnee: 60, legLength: 106, pantsLength: 102, chestLength: 44.5, armholeCirc: 43, waistToArmpit: 30.5, shoulderToChest: 25.5, chestPointDist: 18.5, armholeDepth: 20.5 },
+        42: { chest: 96, waist: 84, hip: 100, backWidth: 37, shoulderLength: 14.6, backLength: 43, sleeveLength: 60, armCirc: 32, cuffCirc: 19, neckCirc: 40, waistToHip: 21, waistToKnee: 60, legLength: 106, pantsLength: 102, chestLength: 45, armholeCirc: 44, waistToArmpit: 31, shoulderToChest: 26, chestPointDist: 19, armholeDepth: 21 },
+        44: { chest: 100, waist: 88, hip: 104, backWidth: 38, shoulderLength: 14.9, backLength: 43.5, sleeveLength: 60, armCirc: 33, cuffCirc: 19.5, neckCirc: 41, waistToHip: 21.5, waistToKnee: 60, legLength: 106, pantsLength: 102, chestLength: 45.5, armholeCirc: 45, waistToArmpit: 31.5, shoulderToChest: 26.5, chestPointDist: 19.5, armholeDepth: 21.5 },
+        46: { chest: 104, waist: 92, hip: 108, backWidth: 39, shoulderLength: 15.2, backLength: 44, sleeveLength: 60, armCirc: 34, cuffCirc: 20, neckCirc: 42, waistToHip: 22, waistToKnee: 60, legLength: 106, pantsLength: 102, chestLength: 46, armholeCirc: 46, waistToArmpit: 32, shoulderToChest: 27, chestPointDist: 20, armholeDepth: 22 },
+        48: { chest: 108, waist: 96, hip: 112, backWidth: 40, shoulderLength: 15.5, backLength: 44.5, sleeveLength: 60, armCirc: 35, cuffCirc: 20.5, neckCirc: 43, waistToHip: 22.5, waistToKnee: 60, legLength: 106, pantsLength: 102, chestLength: 46.5, armholeCirc: 47, waistToArmpit: 32.5, shoulderToChest: 27.5, chestPointDist: 20.5, armholeDepth: 22.5 },
+        50: { chest: 112, waist: 100, hip: 116, backWidth: 41, shoulderLength: 15.8, backLength: 45, sleeveLength: 60, armCirc: 36, cuffCirc: 21, neckCirc: 44, waistToHip: 23, waistToKnee: 60, legLength: 106, pantsLength: 102, chestLength: 47, armholeCirc: 48, waistToArmpit: 33, shoulderToChest: 28, chestPointDist: 21, armholeDepth: 23 }
+    };
+    // الأطفال – جدول 2-2 و 3-2 من إنتاج الملابس
+    const kidsSizes = {
+        2: { chest: 53, waist: 51, hip: 56, backWidth: 24, shoulderLength: 8, backLength: 22, sleeveLength: 32, armCirc: 18, cuffCirc: 14, neckCirc: 26, waistToHip: 12, waistToKnee: 32, legLength: 86, skirtLength: 34, chestLength: 23, armholeCirc: 28, waistToArmpit: 16, shoulderToBust: 14, bustPointDist: 10, armholeDepth: 14 },
+        4: { chest: 56, waist: 53, hip: 58, backWidth: 25, shoulderLength: 8.5, backLength: 23, sleeveLength: 34, armCirc: 19, cuffCirc: 15, neckCirc: 27, waistToHip: 12.5, waistToKnee: 34, legLength: 90, skirtLength: 36, chestLength: 24, armholeCirc: 29, waistToArmpit: 17, shoulderToBust: 14.5, bustPointDist: 10.5, armholeDepth: 14.5 },
+        6: { chest: 58, waist: 54, hip: 60, backWidth: 26, shoulderLength: 9, backLength: 24, sleeveLength: 36, armCirc: 20, cuffCirc: 16, neckCirc: 28, waistToHip: 13, waistToKnee: 36, legLength: 94, skirtLength: 38, chestLength: 25, armholeCirc: 30, waistToArmpit: 18, shoulderToBust: 15, bustPointDist: 11, armholeDepth: 15 },
+        8: { chest: 60, waist: 55, hip: 62, backWidth: 27, shoulderLength: 9.5, backLength: 25, sleeveLength: 38, armCirc: 21, cuffCirc: 17, neckCirc: 29, waistToHip: 13.5, waistToKnee: 38, legLength: 98, skirtLength: 40, chestLength: 26, armholeCirc: 31, waistToArmpit: 19, shoulderToBust: 15.5, bustPointDist: 11.5, armholeDepth: 15.5 },
+        10: { chest: 62, waist: 56, hip: 64, backWidth: 28, shoulderLength: 10, backLength: 26, sleeveLength: 40, armCirc: 22, cuffCirc: 18, neckCirc: 30, waistToHip: 14, waistToKnee: 40, legLength: 102, skirtLength: 42, chestLength: 27, armholeCirc: 32, waistToArmpit: 20, shoulderToBust: 16, bustPointDist: 12, armholeDepth: 16 },
+        12: { chest: 64, waist: 57, hip: 66, backWidth: 29, shoulderLength: 10.5, backLength: 27, sleeveLength: 42, armCirc: 23, cuffCirc: 19, neckCirc: 31, waistToHip: 14.5, waistToKnee: 42, legLength: 106, skirtLength: 44, chestLength: 28, armholeCirc: 33, waistToArmpit: 21, shoulderToBust: 16.5, bustPointDist: 12.5, armholeDepth: 16.5 },
+        14: { chest: 66, waist: 58, hip: 68, backWidth: 30, shoulderLength: 11, backLength: 28, sleeveLength: 44, armCirc: 24, cuffCirc: 20, neckCirc: 32, waistToHip: 15, waistToKnee: 44, legLength: 110, skirtLength: 46, chestLength: 29, armholeCirc: 34, waistToArmpit: 22, shoulderToBust: 17, bustPointDist: 13, armholeDepth: 17 }
+    };
+    // الرضع – من كتاب الأطفال حديثي الولادة (جدول 1-2)
+    const infantSizes = {
+        1: { chest: 48, waist: 47, hip: 50, backWidth: 23, shoulderLength: 9, backLength: 22, sleeveLength: 28, armCirc: 18, cuffCirc: 14, neckCirc: 26, waistToHip: 12, waistToKnee: 32, legLength: 62, skirtLength: 34, chestLength: 24, armholeCirc: 28, waistToArmpit: 16, shoulderToBust: 14, bustPointDist: 10, armholeDepth: 13 },
+        2: { chest: 50, waist: 48, hip: 52, backWidth: 24, shoulderLength: 9.5, backLength: 23, sleeveLength: 30, armCirc: 19, cuffCirc: 15, neckCirc: 27, waistToHip: 12.5, waistToKnee: 34, legLength: 66, skirtLength: 36, chestLength: 25, armholeCirc: 29, waistToArmpit: 17, shoulderToBust: 14.5, bustPointDist: 10.5, armholeDepth: 13.5 },
+        3: { chest: 52, waist: 49, hip: 54, backWidth: 25, shoulderLength: 10, backLength: 24, sleeveLength: 32, armCirc: 20, cuffCirc: 16, neckCirc: 28, waistToHip: 13, waistToKnee: 36, legLength: 70, skirtLength: 38, chestLength: 26, armholeCirc: 30, waistToArmpit: 18, shoulderToBust: 15, bustPointDist: 11, armholeDepth: 14 },
+        4: { chest: 54, waist: 50, hip: 56, backWidth: 26, shoulderLength: 10.5, backLength: 25, sleeveLength: 34, armCirc: 21, cuffCirc: 17, neckCirc: 29, waistToHip: 13.5, waistToKnee: 38, legLength: 74, skirtLength: 40, chestLength: 27, armholeCirc: 31, waistToArmpit: 19, shoulderToBust: 15.5, bustPointDist: 11.5, armholeDepth: 14.5 },
+        5: { chest: 56, waist: 51, hip: 58, backWidth: 27, shoulderLength: 11, backLength: 26, sleeveLength: 36, armCirc: 22, cuffCirc: 18, neckCirc: 30, waistToHip: 14, waistToKnee: 40, legLength: 78, skirtLength: 42, chestLength: 28, armholeCirc: 32, waistToArmpit: 20, shoulderToBust: 16, bustPointDist: 12, armholeDepth: 15 },
+        6: { chest: 58, waist: 52, hip: 60, backWidth: 28, shoulderLength: 11.5, backLength: 27, sleeveLength: 38, armCirc: 23, cuffCirc: 19, neckCirc: 31, waistToHip: 14.5, waistToKnee: 42, legLength: 82, skirtLength: 44, chestLength: 29, armholeCirc: 33, waistToArmpit: 21, shoulderToBust: 16.5, bustPointDist: 12.5, armholeDepth: 15.5 },
+        7: { chest: 60, waist: 53, hip: 62, backWidth: 29, shoulderLength: 12, backLength: 28, sleeveLength: 40, armCirc: 24, cuffCirc: 20, neckCirc: 32, waistToHip: 15, waistToKnee: 44, legLength: 86, skirtLength: 46, chestLength: 30, armholeCirc: 34, waistToArmpit: 22, shoulderToBust: 17, bustPointDist: 13, armholeDepth: 16 },
+        8: { chest: 62, waist: 54, hip: 64, backWidth: 30, shoulderLength: 12.5, backLength: 29, sleeveLength: 42, armCirc: 25, cuffCirc: 21, neckCirc: 33, waistToHip: 15.5, waistToKnee: 46, legLength: 90, skirtLength: 48, chestLength: 31, armholeCirc: 35, waistToArmpit: 23, shoulderToBust: 17.5, bustPointDist: 13.5, armholeDepth: 16.5 },
+        9: { chest: 64, waist: 55, hip: 66, backWidth: 31, shoulderLength: 13, backLength: 30, sleeveLength: 44, armCirc: 26, cuffCirc: 22, neckCirc: 34, waistToHip: 16, waistToKnee: 48, legLength: 94, skirtLength: 50, chestLength: 32, armholeCirc: 36, waistToArmpit: 24, shoulderToBust: 18, bustPointDist: 14, armholeDepth: 17 },
+        10: { chest: 66, waist: 56, hip: 68, backWidth: 32, shoulderLength: 13.5, backLength: 31, sleeveLength: 46, armCirc: 27, cuffCirc: 23, neckCirc: 35, waistToHip: 16.5, waistToKnee: 50, legLength: 98, skirtLength: 52, chestLength: 33, armholeCirc: 37, waistToArmpit: 25, shoulderToBust: 18.5, bustPointDist: 14.5, armholeDepth: 17.5 },
+        11: { chest: 68, waist: 57, hip: 70, backWidth: 33, shoulderLength: 14, backLength: 32, sleeveLength: 48, armCirc: 28, cuffCirc: 24, neckCirc: 36, waistToHip: 17, waistToKnee: 52, legLength: 102, skirtLength: 54, chestLength: 34, armholeCirc: 38, waistToArmpit: 26, shoulderToBust: 19, bustPointDist: 15, armholeDepth: 18 },
+        12: { chest: 70, waist: 58, hip: 72, backWidth: 34, shoulderLength: 14.5, backLength: 33, sleeveLength: 50, armCirc: 29, cuffCirc: 25, neckCirc: 37, waistToHip: 17.5, waistToKnee: 54, legLength: 106, skirtLength: 56, chestLength: 35, armholeCirc: 39, waistToArmpit: 27, shoulderToBust: 19.5, bustPointDist: 15.5, armholeDepth: 18.5 }
+    };
+
+    // تحويل بين أنظمة المقاسات (مبسط)
+    function convertSize(system, size, gender) {
+        if (system === 'eu') return size;
+        if (system === 'us') {
+            if (gender === 'women') return size + 30; // US 4 -> EU 34
+            if (gender === 'men') return size + 10; // US 34 -> EU 44
+            return size; // kids
+        }
+        if (system === 'arab') return size; // افتراض تطابق مع EU
+        if (system === 'asian') return size - 4;
+        return size;
+    }
+
+    let currentGender = 'women';
+    let currentSystem = 'eu';
+    let currentSize = 38;
+    let currentUnit = 'cm';
+    let currentLang = 'ar';
+    let currentMethods = {
+        armholeDepth: 'formula',   // 'direct' or 'formula'
+        frontNeckDrop: 'formula',
+        backNeckDrop: 'formula',
+        shoulderSlope: 'formula'
+    };
+
+    // قائمة أسماء القياسات الـ19
+    const measurementKeys = [
+        "عرض الظهر", "طول الكتف", "طول الظهر", "طول الكم", "محيط الذراع",
+        "محيط الأسوارة", "محيط الرقبة", "محيط الصدر", "محيط الخصر", "محيط الورك",
+        "المسافة من الخصر إلى الورك", "المسافة من الخصر إلى الركبة", "طول الساق من الخصر إلى أسفل القدم",
+        "طول التنورة / البنطلون", "طول الصدر", "محيط الإبط (دوران الإبط)",
+        "المسافة من الخصر إلى الإبط", "المسافة من أعلى الكتف إلى الصدر",
+        "المسافة بين الثديين"
+    ];
+    const measurementKeysEn = [
+        "Back width", "Shoulder length", "Back length", "Sleeve length", "Arm circumference",
+        "Cuff circumference", "Neck circumference", "Chest circumference", "Waist circumference", "Hip circumference",
+        "Waist to hip", "Waist to knee", "Waist to floor", "Skirt/pants length", "Chest length",
+        "Armhole circumference", "Waist to armpit", "Shoulder to bust", "Bust point distance"
+    ];
+    const measurementKeysEs = [
+        "Ancho de espalda", "Largo de hombro", "Largo de espalda", "Largo de manga", "Circunferencia brazo",
+        "Circunferencia puño", "Circunferencia cuello", "Circunferencia pecho", "Circunferencia cintura", "Circunferencia cadera",
+        "Cintura a cadera", "Cintura a rodilla", "Cintura a suelo", "Largo falda/pantalón", "Largo pecho",
+        "Circunferencia sisa", "Cintura a axila", "Hombro a busto", "Distancia entre bustos"
+    ];
+    const measurementKeysDe = [
+        "Rückenbreite", "Schulterlänge", "Rückenlänge", "Ärmellänge", "Armumfang",
+        "Bündchenweite", "Halsumfang", "Brustumfang", "Taillenumfang", "Hüftumfang",
+        "Taille-Hüfte", "Taille-Knie", "Taille-Boden", "Rock/Hosenlänge", "Brustlänge",
+        "Armlochumfang", "Taille-Achsel", "Schulter-Brust", "Brustpunktabstand"
+    ];
+    const measurementTranslations = {
+        ar: measurementKeys,
+        en: measurementKeysEn,
+        es: measurementKeysEs,
+        de: measurementKeysDe
+    };
+
+    function getMeasurements() {
+        let sizeData;
+        if (currentGender === 'women') sizeData = womenSizes[currentSize];
+        else if (currentGender === 'men') sizeData = menSizes[currentSize];
+        else if (currentGender === 'kids') sizeData = kidsSizes[currentSize];
+        else sizeData = infantSizes[currentSize];
+        if (!sizeData) sizeData = womenSizes[38];
+        return sizeData;
+    }
+
+    function formatDim(value) {
+        if (currentUnit === 'in') return (value / 2.54).toFixed(2) + ' in';
+        return value.toFixed(1) + ' سم';
+    }
+
+    function computePattern(meas) {
+        const chest = meas.chest;
+        const waist = meas.waist;
+        const hip = meas.hip;
+        const neck = meas.neckCirc;
+        const backLength = meas.backLength;
+        const shoulder = meas.shoulderLength;
+        const waistToHip = meas.waistToHip;
+        const legLength = meas.legLength;
+        const sleeveLength = meas.sleeveLength;
+        const armCirc = meas.armCirc;
+        const cuffCirc = meas.cuffCirc;
+        const waistToKnee = meas.waistToKnee;
+        const bustDist = meas.bustPointDist;
+        const shoulderToBust = meas.shoulderToBust;
+
+        // استخدام الطرق المختارة
+        let armholeDepth;
+        if (currentMethods.armholeDepth === 'direct') armholeDepth = meas.armholeDepth;
+        else armholeDepth = (chest / 4) - 2;
+
+        let frontNeckDrop;
+        if (currentMethods.frontNeckDrop === 'direct') frontNeckDrop = meas.frontNeckDrop || (neck / 5);
+        else frontNeckDrop = neck / 5;
+
+        let backNeckDrop;
+        if (currentMethods.backNeckDrop === 'direct') backNeckDrop = meas.backNeckDrop || (neck / 20);
+        else backNeckDrop = neck / 20;
+
+        let shoulderSlope;
+        if (currentMethods.shoulderSlope === 'direct') shoulderSlope = meas.shoulderSlope || 4.5;
+        else shoulderSlope = 4.5;
+
+        const neckWidth = (neck / 6) + 0.5;
+        const chestQuarter = chest / 4;
+        const backWidthPat = chestQuarter - 2;
+        const waistQuarter = waist / 4;
+        const hipQuarter = hip / 4;
+        const hipHeight = waistToHip;
+        const totalLength = legLength;
+        const thighCirc = chest * 0.55;
+        const crotchHeight = legLength / 4;
+        const frontCrotch = waist / 8;
+        const backCrotch = waist / 6;
+        const skirtToKnee = waistToKnee;
+        const sleeveWidth = (chest / 5) + 3;
+        const sleeveCapHeight = armholeDepth * 0.8;
+        const cuffWidth = cuffCirc;
+        const backNeckDepth = backNeckDrop + 1;
+
+        return {
+            "طول الظهر": { value: backLength, numericFormula: `${backLength.toFixed(1)}` },
+            "عرض الكتف": { value: shoulder, numericFormula: `${shoulder.toFixed(1)}` },
+            "عرض حردة الرقبة": { value: neckWidth, numericFormula: `(${neck.toFixed(1)} ÷ 6) + 0.5 = ${neckWidth.toFixed(1)}` },
+            "نزول الرقبة الأمامية": { value: frontNeckDrop, numericFormula: `${neck.toFixed(1)} ÷ 5 = ${frontNeckDrop.toFixed(1)}` },
+            "نزول الرقبة الخلفية": { value: backNeckDrop, numericFormula: `${neck.toFixed(1)} ÷ 20 = ${backNeckDrop.toFixed(1)}` },
+            "ارتفاع حفرة الجيرو": { value: armholeDepth, numericFormula: `${chest.toFixed(1)} ÷ 4 - 2 = ${armholeDepth.toFixed(1)}` },
+            "عرض الصدر ÷ 4": { value: chestQuarter, numericFormula: `${chest.toFixed(1)} ÷ 4 = ${chestQuarter.toFixed(1)}` },
+            "عرض الظهر (الباترون)": { value: backWidthPat, numericFormula: `(${chest.toFixed(1)} ÷ 4) - 2 = ${backWidthPat.toFixed(1)}` },
+            "عرض الخصر ÷ 4": { value: waistQuarter, numericFormula: `${waist.toFixed(1)} ÷ 4 = ${waistQuarter.toFixed(1)}` },
+            "عرض الورك ÷ 4": { value: hipQuarter, numericFormula: `${hip.toFixed(1)} ÷ 4 = ${hipQuarter.toFixed(1)}` },
+            "ارتفاع الورك (من الخصر)": { value: hipHeight, numericFormula: `${hipHeight.toFixed(1)}` },
+            "طول البنطلون/التنورة": { value: totalLength, numericFormula: `${totalLength.toFixed(1)}` },
+            "محيط الفخذ": { value: thighCirc, numericFormula: `${chest.toFixed(1)} × 0.55 = ${thighCirc.toFixed(1)}` },
+            "ارتفاع السرج": { value: crotchHeight, numericFormula: `${legLength.toFixed(1)} ÷ 4 = ${crotchHeight.toFixed(1)}` },
+            "عرض خط السرج الأمامي": { value: frontCrotch, numericFormula: `${waist.toFixed(1)} ÷ 8 = ${frontCrotch.toFixed(1)}` },
+            "عرض خط السرج الخلفي": { value: backCrotch, numericFormula: `${waist.toFixed(1)} ÷ 6 = ${backCrotch.toFixed(1)}` },
+            "طول التنورة إلى الركبة": { value: skirtToKnee, numericFormula: `${skirtToKnee.toFixed(1)}` },
+            "عرض الكم": { value: sleeveWidth, numericFormula: `(${chest.toFixed(1)} ÷ 5) + 3 = ${sleeveWidth.toFixed(1)}` },
+            "طول الكم": { value: sleeveLength, numericFormula: `${sleeveLength.toFixed(1)}` },
+            "ارتفاع رأس الكم": { value: sleeveCapHeight, numericFormula: `${armholeDepth.toFixed(1)} × 0.8 = ${sleeveCapHeight.toFixed(1)}` },
+            "عرض الأسوارة": { value: cuffWidth, numericFormula: `${cuffWidth.toFixed(1)}` },
+            "ميل الكتف": { value: shoulderSlope, numericFormula: `${shoulderSlope}` },
+            "المسافة بين الثديين/الحلمات": { value: bustDist, numericFormula: `${bustDist.toFixed(1)}` },
+            "المسافة من الكتف إلى الصدر": { value: shoulderToBust, numericFormula: `${shoulderToBust.toFixed(1)}` },
+            "عمق الرقبة الخلفية": { value: backNeckDepth, numericFormula: `${backNeckDrop.toFixed(1)} + 1 = ${backNeckDepth.toFixed(1)}` }
+        };
+    }
+
+    function drawPattern(meas) {
+        const canvas = document.getElementById('patternCanvas');
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width, h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.save();
+
+        const chest = meas.chest;
+        const backLength = meas.backLength;
+        const neck = meas.neckCirc;
+        let armholeDepth;
+        if (currentMethods.armholeDepth === 'direct') armholeDepth = meas.armholeDepth;
+        else armholeDepth = (chest / 4) - 2;
+        let frontNeckDrop;
+        if (currentMethods.frontNeckDrop === 'direct') frontNeckDrop = meas.frontNeckDrop || (neck / 5);
+        else frontNeckDrop = neck / 5;
+        const shoulderSlope = currentMethods.shoulderSlope === 'direct' ? (meas.shoulderSlope || 4.5) : 4.5;
+        const neckWidth = (neck / 6) + 0.5;
+        const chestQuarter = chest / 4;
+        const waistQuarter = (meas.waist / 4);
+        const hipQuarter = (meas.hip / 4);
+        const waistToHip = meas.waistToHip;
+
+        const width = chestQuarter * 2; // عرض ربع الأمامي (النصف)
+        const height = backLength;
+
+        const scale = Math.min((w-100) / width, (h-100) / height, 3.5);
+        const offsetX = 50, offsetY = 50;
+        const rectW = width * scale;
+        const rectH = height * scale;
+
+        // المستطيل الأساسي
+        ctx.strokeStyle = '#2c5282';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(offsetX, offsetY, rectW, rectH);
+        ctx.fillStyle = 'rgba(44,82,130,0.05)';
+        ctx.fillRect(offsetX, offsetY, rectW, rectH);
+
+        // خط الثنية (منتصف العرض)
+        ctx.beginPath();
+        ctx.moveTo(offsetX + rectW/2, offsetY);
+        ctx.lineTo(offsetX + rectW/2, offsetY + rectH);
+        ctx.strokeStyle = '#000';
+        ctx.setLineDash([5,5]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // خط الصدر (حفرة الإبط)
+        const armholeY = offsetY + armholeDepth * scale;
+        ctx.beginPath();
+        ctx.moveTo(offsetX, armholeY);
+        ctx.lineTo(offsetX + rectW, armholeY);
+        ctx.strokeStyle = '#e53e3e';
+        ctx.setLineDash([5,5]);
+        ctx.stroke();
+
+        // خط الخصر
+        const waistY = offsetY + backLength * scale;
+        ctx.beginPath();
+        ctx.moveTo(offsetX, waistY);
+        ctx.lineTo(offsetX + rectW, waistY);
+        ctx.stroke();
+
+        // خط الورك
+        const hipY = offsetY + (backLength - waistToHip) * scale;
+        ctx.beginPath();
+        ctx.moveTo(offsetX, hipY);
+        ctx.lineTo(offsetX + rectW, hipY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // حردة الرقبة (تقريب)
+        const neckTopX = offsetX + neckWidth * scale;
+        const neckTopY = offsetY;
+        const neckDropX = offsetX + rectW/2;
+        const neckDropY = offsetY + frontNeckDrop * scale;
+        ctx.beginPath();
+        ctx.moveTo(neckTopX, neckTopY);
+        ctx.quadraticCurveTo(offsetX + rectW/2, offsetY, neckDropX, neckDropY);
+        ctx.stroke();
+
+        // خط الكتف
+        const shoulderEndX = offsetX + (shoulderSlope + 2) * scale;
+        const shoulderEndY = offsetY + shoulderSlope * scale;
+        ctx.beginPath();
+        ctx.moveTo(neckTopX, neckTopY);
+        ctx.lineTo(shoulderEndX, shoulderEndY);
+        ctx.stroke();
+
+        // كتابة الأبعاد
+        ctx.fillStyle = '#e53e3e';
+        ctx.font = "12px 'Tajawal'";
+        ctx.fillText(`عرض: ${formatDim(width)}`, offsetX + rectW/2, offsetY - 5);
+        ctx.fillText(`طول: ${formatDim(height)}`, offsetX + rectW + 5, offsetY + rectH/2);
+        ctx.fillText(`خط الصدر: ${formatDim(armholeDepth)}`, offsetX + rectW + 5, armholeY);
+        ctx.fillText(`خط الخصر: ${formatDim(backLength)}`, offsetX + rectW + 5, waistY);
+        ctx.fillText(`خط الورك: ${formatDim(waistToHip)}`, offsetX + rectW + 5, hipY);
+        ctx.fillStyle = '#1e3c72';
+        ctx.font = "bold 14px 'Tajawal'";
+        ctx.fillText("ربع الباترون الأمامي (على ثنية القماش)", offsetX, offsetY - 15);
+        ctx.restore();
+    }
+
+    function updateUI() {
+        const t = translations[currentLang];
+        document.getElementById('app-title').innerText = t.appTitle;
+        document.getElementById('system-label').innerText = t.systemLabel;
+        document.getElementById('gender-label').innerText = t.genderLabel;
+        document.getElementById('unit-label').innerText = t.unitLabel;
+        document.getElementById('size-number-label').innerText = t.sizeNumberLabel;
+        document.getElementById('pattern-title').innerText = t.patternTitle;
+        document.getElementById('footer-text').innerHTML = t.footer;
+        // تحديث نصوص الأزرار الثابتة
+        document.querySelector('#gender-buttons button[data-gender="women"]').innerText = t.women || 'نساء';
+        document.querySelector('#gender-buttons button[data-gender="men"]').innerText = t.men || 'رجال';
+        document.querySelector('#gender-buttons button[data-gender="kids"]').innerText = t.kids || 'أطفال';
+        document.querySelector('#gender-buttons button[data-gender="infant"]').innerText = t.infant || 'رضع';
+        document.querySelectorAll('#unit-buttons .btn').forEach(btn => {
+            btn.innerText = btn.dataset.unit === 'cm' ? t.unitCm : t.unitIn;
+        });
+        buildSizeButtons();
+        renderTables();
+    }
+
+    function buildSizeButtons() {
+        let sizes;
+        if (currentGender === 'women') sizes = Object.keys(womenSizes).map(Number);
+        else if (currentGender === 'men') sizes = Object.keys(menSizes).map(Number);
+        else if (currentGender === 'kids') sizes = Object.keys(kidsSizes).map(Number);
+        else sizes = Object.keys(infantSizes).map(Number);
+        const container = document.getElementById('size-buttons-container');
+        container.innerHTML = sizes.map(s => `<div class="size-option ${s === currentSize ? 'selected' : ''}" data-size="${s}">${s}</div>`).join('');
+        document.querySelectorAll('.size-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                currentSize = parseInt(opt.dataset.size);
+                buildSizeButtons();
+                renderTables();
+            });
+        });
+    }
+
+    function renderTables() {
+        const meas = getMeasurements();
+        const pattern = computePattern(meas);
+        const t = translations[currentLang];
+        const measurementNamesLocal = measurementTranslations[currentLang] || measurementTranslations.ar;
+
+        // تجميع القيم الـ19
+        const measValues = [
+            meas.backWidth, meas.shoulderLength, meas.backLength, meas.sleeveLength,
+            meas.armCirc, meas.cuffCirc, meas.neckCirc, meas.chest, meas.waist,
+            meas.hip, meas.waistToHip, meas.waistToKnee, meas.legLength,
+            (currentGender === 'women' ? meas.skirtLength : (currentGender === 'men' ? meas.pantsLength : meas.skirtLength)),
+            meas.chestLength, meas.armholeCirc, meas.waistToArmpit,
+            (currentGender === 'women' ? meas.shoulderToBust : (currentGender === 'men' ? meas.shoulderToChest : meas.shoulderToBust)),
+            (currentGender === 'women' ? meas.bustPointDist : (currentGender === 'men' ? meas.chestPointDist : meas.bustPointDist))
+        ];
+
+        const bodyTableHtml = `
+            <div class="card">
+                <div class="card-header">${t.bodyTableTitle}</div>
+                <div class="card-content">
+                    <table>
+                        <thead><tr><th>${t.measurement}</th><th>${t.value} (${currentUnit === 'cm' ? t.unitCm : t.unitIn})</th></tr></thead>
+                        <tbody>
+                            ${measurementNamesLocal.map((name, i) => `<tr><td>${name}</td><td><strong>${formatDim(measValues[i])}</strong></td></tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+
+        const patternTableHtml = `
+            <div class="card">
+                <div class="card-header">${t.patternTableTitle}</div>
+                <div class="card-content">
+                    <table>
+                        <thead><tr><th>${t.measurement}</th><th>${t.value} (${currentUnit === 'cm' ? t.unitCm : t.unitIn})</th><th>${t.explanation}</th></tr></thead>
+                        <tbody>
+                            ${Object.entries(pattern).map(([key, {value, numericFormula}]) => `
+                                <tr>
+                                    <td>${key}</td>
+                                    <td><strong>${formatDim(value)}</strong></td>
+                                    <td><button class="info-btn" data-rule="${key}" data-formula="${numericFormula.replace(/"/g, '&quot;')}"><i class="fas fa-info-circle"></i></button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('tables-container').innerHTML = bodyTableHtml + patternTableHtml;
+
+        // إضافة أحداث الأزرار
+        document.querySelectorAll('.info-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const rule = btn.dataset.rule;
+                const formula = btn.dataset.formula;
+                const popup = document.createElement('div');
+                popup.className = 'formula-popup';
+                popup.innerHTML = `
+                    <div style="display:flex; justify-content:space-between;"><strong>القاعدة:</strong><span class="close-popup" style="cursor:pointer;">&times;</span></div>
+                    <div>${rule}</div>
+                    <div style="margin-top:0.5rem;"><strong>المعادلة بالأرقام:</strong><br>${formula}</div>
+                `;
+                document.body.appendChild(popup);
+                const close = popup.querySelector('.close-popup');
+                const closePopup = () => popup.remove();
+                close.addEventListener('click', closePopup);
+                setTimeout(() => popup.remove(), 5000);
+            });
+        });
+
+        drawPattern(meas);
+    }
+
+    function updateMethodsDropdowns() {
+        const container = document.getElementById('calculation-methods');
+        const t = translations[currentLang];
+        container.innerHTML = `
+            <div class="form-group">
+                <label>${t.armholeDepthMethod}</label>
+                <select id="method-armhole">
+                    <option value="formula" ${currentMethods.armholeDepth === 'formula' ? 'selected' : ''}>${t.formula}</option>
+                    <option value="direct" ${currentMethods.armholeDepth === 'direct' ? 'selected' : ''}>${t.direct}</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>${t.neckDropMethod}</label>
+                <select id="method-frontneck">
+                    <option value="formula" ${currentMethods.frontNeckDrop === 'formula' ? 'selected' : ''}>${t.formula}</option>
+                    <option value="direct" ${currentMethods.frontNeckDrop === 'direct' ? 'selected' : ''}>${t.direct}</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>${t.backNeckDropMethod}</label>
+                <select id="method-backneck">
+                    <option value="formula" ${currentMethods.backNeckDrop === 'formula' ? 'selected' : ''}>${t.formula}</option>
+                    <option value="direct" ${currentMethods.backNeckDrop === 'direct' ? 'selected' : ''}>${t.direct}</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>${t.shoulderSlopeMethod}</label>
+                <select id="method-shoulderslope">
+                    <option value="formula" ${currentMethods.shoulderSlope === 'formula' ? 'selected' : ''}>${t.formula}</option>
+                    <option value="direct" ${currentMethods.shoulderSlope === 'direct' ? 'selected' : ''}>${t.direct}</option>
+                </select>
+            </div>
+        `;
+        document.getElementById('method-armhole').addEventListener('change', (e) => { currentMethods.armholeDepth = e.target.value; renderTables(); });
+        document.getElementById('method-frontneck').addEventListener('change', (e) => { currentMethods.frontNeckDrop = e.target.value; renderTables(); });
+        document.getElementById('method-backneck').addEventListener('change', (e) => { currentMethods.backNeckDrop = e.target.value; renderTables(); });
+        document.getElementById('method-shoulderslope').addEventListener('change', (e) => { currentMethods.shoulderSlope = e.target.value; renderTables(); });
+    }
+
+    function switchGender(gender) {
+        currentGender = gender;
+        if (currentGender === 'women') currentSize = 38;
+        else if (currentGender === 'men') currentSize = 44;
+        else if (currentGender === 'kids') currentSize = 6;
+        else currentSize = 6;
+        buildSizeButtons();
+        renderTables();
+        document.querySelectorAll('#gender-buttons .btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`#gender-buttons .btn[data-gender="${gender}"]`).classList.add('active');
+    }
+
+    function switchUnit(unit) {
+        currentUnit = unit;
+        renderTables();
+        document.querySelectorAll('#unit-buttons .btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`#unit-buttons .btn[data-unit="${unit}"]`).classList.add('active');
+    }
+
+    function switchSystem(system) {
+        currentSystem = system;
+        buildSizeButtons();
+        renderTables();
+    }
+
+    function exportExcel() {
+        const meas = getMeasurements();
+        const pattern = computePattern(meas);
+        const t = translations[currentLang];
+        const measurementNamesLocal = measurementTranslations[currentLang] || measurementTranslations.ar;
+        const measValues = [
+            meas.backWidth, meas.shoulderLength, meas.backLength, meas.sleeveLength,
+            meas.armCirc, meas.cuffCirc, meas.neckCirc, meas.chest, meas.waist,
+            meas.hip, meas.waistToHip, meas.waistToKnee, meas.legLength,
+            (currentGender === 'women' ? meas.skirtLength : (currentGender === 'men' ? meas.pantsLength : meas.skirtLength)),
+            meas.chestLength, meas.armholeCirc, meas.waistToArmpit,
+            (currentGender === 'women' ? meas.shoulderToBust : (currentGender === 'men' ? meas.shoulderToChest : meas.shoulderToBust)),
+            (currentGender === 'women' ? meas.bustPointDist : (currentGender === 'men' ? meas.chestPointDist : meas.bustPointDist))
+        ];
+        const bodyData = measurementNamesLocal.map((name, i) => [name, formatDim(measValues[i])]);
+        const patternData = Object.entries(pattern).map(([key, {value, numericFormula}]) => [key, formatDim(value), numericFormula]);
+        const wsData = [
+            [t.bodyTableTitle],
+            [t.measurement, t.value],
+            ...bodyData,
+            [],
+            [t.patternTableTitle],
+            [t.measurement, t.value, t.formula],
+            ...patternData
+        ];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Pattern');
+        XLSX.writeFile(wb, `pattern_${currentGender}_${currentSize}.xlsx`);
+    }
+
+    function exportPNG() {
+        const canvas = document.getElementById('patternCanvas');
+        const link = document.createElement('a');
+        link.download = `pattern_${currentGender}_${currentSize}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+    }
+
+    function exportPDF() {
+        const element = document.getElementById('tables-container');
+        const opt = {
+            margin: 0.5,
+            filename: `pattern_${currentGender}_${currentSize}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
+    }
+
+    // الأحداث
+    document.querySelectorAll('#gender-buttons .btn').forEach(btn => btn.addEventListener('click', () => switchGender(btn.dataset.gender)));
+    document.querySelectorAll('#unit-buttons .btn').forEach(btn => btn.addEventListener('click', () => switchUnit(btn.dataset.unit)));
+    document.getElementById('size-system').addEventListener('change', (e) => switchSystem(e.target.value));
+    document.getElementById('lang-select').addEventListener('change', (e) => {
+        currentLang = e.target.value;
+        updateUI();
+        updateMethodsDropdowns();
+    });
+    document.getElementById('export-excel').addEventListener('click', exportExcel);
+    document.getElementById('export-png').addEventListener('click', exportPNG);
+    document.getElementById('export-pdf').addEventListener('click', exportPDF);
+
+    // تهيئة
+    function init() {
+        updateUI();
+        updateMethodsDropdowns();
+        renderTables();
+        if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark');
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+        });
+    }
+    init();
+</script>
+</body>
+</html>
