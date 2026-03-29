@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>موسوعة الأجيال - محرك رسم البترونات الهندسية</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.1.2/dist/svg.min.js"></script>
+    <style>
+        /* إعدادات عامة */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --dark-bg: #1a1a2e;
+            --light-bg: #f8f9fa;
+            --text-light: #ffffff;
+            --text-dark: #333333;
+            --border-color: #ddd;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Tajawal', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--light-bg);
+            direction: rtl;
+        }
+
+        /* الهيدر */
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: var(--text-light);
+            text-align: center;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* القسم الرئيسي */
+        main {
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 200px);
+        }
+
+        /* منطقة الرسم */
+        #drawing-section {
+            flex: 1;
+            padding: 1.5rem;
+            background-color: white;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        #drawing-section h2 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+        }
+
+        #drawing-viewport {
+            width: 100%;
+            height: 500px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: white;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+        }
+
+        .viewport-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .viewport-controls button {
+            padding: 0.5rem 1rem;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .viewport-controls button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .viewport-controls #export-btn {
+            background-color: var(--success-color);
+        }
+
+        /* منطقة التحكم */
+        #control-section {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            padding: 1.5rem;
+        }
+
+        #control-section h2 {
+            margin-bottom: 1rem;
+            color: var(--text-light);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .category-section, .data-section, .popup-section {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .category-section h3, .data-section h3, .popup-section h3 {
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+        }
+
+        /* أزرار الفئات */
+        .category-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .category-btn {
+            padding: 0.75rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-light);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 500;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .category-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .category-btn.active {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        /* جدول البيانات */
+        .size-info {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            padding: 1rem;
+        }
+
+        .size-header {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+            text-align: center;
+        }
+
+        #measurements-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #measurements-table th, #measurements-table td {
+            padding: 0.75rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #measurements-table th {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--secondary-color);
+        }
+
+        #measurements-table tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        /* أزرار النوافذ المنبثقة */
+        .popup-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .popup-btn {
+            padding: 0.75rem;
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 500;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .popup-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        /* النوافذ المنبثقة */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            display: none;
+        }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            width: 90%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .popup-header h3 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .close-popup {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .close-popup:hover {
+            color: var(--accent-color);
+        }
+
+        .popup-content {
+            padding: 1.5rem;
+        }
+
+        /* التبويبات */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 500;
+            color: var(--text-dark);
+            transition: var(--transition);
+        }
+
+        .tab-btn:hover {
+            color: var(--secondary-color);
+        }
+
+        .tab-btn.active {
+            color: var(--secondary-color);
+            border-bottom-color: var(--secondary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* جداول المقاسات */
+        .sizes-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .sizes-table th, .sizes-table td {
+            padding: 0.75rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .sizes-table th {
+            background-color: var(--light-bg);
+            color: var(--primary-color);
+        }
+
+        .sizes-table tr:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        .size-select-btn {
+            padding: 0.5rem 1rem;
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            transition: var(--transition);
+        }
+
+        .size-select-btn:hover {
+            background-color: #27ae60;
+        }
+
+        /* بطاقات الموديلات */
+        .model-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .model-card {
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+
+        .model-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+            border-color: var(--secondary-color);
+        }
+
+        .model-icon {
+            font-size: 2.5rem;
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+
+        .model-card h4 {
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        .model-card p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* بطاقات الصيغ الرياضية */
+        .formula-card {
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .formula-card h4 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .formula {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            text-align: center;
+            margin: 1rem 0;
+            padding: 0.5rem;
+            background-color: white;
+            border-radius: 4px;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .formula-example {
+            background-color: white;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .calculator {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .calculator input {
+            flex: 1;
+            min-width: 150px;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        .calculator button {
+            padding: 0.5rem 1rem;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        .calculator p {
+            flex-basis: 100%;
+            margin-top: 0.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        /* التعليمات */
+        .instructions ol, .instructions ul {
+            margin-right: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .instructions li {
+            margin-bottom: 0.5rem;
+        }
+
+        .system-requirements {
+            background-color: var(--light-bg);
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        /* الفوتر */
+        footer {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            text-align: center;
+            padding: 1rem;
+        }
+
+        /* تخصيص SVG */
+        svg text {
+            font-family: 'Tajawal', Arial, sans-serif;
+        }
+
+        .point-label {
+            font-weight: bold;
+            fill: red;
+            font-size: 14px;
+        }
+
+        /* استجابة للشاشات الصغيرة */
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .category-buttons, .popup-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .model-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .popup {
+                width: 95%;
+            }
+            
+            #drawing-viewport {
+                height: 400px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .viewport-controls {
+                flex-direction: column;
+            }
+            
+            .tabs {
+                flex-wrap: wrap;
+            }
+            
+            .tab-btn {
+                flex: 1;
+                min-width: 100px;
+                text-align: center;
+            }
+        }
+
+        /* تخصيصات إضافية */
+        input[type="number"] {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        .measurement-input {
+            text-align: center;
+            width: 80px;
+        }
+
+        .success-message {
+            background-color: var(--success-color);
+            color: white;
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1><i class="fas fa-ruler-combined"></i> موسوعة الأجيال - محرك رسم البترونات الهندسية</h1>
+        <p class="subtitle">طريقة فتحي خليل للنمذجة الهندسية</p>
+    </header>
+
+    <main>
+        <!-- منطقة الرسم -->
+        <section id="drawing-section">
+            <h2><i class="fas fa-pencil-ruler"></i> منطقة الرسم</h2>
+            <div id="drawing-viewport">
+                <!-- SVG سيتم إنشاؤه ديناميكيًا -->
+            </div>
+            <div class="viewport-controls">
+                <button id="zoom-in"><i class="fas fa-search-plus"></i> تكبير</button>
+                <button id="zoom-out"><i class="fas fa-search-minus"></i> تصغير</button>
+                <button id="reset-view"><i class="fas fa-sync-alt"></i> إعادة تعيين</button>
+                <button id="export-btn"><i class="fas fa-download"></i> تصدير SVG</button>
+            </div>
+            <div id="export-message" class="success-message"></div>
+        </section>
+
+        <!-- منطقة التحكم -->
+        <section id="control-section">
+            <h2><i class="fas fa-sliders-h"></i> لوحة التحكم</h2>
+            <div class="dashboard">
+                
+                <!-- القسم الأول: أزرار اختيار الفئة -->
+                <div class="category-section">
+                    <h3><i class="fas fa-users"></i> اختر فئة الموديل</h3>
+                    <div class="category-buttons">
+                        <button class="category-btn active" data-category="women">
+                            <i class="fas fa-female"></i> حريمي
+                        </button>
+                        <button class="category-btn" data-category="men">
+                            <i class="fas fa-male"></i> رجالي
+                        </button>
+                        <button class="category-btn" data-category="girls">
+                            <i class="fas fa-child"></i> بناتي
+                        </button>
+                        <button class="category-btn" data-category="kids">
+                            <i class="fas fa-baby"></i> أطفال
+                        </button>
+                    </div>
+                </div>
+
+                <!-- القسم الثاني: جدول البيانات الحي -->
+                <div class="data-section">
+                    <h3><i class="fas fa-table"></i> مقاسات الموديل الحالي</h3>
+                    <div class="size-info">
+                        <div class="size-header">
+                            <span id="current-category">الحريمي</span> - 
+                            <span id="current-size">المقاس 38</span>
+                        </div>
+                        <table id="measurements-table">
+                            <thead>
+                                <tr>
+                                    <th>القياس</th>
+                                    <th>القيمة (سم)</th>
+                                    <th>القاعدة الرياضية</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- سيتم ملؤه ديناميكيًا -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- القسم الثالث: أزرار النوافذ المنبثقة -->
+                <div class="popup-section">
+                    <h3><i class="fas fa-window-restore"></i> أدوات الرسم</h3>
+                    <div class="popup-buttons">
+                        <button class="popup-btn" id="sizes-popup-btn">
+                            <i class="fas fa-ruler"></i> قاعدة المقاسات
+                        </button>
+                        <button class="popup-btn" id="models-popup-btn">
+                            <i class="fas fa-tshirt"></i> كتالوج الموديلات
+                        </button>
+                        <button class="popup-btn" id="calculations-popup-btn">
+                            <i class="fas fa-calculator"></i> الحسابات الرياضية
+                        </button>
+                        <button class="popup-btn" id="instructions-popup-btn">
+                            <i class="fas fa-book"></i> تعليمات الاستخدام
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- النوافذ المنبثقة -->
+    <div class="popup-overlay" id="popup-overlay"></div>
+
+    <!-- نافذة المقاسات -->
+    <div class="popup" id="sizes-popup">
+        <div class="popup-header">
+            <h3><i class="fas fa-ruler-combined"></i> قاعدة بيانات المقاسات</h3>
+            <button class="close-popup"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="popup-content">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="women-tab">حريمي</button>
+                <button class="tab-btn" data-tab="men-tab">رجالي</button>
+                <button class="tab-btn" data-tab="girls-tab">بناتي</button>
+                <button class="tab-btn" data-tab="kids-tab">أطفال</button>
+            </div>
+            
+            <div class="tab-content active" id="women-tab">
+                <table class="sizes-table">
+                    <thead>
+                        <tr>
+                            <th>المقاس</th>
+                            <th>الصدر</th>
+                            <th>الوسط</th>
+                            <th>الظهر</th>
+                            <th>عرض الظهر</th>
+                            <th>الرقبة</th>
+                            <th>اختر</th>
+                        </tr>
+                    </thead>
+                    <tbody id="women-sizes">
+                        <!-- سيتم ملؤه ديناميكيًا -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="tab-content" id="men-tab">
+                <table class="sizes-table">
+                    <thead>
+                        <tr>
+                            <th>المقاس</th>
+                            <th>الصدر</th>
+                            <th>الوسط</th>
+                            <th>الظهر</th>
+                            <th>عرض الظهر</th>
+                            <th>اختر</th>
+                        </tr>
+                    </thead>
+                    <tbody id="men-sizes">
+                        <!-- سيتم ملؤه ديناميكيًا -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="tab-content" id="girls-tab">
+                <table class="sizes-table">
+                    <thead>
+                        <tr>
+                            <th>المقاس</th>
+                            <th>الصدر</th>
+                            <th>الوسط</th>
+                            <th>الظهر</th>
+                            <th>الرقبة</th>
+                            <th>اختر</th>
+                        </tr>
+                    </thead>
+                    <tbody id="girls-sizes">
+                        <!-- سيتم ملؤه ديناميكيًا -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="tab-content" id="kids-tab">
+                <table class="sizes-table">
+                    <thead>
+                        <tr>
+                            <th>المقاس</th>
+                            <th>الصدر</th>
+                            <th>الظهر</th>
+                            <th>الرقبة</th>
+                            <th>اختر</th>
+                        </tr>
+                    </thead>
+                    <tbody id="kids-sizes">
+                        <!-- سيتم ملؤه ديناميكيًا -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة الموديلات -->
+    <div class="popup" id="models-popup">
+        <div class="popup-header">
+            <h3><i class="fas fa-tshirt"></i> كتالوج الموديلات</h3>
+            <button class="close-popup"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="popup-content">
+            <p class="popup-description">اختر نوع الموديل لرسم البترون المناسب:</p>
+            <div class="model-options">
+                <div class="model-card" data-model="jacket">
+                    <div class="model-icon">
+                        <i class="fas fa-vest"></i>
+                    </div>
+                    <h4>جاكيت / بالطو</h4>
+                    <p>رسم المستطيل الأساسي + خط الإبط + ميل الكتف</p>
+                </div>
+                
+                <div class="model-card" data-model="pants">
+                    <div class="model-icon">
+                        <i class="fas fa-vest-patches"></i>
+                    </div>
+                    <h4>بنطلون</h4>
+                    <p>رسم شبكة البنطلون (خط الحجر، الركبة، الطول الكلي)</p>
+                </div>
+                
+                <div class="model-card" data-model="skirt">
+                    <div class="model-icon">
+                        <i class="fas fa-female"></i>
+                    </div>
+                    <h4>تنورة (جيبة)</h4>
+                    <p>رسم بترون التنورة الأساسي مع البنسات</p>
+                </div>
+                
+                <div class="model-card" data-model="shirt">
+                    <div class="model-icon">
+                        <i class="fas fa-shirt"></i>
+                    </div>
+                    <h4>قميص</h4>
+                    <p>رسم قميص رجالي مع حساب مقدار المرد والياقة</p>
+                </div>
+                
+                <div class="model-card" data-model="blouse">
+                    <div class="model-icon">
+                        <i class="fas fa-vest"></i>
+                    </div>
+                    <h4>بلوزة</h4>
+                    <p>رسم الكورساج الحريمي مع بنسة الصدر</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة الحسابات الرياضية -->
+    <div class="popup" id="calculations-popup">
+        <div class="popup-header">
+            <h3><i class="fas fa-calculator"></i> الحسابات الرياضية</h3>
+            <button class="close-popup"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="popup-content">
+            <div class="formula-card">
+                <h4><i class="fas fa-ruler-vertical"></i> حساب فتحة الإبط</h4>
+                <p class="formula">(طول الظهر ÷ 2) + 4</p>
+                <div class="formula-example">
+                    <p>مثال: إذا كان طول الظهر = 40 سم</p>
+                    <p>فتحة الإبط = (40 ÷ 2) + 4 = 24 سم</p>
+                </div>
+                <div class="calculator">
+                    <input type="number" id="back-length-input" placeholder="أدخل طول الظهر" value="40">
+                    <button id="calculate-armhole">احسب</button>
+                    <p id="armhole-result"></p>
+                </div>
+            </div>
+            
+            <div class="formula-card">
+                <h4><i class="fas fa-neuter"></i> حساب عرض الرقبة</h4>
+                <p class="formula">(محيط الرقبة ÷ 5) + 1</p>
+                <div class="formula-example">
+                    <p>مثال: إذا كان محيط الرقبة = 36 سم</p>
+                    <p>عرض الرقبة = (36 ÷ 5) + 1 = 8.2 سم</p>
+                </div>
+                <div class="calculator">
+                    <input type="number" id="neck-circ-input" placeholder="أدخل محيط الرقبة" value="36">
+                    <button id="calculate-neck">احسب</button>
+                    <p id="neck-result"></p>
+                </div>
+            </div>
+            
+            <div class="formula-card">
+                <h4><i class="fas fa-arrows-alt-h"></i> حساب عرض القطعة</h4>
+                <p class="formula">(الصدر ÷ 4) + القيمة الإضافية</p>
+                <div class="formula-example">
+                    <p>مثال: إذا كان الصدر = 88 سم والقيمة الإضافية = 2 سم</p>
+                    <p>العرض = (88 ÷ 4) + 2 = 24 سم</p>
+                </div>
+                <div class="calculator">
+                    <input type="number" id="bust-input" placeholder="أدخل مقاس الصدر" value="88">
+                    <input type="number" id="extra-input" placeholder="القيمة الإضافية" value="2">
+                    <button id="calculate-width">احسب</button>
+                    <p id="width-result"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة التعليمات -->
+    <div class="popup" id="instructions-popup">
+        <div class="popup-header">
+            <h3><i class="fas fa-book"></i> تعليمات استخدام المحرك</h3>
+            <button class="close-popup"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="popup-content">
+            <div class="instructions">
+                <h4><i class="fas fa-list-ol"></i> خطوات العمل:</h4>
+                <ol>
+                    <li>اختر الفئة المناسبة (حريمي، رجالي، بناتي، أطفال).</li>
+                    <li>افتح نافذة "قاعدة المقاسات" واختر المقاس المطلوب.</li>
+                    <li>افتح نافذة "كتالوج الموديلات" واختر نوع الموديل المراد رسمه.</li>
+                    <li>سيتم تحديث الرسم تلقائياً بناءً على المقاس والموديل المختار.</li>
+                    <li>يمكنك استخدام أدوات التحكم في منطقة الرسم للتكبير والتصغير.</li>
+                    <li>استخدم نافذة "الحسابات الرياضية" للتحقق من القياسات.</li>
+                    <li>اضغط على "تصدير SVG" لحفظ الرسم على جهازك.</li>
+                </ol>
+                
+                <h4><i class="fas fa-lightbulb"></i> نصائح تقنية:</h4>
+                <ul>
+                    <li>يمكنك التبديل بين الفئات في أي وقت.</li>
+                    <li>القياسات المعروضة في الجدول قابلة للتعديل يدوياً.</li>
+                    <li>يتم تحديث الرسم فوراً عند تغيير أي قيمة.</li>
+                    <li>جميع الحسابات تتم وفق منهج فتحي خليل للنمذجة الهندسية.</li>
+                </ul>
+                
+                <div class="system-requirements">
+                    <h4><i class="fas fa-cogs"></i> متطلبات النظام:</h4>
+                    <p>متصفح حديث يدعم SVG و JavaScript (Chrome 80+, Firefox 75+, Safari 13+)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>موسوعة الأجيال - محرك رسم البترونات الهندسية v5.0</p>
+        <p>طريقة فتحي خليل للنمذجة الهندسية © 2023</p>
+    </footer>
+
+    <script>
+        // قاعدة بيانات المقاسات الكاملة (بدون أي حذف أو اختصار)
+        const measurementsDatabase = {
+            // جدول الحريمي (Women)
+            women: {
+                "38": {
+                    صدر: 88,
+                    وسط: 70,
+                    ظهر: 39,
+                    عرض_ظهر: 17.5,
+                    رقبة: 36
+                },
+                "40": {
+                    صدر: 92,
+                    وسط: 74,
+                    ظهر: 40,
+                    عرض_ظهر: 18.0,
+                    رقبة: 37
+                },
+                "42": {
+                    صدر: 96,
+                    وسط: 78,
+                    ظهر: 41,
+                    عرض_ظهر: 18.5,
+                    رقبة: 38
+                },
+                "44": {
+                    صدر: 100,
+                    وسط: 82,
+                    ظهر: 42,
+                    عرض_ظهر: 19.0,
+                    رقبة: 39
+                },
+                "46": {
+                    صدر: 104,
+                    وسط: 86,
+                    ظهر: 43,
+                    عرض_ظهر: 19.5,
+                    رقبة: 40
+                },
+                "48": {
+                    صدر: 108,
+                    وسط: 90,
+                    ظهر: 44,
+                    عرض_ظهر: 20.0,
+                    رقبة: 41
+                },
+                "50": {
+                    صدر: 112,
+                    وسط: 94,
+                    ظهر: 45,
+                    عرض_ظهر: 20.5,
+                    رقبة: 42
+                },
+                "52": {
+                    صدر: 116,
+                    وسط: 98,
+                    ظهر: 46,
+                    عرض_ظهر: 21.0,
+                    رقبة: 43
+                }
+            },
+            
+            // جدول الرجالي (Men)
+            men: {
+                "44": {
+                    صدر: 88,
+                    وسط: 76,
+                    ظهر: 43,
+                    عرض_ظهر: 18
+                },
+                "46": {
+                    صدر: 92,
+                    وسط: 80,
+                    ظهر: 44,
+                    عرض_ظهر: 18.5
+                },
+                "48": {
+                    صدر: 96,
+                    وسط: 84,
+                    ظهر: 45,
+                    عرض_ظهر: 19
+                },
+                "50": {
+                    صدر: 100,
+                    وسط: 88,
+                    ظهر: 46,
+                    عرض_ظهر: 19.5
+                },
+                "52": {
+                    صدر: 104,
+                    وسط: 92,
+                    ظهر: 47,
+                    عرض_ظهر: 20
+                },
+                "54": {
+                    صدر: 108,
+                    وسط: 96,
+                    ظهر: 48,
+                    عرض_ظهر: 20.5
+                },
+                "56": {
+                    صدر: 112,
+                    وسط: 100,
+                    ظهر: 49,
+                    عرض_ظهر: 21
+                }
+            },
+            
+            // جدول البناتي (Girls)
+            girls: {
+                "10Y": {
+                    صدر: 72,
+                    وسط: 62,
+                    ظهر: 32,
+                    رقبة: 32
+                },
+                "12Y": {
+                    صدر: 78,
+                    وسط: 66,
+                    ظهر: 34,
+                    رقبة: 33
+                },
+                "14Y": {
+                    صدر: 84,
+                    وسط: 68,
+                    ظهر: 36,
+                    رقبة: 34
+                }
+            },
+            
+            // جدول الأطفال (Kids)
+            kids: {
+                "2Y": {
+                    صدر: 56,
+                    ظهر: 22,
+                    رقبة: 26
+                },
+                "4Y": {
+                    صدر: 60,
+                    ظهر: 24,
+                    رقبة: 28
+                },
+                "6Y": {
+                    صدر: 64,
+                    ظهر: 26,
+                    رقبة: 30
+                },
+                "8Y": {
+                    صدر: 68,
+                    ظهر: 29,
+                    رقبة: 31
+                }
+            }
+        };
+
+        // أسماء الفئات بالعربية
+        const categoryNames = {
+            women: "حريمي",
+            men: "رجالي",
+            girls: "بناتي",
+            kids: "أطفال"
+        };
+
+        // معلومات الموديلات
+        const modelInfo = {
+            jacket: {
+                name: "جاكيت / بالطو",
+                description: "رسم المستطيل الأساسي + خط الإبط + ميل الكتف"
+            },
+            pants: {
+                name: "بنطلون",
+                description: "رسم شبكة البنطلون (خط الحجر، الركبة، الطول الكلي)"
+            },
+            skirt: {
+                name: "تنورة (جيبة)",
+                description: "رسم بترون التنورة الأساسي مع البنسات"
+            },
+            shirt: {
+                name: "قميص",
+                description: "رسم قميص رجالي مع حساب مقدار المرد والياقة"
+            },
+            blouse: {
+                name: "بلوزة",
+                description: "رسم الكورساج الحريمي مع بنسة الصدر"
+            }
+        };
+
+        // حالة التطبيق
+        const appState = {
+            currentCategory: "women",
+            currentSize: "38",
+            currentModel: "jacket",
+            zoomLevel: 1.0,
+            measurements: {},
+            svgDrawing: null,
+            svgCanvas: null
+        };
+
+        // تهيئة التطبيق
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            setupEventListeners();
+            loadInitialData();
+            drawPattern();
+            initializeCalculations();
+        });
+
+        // تهيئة التطبيق
+        function initializeApp() {
+            // إنشاء لوحة SVG
+            const viewport = document.getElementById('drawing-viewport');
+            appState.svgDrawing = SVG().addTo('#drawing-viewport').size('100%', '100%');
+            appState.svgCanvas = appState.svgDrawing.group();
+            
+            // تعيين القياسات الابتدائية
+            appState.measurements = measurementsDatabase[appState.currentCategory][appState.currentSize];
+            
+            // تحديث واجهة المستخدم
+            updateCategoryDisplay();
+            updateMeasurementsTable();
+            populateSizesTables();
+        }
+
+        // إعداد مستمعي الأحداث
+        function setupEventListeners() {
+            // أزرار الفئات
+            document.querySelectorAll('.category-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const category = this.dataset.category;
+                    switchCategory(category);
+                    
+                    // تحديث حالة الأزرار النشطة
+                    document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            // أزرار النوافذ المنبثقة
+            document.getElementById('sizes-popup-btn').addEventListener('click', () => openPopup('sizes-popup'));
+            document.getElementById('models-popup-btn').addEventListener('click', () => openPopup('models-popup'));
+            document.getElementById('calculations-popup-btn').addEventListener('click', () => openPopup('calculations-popup'));
+            document.getElementById('instructions-popup-btn').addEventListener('click', () => openPopup('instructions-popup'));
+            
+            // إغلاق النوافذ
+            document.querySelectorAll('.close-popup').forEach(button => {
+                button.addEventListener('click', closeAllPopups);
+            });
+            
+            document.getElementById('popup-overlay').addEventListener('click', closeAllPopups);
+            
+            // التبويبات
+            document.querySelectorAll('.tab-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabId = this.dataset.tab;
+                    
+                    // تحديث الأزرار النشطة
+                    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // إظهار المحتوى المناسب
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            // أزرار التحكم في منطقة الرسم
+            document.getElementById('zoom-in').addEventListener('click', zoomIn);
+            document.getElementById('zoom-out').addEventListener('click', zoomOut);
+            document.getElementById('reset-view').addEventListener('click', resetView);
+            document.getElementById('export-btn').addEventListener('click', exportSVG);
+            
+            // بطاقات الموديلات
+            document.querySelectorAll('.model-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const model = this.dataset.model;
+                    selectModel(model);
+                    closeAllPopups();
+                });
+            });
+            
+            // الحسابات الرياضية
+            document.getElementById('calculate-armhole').addEventListener('click', calculateArmhole);
+            document.getElementById('calculate-neck').addEventListener('click', calculateNeck);
+            document.getElementById('calculate-width').addEventListener('click', calculateWidth);
+            
+            // تحديث القيم في الجدول
+            document.addEventListener('input', function(e) {
+                if (e.target.classList.contains('measurement-input')) {
+                    updateMeasurement(e.target.dataset.key, parseFloat(e.target.value) || 0);
+                }
+            });
+            
+            // إدخال الأرقام في الحقول
+            document.getElementById('back-length-input').addEventListener('input', calculateArmhole);
+            document.getElementById('neck-circ-input').addEventListener('input', calculateNeck);
+            document.getElementById('bust-input').addEventListener('input', calculateWidth);
+            document.getElementById('extra-input').addEventListener('input', calculateWidth);
+        }
+
+        // تحميل البيانات الأولية
+        function loadInitialData() {
+            // لا حاجة لتحميل إضافي حيث البيانات مخزنة محلياً
+        }
+
+        // تبديل الفئة
+        function switchCategory(category) {
+            appState.currentCategory = category;
+            
+            // الحصول على أول مقاس متوفر لهذه الفئة
+            const sizes = Object.keys(measurementsDatabase[category]);
+            appState.currentSize = sizes[0];
+            appState.measurements = measurementsDatabase[category][appState.currentSize];
+            
+            // تحديث الواجهة
+            updateCategoryDisplay();
+            updateMeasurementsTable();
+            drawPattern();
+        }
+
+        // تحديث عرض الفئة
+        function updateCategoryDisplay() {
+            const categoryName = categoryNames[appState.currentCategory];
+            document.getElementById('current-category').textContent = categoryName;
+            
+            // تحديث اسم الفئة في النافذة المنبثقة
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                if (btn.dataset.tab === `${appState.currentCategory}-tab`) {
+                    btn.click();
+                }
+            });
+        }
+
+        // تحديث جدول القياسات
+        function updateMeasurementsTable() {
+            const tableBody = document.querySelector('#measurements-table tbody');
+            tableBody.innerHTML = '';
+            
+            const measurements = appState.measurements;
+            const category = appState.currentCategory;
+            
+            // إنشاء صفوف الجدول
+            Object.keys(measurements).forEach(key => {
+                const value = measurements[key];
+                let formula = '';
+                
+                // تحديد القاعدة الرياضية بناءً على القياس
+                if (key === 'ظهر') {
+                    formula = `فتحة الإبط = (${value} ÷ 2) + 4 = ${calculateArmholeValue(value)} سم`;
+                } else if (key === 'رقبة') {
+                    formula = `عرض الرقبة = (${value} ÷ 5) + 1 = ${calculateNeckValue(value)} سم`;
+                } else if (key === 'صدر') {
+                    formula = `عرض القطعة = (${value} ÷ 4) + 2 = ${calculateWidthValue(value, 2)} سم`;
+                }
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${getMeasurementName(key)}</td>
+                    <td>
+                        <input type="number" class="measurement-input" data-key="${key}" 
+                               value="${value}" step="0.5" min="10" max="200">
+                    </td>
+                    <td>${formula}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            // تحديث عرض المقاس
+            document.getElementById('current-size').textContent = `المقاس ${appState.currentSize}`;
+        }
+
+        // الحصول على الاسم العربي للقياس
+        function getMeasurementName(key) {
+            const names = {
+                'صدر': 'الصدر',
+                'وسط': 'الوسط',
+                'ظهر': 'طول الظهر',
+                'عرض_ظهر': 'عرض الظهر',
+                'رقبة': 'محيط الرقبة'
+            };
+            
+            return names[key] || key;
+        }
+
+        // ملء جداول المقاسات في النافذة المنبثقة
+        function populateSizesTables() {
+            // جدول الحريمي
+            const womenTable = document.getElementById('women-sizes');
+            womenTable.innerHTML = '';
+            
+            Object.keys(measurementsDatabase.women).forEach(size => {
+                const measurements = measurementsDatabase.women[size];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${size}</td>
+                    <td>${measurements.صدر}</td>
+                    <td>${measurements.وسط}</td>
+                    <td>${measurements.ظهر}</td>
+                    <td>${measurements.عرض_ظهر}</td>
+                    <td>${measurements.رقبة}</td>
+                    <td><button class="size-select-btn" data-category="women" data-size="${size}">اختر</button></td>
+                `;
+                womenTable.appendChild(row);
+            });
+            
+            // جدول الرجالي
+            const menTable = document.getElementById('men-sizes');
+            menTable.innerHTML = '';
+            
+            Object.keys(measurementsDatabase.men).forEach(size => {
+                const measurements = measurementsDatabase.men[size];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${size}</td>
+                    <td>${measurements.صدر}</td>
+                    <td>${measurements.وسط}</td>
+                    <td>${measurements.ظهر}</td>
+                    <td>${measurements.عرض_ظهر}</td>
+                    <td><button class="size-select-btn" data-category="men" data-size="${size}">اختر</button></td>
+                `;
+                menTable.appendChild(row);
+            });
+            
+            // جدول البناتي
+            const girlsTable = document.getElementById('girls-sizes');
+            girlsTable.innerHTML = '';
+            
+            Object.keys(measurementsDatabase.girls).forEach(size => {
+                const measurements = measurementsDatabase.girls[size];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${size}</td>
+                    <td>${measurements.صدر}</td>
+                    <td>${measurements.وسط}</td>
+                    <td>${measurements.ظهر}</td>
+                    <td>${measurements.رقبة}</td>
+                    <td><button class="size-select-btn" data-category="girls" data-size="${size}">اختر</button></td>
+                `;
+                girlsTable.appendChild(row);
+            });
+            
+            // جدول الأطفال
+            const kidsTable = document.getElementById('kids-sizes');
+            kidsTable.innerHTML = '';
+            
+            Object.keys(measurementsDatabase.kids).forEach(size => {
+                const measurements = measurementsDatabase.kids[size];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${size}</td>
+                    <td>${measurements.صدر}</td>
+                    <td>${measurements.ظهر}</td>
+                    <td>${measurements.رقبة}</td>
+                    <td><button class="size-select-btn" data-category="kids" data-size="${size}">اختر</button></td>
+                `;
+                kidsTable.appendChild(row);
+            });
+            
+            // إضافة مستمعي الأحداث لأزرار الاختيار
+            document.querySelectorAll('.size-select-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const category = this.dataset.category;
+                    const size = this.dataset.size;
+                    
+                    // تحديث حالة التطبيق
+                    appState.currentCategory = category;
+                    appState.currentSize = size;
+                    appState.measurements = measurementsDatabase[category][size];
+                    
+                    // تحديث واجهة المستخدم
+                    updateCategoryDisplay();
+                    updateMeasurementsTable();
+                    
+                    // تحديث أزرار الفئة النشطة
+                    document.querySelectorAll('.category-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.dataset.category === category) {
+                            btn.classList.add('active');
+                        }
+                    });
+                    
+                    // رسم النموذج الجديد
+                    drawPattern();
+                    
+                    // إغلاق النافذة
+                    closeAllPopups();
+                    
+                    // إظهار رسالة نجاح
+                    showSuccessMessage(`تم تحميل مقاس ${size} لفئة ${categoryNames[category]} بنجاح!`);
+                });
+            });
+        }
+
+        // فتح النافذة المنبثقة
+        function openPopup(popupId) {
+            document.getElementById('popup-overlay').style.display = 'block';
+            document.getElementById(popupId).style.display = 'block';
+        }
+
+        // إغلاق جميع النوافذ المنبثقة
+        function closeAllPopups() {
+            document.getElementById('popup-overlay').style.display = 'none';
+            document.querySelectorAll('.popup').forEach(popup => {
+                popup.style.display = 'none';
+            });
+        }
+
+        // اختيار الموديل
+        function selectModel(model) {
+            appState.currentModel = model;
+            drawPattern();
+            showSuccessMessage(`تم تحميل موديل ${modelInfo[model].name} بنجاح!`);
+        }
+
+        // رسم البترون
+        function drawPattern() {
+            // مسح الرسم الحالي
+            if (appState.svgCanvas) {
+                appState.svgCanvas.clear();
+            }
+            
+            // إعداد إعدادات الرسم
+            const width = 800;
+            const height = 600;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            // تحديد نوع الرسم بناءً على الموديل المختار
+            switch(appState.currentModel) {
+                case 'jacket':
+                    drawJacketPattern(centerX, centerY);
+                    break;
+                case 'pants':
+                    drawPantsPattern(centerX, centerY);
+                    break;
+                case 'skirt':
+                    drawSkirtPattern(centerX, centerY);
+                    break;
+                case 'shirt':
+                    drawShirtPattern(centerX, centerY);
+                    break;
+                case 'blouse':
+                    drawBlousePattern(centerX, centerY);
+                    break;
+                default:
+                    drawJacketPattern(centerX, centerY);
+            }
+        }
+
+        // رسم بترون الجاكيت/البالطو
+        function drawJacketPattern(centerX, centerY) {
+            const measurements = appState.measurements;
+            
+            // القياسات الأساسية
+            const bust = measurements.صدر || 88;
+            const backLength = measurements.ظهر || 40;
+            const neckCirc = measurements.رقبة || 36;
+            
+            // الحسابات الرياضية
+            const armholeDepth = calculateArmholeValue(backLength);
+            const neckWidth = calculateNeckValue(neckCirc);
+            const pieceWidth = calculateWidthValue(bust, 2);
+            
+            // رسم المستطيل الأساسي
+            const rectX = centerX - pieceWidth * 2;
+            const rectY = centerY - backLength / 2;
+            const rectWidth = pieceWidth * 4;
+            const rectHeight = backLength;
+            
+            const baseRect = appState.svgCanvas.rect(rectWidth, rectHeight)
+                .move(rectX, rectY)
+                .fill('none')
+                .stroke({ width: 2, color: '#333' });
+            
+            // تحديد النقاط الأساسية
+            const pointA = { x: rectX, y: rectY };
+            const pointB = { x: rectX + rectWidth, y: rectY };
+            const pointS = { x: rectX + rectWidth / 2, y: rectY + rectHeight };
+            const pointD = { x: rectX + rectWidth / 2, y: rectY };
+            
+            // رسم خط الإبط
+            const armholeY = rectY + armholeDepth;
+            const armholeLine = appState.svgCanvas.line(rectX, armholeY, rectX + rectWidth, armholeY)
+                .stroke({ width: 1, color: '#e74c3c', dasharray: '5,5' });
+            
+            // رسم ميل الكتف
+            const shoulderSlope = 15; // زاوية ميل الكتف
+            const shoulderLine = appState.svgCanvas.line(
+                rectX + neckWidth, rectY,
+                rectX + rectWidth / 2 - 10, rectY + shoulderSlope
+            ).stroke({ width: 2, color: '#3498db' });
+            
+            // إضافة تسميات النقاط
+            drawPointLabel(pointA.x - 15, pointA.y - 10, 'أ');
+            drawPointLabel(pointB.x + 15, pointB.y - 10, 'ب');
+            drawPointLabel(pointS.x, pointS.y + 20, 'س');
+            drawPointLabel(pointD.x, pointD.y - 20, 'ص');
+            
+            // إضافة نص توضيحي
+            appState.svgCanvas.text(`جاكيت / بالطو - المقاس ${appState.currentSize}`)
+                .move(centerX - 100, rectY - 40)
+                .font({ family: 'Tajawal', size: 16, weight: 'bold' })
+                .fill('#2c3e50');
+            
+            // إضافة وسيلة إيضاح
+            addLegend(centerX + 200, rectY);
+        }
+
+        // رسم بترون البنطلون
+        function drawPantsPattern(centerX, centerY) {
+            const measurements = appState.measurements;
+            
+            // القياسات الأساسية
+            const waist = measurements.وسط || 70;
+            const hip = measurements.صدر || 88; // استخدام الصدر كبديل للورك
+            
+            // رسم شبكة البنطلون
+            const gridSize = 30;
+            const gridWidth = Math.floor(hip / 4) * 2;
+            const gridHeight = 100;
+            
+            const gridX = centerX - gridWidth / 2;
+            const gridY = centerY - gridHeight / 2;
+            
+            // رسم خط الحجر
+            const crotchLineY = gridY + 30;
+            const crotchLine = appState.svgCanvas.line(gridX, crotchLineY, gridX + gridWidth, crotchLineY)
+                .stroke({ width: 2, color: '#e74c3c' });
+            
+            // رسم خط الركبة
+            const kneeLineY = gridY + 60;
+            const kneeLine = appState.svgCanvas.line(gridX, kneeLineY, gridX + gridWidth, kneeLineY)
+                .stroke({ width: 2, color: '#3498db' });
+            
+            // رسم الطول الكلي
+            const totalLengthY = gridY + gridHeight;
+            const totalLengthLine = appState.svgCanvas.line(gridX, totalLengthY, gridX + gridWidth, totalLengthY)
+                .stroke({ width: 2, color: '#2ecc71' });
+            
+            // إضافة تسميات
+            drawPointLabel(gridX - 15, crotchLineY, 'خط الحجر');
+            drawPointLabel(gridX - 15, kneeLineY, 'خط الركبة');
+            drawPointLabel(gridX - 15, totalLengthY, 'الطول الكلي');
+            
+            // إضافة نص توضيحي
+            appState.svgCanvas.text(`بنطلون - المقاس ${appState.currentSize}`)
+                .move(centerX - 80, gridY - 40)
+                .font({ family: 'Tajawal', size: 16, weight: 'bold' })
+                .fill('#2c3e50');
+            
+            // رسم الشبكة
+            drawGrid(gridX, gridY, gridWidth, gridHeight, gridSize);
+        }
+
+        // رسم بترون التنورة
+        function drawSkirtPattern(centerX, centerY) {
+            // رسم بترون التنورة الأساسي مع البنسات
+            const radius = 80;
+            
+            // رسم الدائرة الأساسية
+            const baseCircle = appState.svgCanvas.circle(radius * 2)
+                .move(centerX - radius, centerY - radius)
+                .fill('none')
+                .stroke({ width: 2, color: '#333' });
+            
+            // رسم البنسات
+            const dartCount = 4;
+            const dartLength = 15;
+            
+            for (let i = 0; i < dartCount; i++) {
+                const angle = (i * 360 / dartCount) * Math.PI / 180;
+                const startX = centerX + Math.cos(angle) * radius;
+                const startY = centerY + Math.sin(angle) * radius;
+                const endX = centerX + Math.cos(angle) * (radius - dartLength);
+                const endY = centerY + Math.sin(angle) * (radius - dartLength);
+                
+                const dart = appState.svgCanvas.line(startX, startY, endX, endY)
+                    .stroke({ width: 2, color: '#e74c3c' });
+            }
+            
+            // إضافة نص توضيحي
+            appState.svgCanvas.text(`تنورة (جيبة) - المقاس ${appState.currentSize}`)
+                .move(centerX - 100, centerY - radius - 40)
+                .font({ family: 'Tajawal', size: 16, weight: 'bold' })
+                .fill('#2c3e50');
+        }
+
+        // رسم بترون القميص
+        function drawShirtPattern(centerX, centerY) {
+            // رسم قميص رجالي مع حساب مقدار المرد والياقة
+            const width = 120;
+            const height = 150;
+            
+            const shirtX = centerX - width / 2;
+            const shirtY = centerY - height / 2;
+            
+            // رسم الشكل الأساسي
+            const shirtShape = appState.svgCanvas.rect(width, height)
+                .move(shirtX, shirtY)
+                .fill('none')
+                .stroke({ width: 2, color: '#333' });
+            
+            // رسم الياقة
+            const collarWidth = 15;
+            const collarHeight = 10;
+            
+            const collar = appState.svgCanvas.rect(collarWidth, collarHeight)
+                .move(shirtX + width / 2 - collarWidth / 2, shirtY - 5)
+                .fill('#f1c40f')
+                .stroke({ width: 1, color: '#333' });
+            
+            // رسم المرد
+            const placketWidth = 5;
+            const placketHeight = 40;
+            
+            const placket = appState.svgCanvas.rect(placketWidth, placketHeight)
+                .move(shirtX + width / 2 - placketWidth / 2, shirtY + 20)
+                .fill('#3498db')
+                .stroke({ width: 1, color: '#333' });
+            
+            // إضافة نص توضيحي
+            appState.svgCanvas.text(`قميص رجالي - المقاس ${appState.currentSize}`)
+                .move(centerX - 80, shirtY - 40)
+                .font({ family: 'Tajawal', size: 16, weight: 'bold' })
+                .fill('#2c3e50');
+            
+            // إضافة تسمية المرد والياقة
+            drawPointLabel(shirtX + width / 2, shirtY - 10, 'الياقة');
+            drawPointLabel(shirtX + width / 2, shirtY + 40, 'المرد');
+        }
+
+        // رسم بترون البلوزة
+        function drawBlousePattern(centerX, centerY) {
+            // رسم الكورساج الحريمي مع بنسة الصدر
+            const width = 100;
+            const height = 120;
+            
+            const blouseX = centerX - width / 2;
+            const blouseY = centerY - height / 2;
+            
+            // رسم الشكل الأساسي
+            const blouseShape = appState.svgCanvas.rect(width, height)
+                .move(blouseX, blouseY)
+                .fill('none')
+                .stroke({ width: 2, color: '#333' });
+            
+            // رسم بنسة الصدر
+            const dartX = blouseX + width / 2;
+            const dartY = blouseY + 40;
+            const dartLength = 15;
+            
+            const dart = appState.svgCanvas.line(dartX, dartY, dartX, dartY + dartLength)
+                .stroke({ width: 3, color: '#e74c3c' });
+            
+            // إضافة نص توضيحي
+            appState.svgCanvas.text(`بلوزة - المقاس ${appState.currentSize}`)
+                .move(centerX - 60, blouseY - 40)
+                .font({ family: 'Tajawal', size: 16, weight: 'bold' })
+                .fill('#2c3e50');
+            
+            // إضافة تسمية بنسة الصدر
+            drawPointLabel(dartX + 15, dartY + dartLength / 2, 'بنسة الصدر');
+        }
+
+        // رسم تسمية النقطة
+        function drawPointLabel(x, y, text) {
+            appState.svgCanvas.text(text)
+                .move(x, y)
+                .font({ family: 'Tajawal', size: 14, weight: 'bold' })
+                .fill('#e74c3c');
+        }
+
+        // إضافة وسيلة إيضاح
+        function addLegend(x, y) {
+            const legend = appState.svgCanvas.group();
+            
+            const items = [
+                { color: '#333', label: 'الخطوط الأساسية' },
+                { color: '#e74c3c', label: 'خط الإبط' },
+                { color: '#3498db', label: 'ميل الكتف' },
+                { color: '#2ecc71', label: 'خط الطول' }
+            ];
+            
+            items.forEach((item, index) => {
+                // رسم عينة اللون
+                legend.rect(15, 15)
+                    .move(x, y + index * 25)
+                    .fill(item.color);
+                
+                // إضافة النص
+                legend.text(item.label)
+                    .move(x + 20, y + index * 25)
+                    .font({ family: 'Tajawal', size: 12 })
+                    .fill('#333');
+            });
+        }
+
+        // رسم الشبكة
+        function drawGrid(x, y, width, height, size) {
+            // الخطوط الأفقية
+            for (let i = 0; i <= height; i += size) {
+                appState.svgCanvas.line(x, y + i, x + width, y + i)
+                    .stroke({ width: 0.5, color: '#ddd' });
+            }
+            
+            // الخطوط الرأسية
+            for (let i = 0; i <= width; i += size) {
+                appState.svgCanvas.line(x + i, y, x + i, y + height)
+                    .stroke({ width: 0.5, color: '#ddd' });
+            }
+        }
+
+        // الدوال الرياضية المطلوبة
+        function calculateArmholeValue(backLen) {
+            return (backLen / 2) + 4;
+        }
+
+        function calculateNeckValue(neckCirc) {
+            return (neckCirc / 5) + 1;
+        }
+
+        function calculateWidthValue(bust, extra) {
+            return (bust / 4) + extra;
+        }
+
+        // أدوات التحكم في العرض
+        function zoomIn() {
+            appState.zoomLevel *= 1.2;
+            updateZoom();
+        }
+
+        function zoomOut() {
+            appState.zoomLevel /= 1.2;
+            updateZoom();
+        }
+
+        function resetView() {
+            appState.zoomLevel = 1.0;
+            updateZoom();
+        }
+
+        function updateZoom() {
+            appState.svgCanvas.scale(appState.zoomLevel);
+        }
+
+        // تصدير SVG
+        function exportSVG() {
+            const svgElement = document.querySelector('#drawing-viewport svg');
+            const serializer = new XMLSerializer();
+            const source = serializer.serializeToString(svgElement);
+            
+            // إضافة تعريف XML
+            const preface = '<?xml version="1.0" standalone="no"?>\r\n';
+            const svgBlob = new Blob([preface + source], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+            
+            // إنشاء رابط للتحميل
+            const downloadLink = document.createElement('a');
+            downloadLink.href = url;
+            downloadLink.download = `باترون_${appState.currentCategory}_${appState.currentSize}_${appState.currentModel}.svg`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            
+            // إظهار رسالة نجاح
+            showSuccessMessage(`تم تصدير الرسم بنجاح كملف SVG!`);
+        }
+
+        // تحديث القياس
+        function updateMeasurement(key, value) {
+            appState.measurements[key] = value;
+            drawPattern();
+        }
+
+        // الحسابات الرياضية التفاعلية
+        function calculateArmhole() {
+            const backLen = parseFloat(document.getElementById('back-length-input').value);
+            if (isNaN(backLen)) {
+                document.getElementById('armhole-result').textContent = `الرجاء إدخال قيمة صحيحة لطول الظهر`;
+                return;
+            }
+            
+            const result = calculateArmholeValue(backLen);
+            document.getElementById('armhole-result').textContent = `فتحة الإبط = ${result.toFixed(1)} سم`;
+        }
+
+        function calculateNeck() {
+            const neckCirc = parseFloat(document.getElementById('neck-circ-input').value);
+            if (isNaN(neckCirc)) {
+                document.getElementById('neck-result').textContent = `الرجاء إدخال قيمة صحيحة لمحيط الرقبة`;
+                return;
+            }
+            
+            const result = calculateNeckValue(neckCirc);
+            document.getElementById('neck-result').textContent = `عرض الرقبة = ${result.toFixed(1)} سم`;
+        }
+
+        function calculateWidth() {
+            const bust = parseFloat(document.getElementById('bust-input').value);
+            const extra = parseFloat(document.getElementById('extra-input').value);
+            
+            if (isNaN(bust) || isNaN(extra)) {
+                document.getElementById('width-result').textContent = `الرجاء إدخال قيم صحيحة`;
+                return;
+            }
+            
+            const result = calculateWidthValue(bust, extra);
+            document.getElementById('width-result').textContent = `عرض القطعة = ${result.toFixed(1)} سم`;
+        }
+
+        // تهيئة الحسابات باستخدام القيم الحالية
+        function initializeCalculations() {
+            const measurements = appState.measurements;
+            
+            if (measurements.ظهر) {
+                document.getElementById('back-length-input').value = measurements.ظهر;
+                calculateArmhole();
+            }
+            
+            if (measurements.رقبة) {
+                document.getElementById('neck-circ-input').value = measurements.رقبة;
+                calculateNeck();
+            }
+            
+            if (measurements.صدر) {
+                document.getElementById('bust-input').value = measurements.صدر;
+                calculateWidth();
+            }
+        }
+
+        // إظهار رسالة نجاح
+        function showSuccessMessage(message) {
+            const messageEl = document.getElementById('export-message');
+            messageEl.textContent = message;
+            messageEl.style.display = 'block';
+            
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 3000);
+        }
+
+        // إضافة مستمعي الأحداث للحسابات عند فتح النافذة
+        document.getElementById('calculations-popup-btn').addEventListener('click', initializeCalculations);
+    </script>
+</body>
+</html>

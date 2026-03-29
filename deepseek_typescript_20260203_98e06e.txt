@@ -1,0 +1,56 @@
+// تحسين دالة offsetPolyline للأداء
+private _offsetPolylineOptimized(
+    points: {x: number, y: number}[], 
+    offset: number, 
+    closed: boolean
+): {x: number, y: number}[] {
+    if (points.length < 2) return [];
+    
+    const offsetPoints: {x: number, y: number}[] = [];
+    const len = points.length;
+    
+    // استخدام Float32Array للأداء
+    const xArray = new Float32Array(len);
+    const yArray = new Float32Array(len);
+    
+    points.forEach((p, i) => {
+        xArray[i] = p.x;
+        yArray[i] = p.y;
+    });
+    
+    // حساب الإزاحة بسرعة
+    for (let i = 0; i < len; i++) {
+        const prev = closed ? (i + len - 1) % len : Math.max(0, i - 1);
+        const next = closed ? (i + 1) % len : Math.min(len - 1, i + 1);
+        
+        const dx1 = xArray[i] - xArray[prev];
+        const dy1 = yArray[i] - yArray[prev];
+        const dx2 = xArray[next] - xArray[i];
+        const dy2 = yArray[next] - yArray[i];
+        
+        const length1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+        const length2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+        
+        if (length1 > 0 && length2 > 0) {
+            const nx1 = -dy1 / length1;
+            const ny1 = dx1 / length1;
+            const nx2 = -dy2 / length2;
+            const ny2 = dx2 / length2;
+            
+            const nx = (nx1 + nx2) * 0.5;
+            const ny = (ny1 + ny2) * 0.5;
+            const length = Math.sqrt(nx * nx + ny * ny);
+            
+            if (length > 0.001) {
+                offsetPoints.push({
+                    x: xArray[i] + (nx / length) * offset,
+                    y: yArray[i] + (ny / length) * offset
+                });
+            } else {
+                offsetPoints.push({ x: xArray[i], y: yArray[i] });
+            }
+        }
+    }
+    
+    return offsetPoints;
+}

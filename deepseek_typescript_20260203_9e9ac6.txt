@@ -1,0 +1,23 @@
+private _addSewingNotches(paths: SvgPath[], positions: {x: number, y: number, type: 'single' | 'double' | 'triple'}[]): void {
+    positions.forEach(pos => {
+        const notchSize = 0.3 * this.scale;
+        
+        if (pos.type === 'single') {
+            paths.push({
+                d: `M ${pos.x * this.scale} ${pos.y * this.scale} 
+                    l ${-notchSize} ${-notchSize} 
+                    l ${notchSize * 2} 0 
+                    l ${-notchSize} ${notchSize}`,
+                class: 'stroke-blue-600 stroke-1 fill-none'
+            });
+        } else if (pos.type === 'double') {
+            paths.push({
+                d: `M ${(pos.x - notchSize * 1.5) * this.scale} ${pos.y * this.scale} 
+                    l ${notchSize} ${-notchSize} 
+                    m ${0} ${notchSize * 2} 
+                    l ${notchSize} ${-notchSize}`,
+                class: 'stroke-blue-600 stroke-1 fill-none'
+            });
+        }
+    });
+}

@@ -1,0 +1,21 @@
+private _calculateProportionalPoints(measurements: Measurements, isFront: boolean): any {
+    // استخدام نسب مئوية بدلاً من قيم ثابتة
+    const proportions = {
+        neckWidth: measurements.bust * 0.05 + 2,
+        armholeDepth: measurements.bust * 0.1 + (measurements.category === 'woman' ? 10.5 : 12),
+        shoulderSlope: measurements.bust * 0.04,
+        waistPosition: measurements.bust * 0.45, // نسبة من الطول الكلي
+        hipPosition: measurements.bust * 0.65
+    };
+    
+    // تطبيق تصحيحات بناءً على الفئة
+    if (measurements.category === 'child') {
+        proportions.armholeDepth *= 0.9;
+        proportions.shoulderSlope *= 0.8;
+    } else if (measurements.category === 'man') {
+        proportions.neckWidth *= 1.1;
+        proportions.armholeDepth *= 1.05;
+    }
+    
+    return proportions;
+}

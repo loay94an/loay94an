@@ -1,0 +1,26 @@
+private _validatePattern(piece: PatternPiece): { valid: boolean; errors: string[] } {
+    const errors: string[] = [];
+    
+    // التحقق من أن جميع النقاط موجبة
+    const hasNegativePoints = piece.paths.some(path => 
+        path.d?.match(/[MLCQA]\s+-?\d+/g)?.some(match => match.includes('-'))
+    );
+    
+    if (hasNegativePoints) errors.push('يحتوي البترون على إحداثيات سالبة');
+    
+    // التحقق من الأبعاد
+    if (piece.width <= 0 || piece.height <= 0) {
+        errors.push('أبعاد البترون غير صالحة');
+    }
+    
+    // التحقق من أن الباترون ليس كبيراً جداً
+    const maxSize = 1000 * this.scale; // 10 أمتار
+    if (piece.width > maxSize || piece.height > maxSize) {
+        errors.push('أبعاد البترون كبيرة جداً');
+    }
+    
+    return {
+        valid: errors.length === 0,
+        errors
+    };
+}

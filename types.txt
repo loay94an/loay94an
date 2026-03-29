@@ -1,0 +1,76 @@
+
+import React from 'react';
+
+export interface Point { x: number; y: number; }
+export interface Polyline extends Array<Point> {}
+
+export interface SvgPath { 
+  d?: string; 
+  className?: string; 
+  label?: string; 
+  x?: number; 
+  y?: number; 
+  style?: React.CSSProperties;
+}
+
+export interface Measurement {
+  label: string;
+  value: number;
+}
+
+export type Unit = 'cm' | 'in';
+
+export interface PieceSettings {
+  [key: string]: any;
+}
+
+export interface PatternPiece {
+  paths: SvgPath[];
+  width: number;
+  height: number;
+  name?: string;
+  metadata?: {
+    armholeLength?: number;
+  };
+}
+
+export interface G2Diagnostic {
+  join: string;
+  diffD1: number;
+  diffD2: number;
+  status: 'optimal' | 'adjusted' | 'failed';
+}
+
+export type PatternCategory = 'Women' | 'Men' | 'Children' | 'Accessories';
+
+export type PatternPreset = 
+  | 'bodice-basic' 
+  | 'shirt-basic' 
+  | 'pants-basic' 
+  | 'shorts-basic'
+  | 'skirt-basic' 
+  | 'skirt-circle'
+  | 'collar-basic'
+  | 'jacket-basic'
+  | 'dress-basic'
+  | 'blouse-basic'
+  | 'custom-lab';
+
+export type SizingStandard = 
+  | 'EU-34' | 'EU-36' | 'EU-38' | 'EU-40' | 'EU-42' | 'EU-44' | 'EU-46'
+  | 'US-2' | 'US-4' | 'US-6' | 'US-8' | 'US-10' | 'US-12'
+  | 'MEN-S' | 'MEN-M' | 'MEN-L' | 'MEN-XL'
+  | 'KIDS-2Y' | 'KIDS-4Y' | 'KIDS-6Y' | 'KIDS-8Y';
+
+export interface PatternOutput {
+  paths: SvgPath[];
+  width: number;
+  height: number;
+  diagnostics: G2Diagnostic[];
+}
+
+export interface AlgorithmPart {
+  name: string;
+  code: string;
+}
+types.tsص

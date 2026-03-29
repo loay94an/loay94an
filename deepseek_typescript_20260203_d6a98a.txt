@@ -1,0 +1,11 @@
+// إنشاء محرك البترونات
+const engine = new ProfessionalPatternEngine();
+
+// توليد بترون جديد
+const pattern = engine.generateBasicPattern('dress', measurements, 'fitted');
+
+// حفظ البترون
+const patternJSON = JSON.stringify(pattern, null, 2);
+
+// تحميل بترون
+const loadedPattern = JSON.parse(patternJSON);

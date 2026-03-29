@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام رسم الباترونات الإلكتروني - موسوعة الأجيال</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #8a2be2;
+            --secondary: #4b0082;
+            --accent: #ff6b6b;
+            --light: #f9f7fe;
+            --dark: #2c2c54;
+            --success: #20bf6b;
+            --warning: #fa8231;
+            --shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 1.5rem 0;
+            box-shadow: var(--shadow);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo i {
+            font-size: 2.5rem;
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        
+        .logo span {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        /* Navigation */
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        
+        nav a:hover, nav a.active {
+            background-color: rgba(255,255,255,0.2);
+        }
+        
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            margin-top: 2rem;
+            gap: 2rem;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            flex: 0 0 300px;
+            background-color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            height: fit-content;
+        }
+        
+        .sidebar h2 {
+            color: var(--secondary);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .sidebar-section {
+            margin-bottom: 2rem;
+        }
+        
+        /* Measurement Form */
+        .measurement-form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .measurement-input {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .measurement-input input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+        
+        .measurement-input input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        
+        .measurement-input span {
+            margin-left: 10px;
+            font-weight: 600;
+            color: var(--secondary);
+            min-width: 40px;
+        }
+        
+        /* Pattern Types */
+        .pattern-types {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .pattern-type {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .pattern-type:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px);
+        }
+        
+        .pattern-type.active {
+            border-color: var(--primary);
+            background-color: rgba(138, 43, 226, 0.1);
+        }
+        
+        .pattern-type i {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            background-color: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+        
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .section-title h2 {
+            color: var(--secondary);
+        }
+        
+        .section-title .controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        /* Canvas Container */
+        .canvas-container {
+            background-color: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 2rem;
+            overflow: auto;
+        }
+        
+        #patternCanvas {
+            background-color: white;
+            display: block;
+            margin: 0 auto;
+            border: 1px solid #ccc;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Instructions */
+        .instructions {
+            background-color: #f0f7ff;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .instructions h3 {
+            color: var(--secondary);
+            margin-bottom: 1rem;
+        }
+        
+        .instructions ol {
+            padding-right: 1.5rem;
+        }
+        
+        .instructions li {
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Tables */
+        .measurement-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .measurement-table th {
+            background-color: var(--primary);
+            color: white;
+            padding: 12px;
+            text-align: right;
+        }
+        
+        .measurement-table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+        
+        .measurement-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+        
+        .btn:hover {
+            background-color: var(--secondary);
+            transform: translateY(-2px);
+        }
+        
+        .btn i {
+            margin-left: 8px;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+        }
+        
+        .btn-success:hover {
+            background-color: #1ca55c;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning);
+        }
+        
+        .btn-warning:hover {
+            background-color: #e97a20;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--dark);
+            color: white;
+            padding: 2rem 0;
+            margin-top: 3rem;
+            text-align: center;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .copyright {
+            opacity: 0.8;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1100px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                flex: 0 0 auto;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            nav ul {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 1rem;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            
+            .section-title {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .pattern-types {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .pattern-types {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .section-title .controls {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 2rem;
+        }
+        
+        .tab {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .tab:hover {
+            color: var(--primary);
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Pattern Details */
+        .pattern-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .detail-card {
+            background-color: #f9f7fe;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .detail-card h4 {
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .detail-card p {
+            color: #555;
+            font-size: 0.95rem;
+        }
+        
+        /* Slider */
+        .slider-container {
+            margin-bottom: 1.5rem;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+        }
+        
+        /* Alert */
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border-left: 4px solid var(--success);
+        }
+        
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .alert i {
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <i class="fas fa-ruler-combined"></i>
+                <div>
+                    <h1>موسوعة الأجيال للتفصيل</h1>
+                    <span>نظام رسم الباترونات الإلكتروني</span>
+                </div>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#home" class="active"><i class="fas fa-home"></i> الرئيسية</a></li>
+                    <li><a href="#patterns"><i class="fas fa-tshirt"></i> الباترونات</a></li>
+                    <li><a href="#measurements"><i class="fas fa-ruler"></i> المقاسات</a></li>
+                    <li><a href="#tables"><i class="fas fa-table"></i> الجداول</a></li>
+                    <li><a href="#instructions"><i class="fas fa-book"></i> التعليمات</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h2><i class="fas fa-sliders-h"></i> إعدادات الباترون</h2>
+            
+            <!-- Measurement Form -->
+            <div class="sidebar-section">
+                <h3><i class="fas fa-user-edit"></i> أدخل مقاساتك</h3>
+                <div class="measurement-form">
+                    <div class="measurement-input">
+                        <label for="hip">محيط الهنش (سم)</label>
+                        <input type="number" id="hip" value="100" min="70" max="150">
+                    </div>
+                    
+                    <div class="measurement-input">
+                        <label for="waist">محيط الوسط (سم)</label>
+                        <input type="number" id="waist" value="72" min="60" max="120">
+                    </div>
+                    
+                    <div class="measurement-input">
+                        <label for="length">طول الجونلة (سم)</label>
+                        <input type="number" id="length" value="60" min="30" max="120">
+                    </div>
+                    
+                    <div class="measurement-input">
+                        <label for="sideLength">طول الجنب (سم)</label>
+                        <input type="number" id="sideLength" value="20" min="15" max="30">
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <div>استخدم الجداول المرجعية أدناه للمقاسات القياسية</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pattern Type Selection -->
+            <div class="sidebar-section">
+                <h3><i class="fas fa-cut"></i> نوع الباترون</h3>
+                <div class="pattern-types">
+                    <div class="pattern-type active" data-type="normal">
+                        <i class="fas fa-square"></i>
+                        <div>عادي</div>
+                    </div>
+                    <div class="pattern-type" data-type="tight">
+                        <i class="fas fa-arrow-up"></i>
+                        <div>ضيقة</div>
+                    </div>
+                    <div class="pattern-type" data-type="wide">
+                        <i class="fas fa-arrow-down"></i>
+                        <div>واسعة</div>
+                    </div>
+                    <div class="pattern-type" data-type="pleated">
+                        <i class="fas fa-wave-square"></i>
+                        <div>كسرات</div>
+                    </div>
+                    <div class="pattern-type" data-type="circle">
+                        <i class="fas fa-circle"></i>
+                        <div>كلوش</div>
+                    </div>
+                    <div class="pattern-type" data-type="panels">
+                        <i class="fas fa-th"></i>
+                        <div>قصات</div>
+                    </div>
+                </div>
+                
+                <!-- Additional Options for Panels -->
+                <div id="panelsOptions" style="display: none; margin-top: 1rem;">
+                    <label for="panelCount">عدد القصات:</label>
+                    <select id="panelCount" class="measurement-input">
+                        <option value="6">6 قصات</option>
+                        <option value="8">8 قصات</option>
+                        <option value="10">10 قصات</option>
+                        <option value="12">12 قصات</option>
+                    </select>
+                </div>
+                
+                <!-- Additional Options for Pleats -->
+                <div id="pleatsOptions" style="display: none; margin-top: 1rem;">
+                    <label for="pleatCount">عدد الكسرات:</label>
+                    <select id="pleatCount" class="measurement-input">
+                        <option value="8">8 كسرات</option>
+                        <option value="12">12 كسرات</option>
+                        <option value="16">16 كسرات</option>
+                        <option value="20">20 كسرات</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="sidebar-section">
+                <button class="btn btn-success" id="generatePattern">
+                    <i class="fas fa-magic"></i> توليد الباترون
+                </button>
+                <button class="btn btn-secondary" id="resetPattern" style="margin-top: 10px;">
+                    <i class="fas fa-redo"></i> إعادة تعيين
+                </button>
+                <button class="btn btn-warning" id="printPattern" style="margin-top: 10px;">
+                    <i class="fas fa-print"></i> طباعة الباترون
+                </button>
+            </div>
+            
+            <!-- Measurement Reference Table -->
+            <div class="sidebar-section">
+                <h3><i class="fas fa-table"></i> جدول مقاسات سريع</h3>
+                <table class="measurement-table">
+                    <thead>
+                        <tr>
+                            <th>المقاس</th>
+                            <th>الهنش</th>
+                            <th>الوسط</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>صغير</td>
+                            <td>90</td>
+                            <td>66</td>
+                        </tr>
+                        <tr>
+                            <td>متوسط</td>
+                            <td>100</td>
+                            <td>72</td>
+                        </tr>
+                        <tr>
+                            <td>كبير</td>
+                            <td>110</td>
+                            <td>82</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Tabs -->
+            <div class="tabs">
+                <div class="tab active" data-tab="pattern">عرض الباترون</div>
+                <div class="tab" data-tab="details">تفاصيل الحسابات</div>
+                <div class="tab" data-tab="instructions">تعليمات الرسم</div>
+                <div class="tab" data-tab="tables">جداول المقاسات</div>
+            </div>
+            
+            <!-- Pattern Tab -->
+            <div class="tab-content active" id="patternTab">
+                <div class="section-title">
+                    <h2><i class="fas fa-drafting-compass"></i> باترون الجونلة</h2>
+                    <div class="controls">
+                        <button class="btn" id="zoomIn"><i class="fas fa-search-plus"></i></button>
+                        <button class="btn btn-secondary" id="zoomOut"><i class="fas fa-search-minus"></i></button>
+                        <button class="btn btn-success" id="downloadPattern"><i class="fas fa-download"></i> تحميل</button>
+                    </div>
+                </div>
+                
+                <!-- Pattern Canvas -->
+                <div class="canvas-container">
+                    <canvas id="patternCanvas" width="1000" height="600">
+                        المتصفح لا يدعم عنصر Canvas، يرجى استخدام متصفح حديث
+                    </canvas>
+                </div>
+                
+                <!-- Pattern Info -->
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <strong>تم إنشاء الباترون بنجاح!</strong>
+                        <div>يظهر باترون الجونلة الأمامية (يمين) والظهرية (يسار) مع جميع القياسات.</div>
+                    </div>
+                </div>
+                
+                <!-- Pattern Details -->
+                <div class="pattern-details">
+                    <div class="detail-card">
+                        <h4><i class="fas fa-calculator"></i> الحسابات الأساسية</h4>
+                        <p id="calcDetails">جارٍ حساب التفاصيل...</p>
+                    </div>
+                    <div class="detail-card">
+                        <h4><i class="fas fa-ruler"></i> أبعاد الباترون</h4>
+                        <p id="patternDimensions">جارٍ حساب الأبعاد...</p>
+                    </div>
+                    <div class="detail-card">
+                        <h4><i class="fas fa-cut"></i> تفاصيل التكسيم</h4>
+                        <p id="dartDetails">جارٍ حساب التفاصيل...</p>
+                    </div>
+                    <div class="detail-card">
+                        <h4><i class="fas fa-info-circle"></i> ملاحظات التنفيذ</h4>
+                        <p id="executionNotes">جارٍ تحضير الملاحظات...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Details Tab -->
+            <div class="tab-content" id="detailsTab">
+                <div class="section-title">
+                    <h2><i class="fas fa-calculator"></i> تفاصيل الحسابات</h2>
+                </div>
+                
+                <div class="instructions">
+                    <h3>الخوارزميات الحسابية المستخدمة</h3>
+                    <ol>
+                        <li><strong>باترون الظهر:</strong> العرض = (¼ محيط الهنش - 1.5 سم)</li>
+                        <li><strong>باترون الأمام:</strong> العرض = (¼ محيط الهنش + 1.5 سم)</li>
+                        <li><strong>تكسيم الوسط (الظهر):</strong> = عرض الباترون - (¼ محيط الوسط - 1 سم)</li>
+                        <li><strong>تكسيم الوسط (الأمام):</strong> = عرض الباترون - (¼ محيط الوسط + 1 سم)</li>
+                        <li><strong>توزيع التكسيم:</strong> نصفه للجنب والنصف الآخر للبنسة</li>
+                    </ol>
+                    
+                    <h3 style="margin-top: 2rem;">البيانات المدخلة</h3>
+                    <table class="measurement-table">
+                        <thead>
+                            <tr>
+                                <th>المقياس</th>
+                                <th>القيمة</th>
+                                <th>الحساب</th>
+                                <th>النتيجة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="calculationTable">
+                            <!-- سيتم ملؤها بالجافاسكريبت -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Instructions Tab -->
+            <div class="tab-content" id="instructionsTab">
+                <div class="section-title">
+                    <h2><i class="fas fa-book-open"></i> تعليمات الرسم من الموسوعة</h2>
+                </div>
+                
+                <div class="instructions">
+                    <h3>طريقة رسم باترون الجونلة العادية</h3>
+                    <ol>
+                        <li>ارسم المستطيل (أ ب ج د) طوله = طول الجونلة</li>
+                        <li>ارسم خط الهنش (هـ و) على بعد 20 سم من الأعلى (طول الجنب)</li>
+                        <li>ارسم خط الذيل في الأسفل (ب ج)</li>
+                        <li>الخط الرأسي أ ب يمثل خط نصف الظهر</li>
+                        <li>الخط الرأسي د ج يمثل خط الجنب</li>
+                        <li>استخرج مقدار تكسيم الوسط بالطرح: عرض الباترون - (¼ محيط الوسط ± 1 سم)</li>
+                        <li>خذ نصف مقدار التكسيم لعمل دوران الجنب</li>
+                        <li>خذ النصف الآخر لعمل بنسة الوسط</li>
+                        <li>ارسم خط البنسة بارتفاع ربع طول الجنب</li>
+                        <li>استعدل خط الوسط عند دوران الجنب</li>
+                    </ol>
+                    
+                    <h3>نصائح هامة من المؤلف</h3>
+                    <ul>
+                        <li>دائماً ارسم نصف الباترون على الورق ثم ضعه على القماش مزدوجاً</li>
+                        <li>لا تزيد نسبة التضييق في الجونلات الضيقة عن 18 سم</li>
+                        <li>في الجونلات الضيقة، يجب عمل فتحات في الذيل أو كالونات للحركة</li>
+                        <li>اتبع اتجاه النسيج (البرسل) عند وضع الباترون على القماش</li>
+                        <li>قبل وضع الباترون على القماش، اغسل عينة للتأكد من ثبات الصباغة</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Tables Tab -->
+            <div class="tab-content" id="tablesTab">
+                <div class="section-title">
+                    <h2><i class="fas fa-th"></i> جداول المقاسات المرجعية</h2>
+                </div>
+                
+                <div class="instructions">
+                    <h3>جدول محيط الهنش وعرض الباترون</h3>
+                    <table class="measurement-table">
+                        <thead>
+                            <tr>
+                                <th>محيط الهنش</th>
+                                <th>عرض باترون الظهر</th>
+                                <th>عرض باترون الصدر</th>
+                                <th>محيط الهنش</th>
+                                <th>عرض باترون الظهر</th>
+                                <th>عرض باترون الصدر</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>94</td><td>27</td><td>30</td>
+                                <td>104</td><td>30</td><td>33</td>
+                            </tr>
+                            <tr>
+                                <td>96</td><td>27.5</td><td>30.5</td>
+                                <td>106</td><td>30.5</td><td>33.5</td>
+                            </tr>
+                            <tr>
+                                <td>98</td><td>28</td><td>31</td>
+                                <td>108</td><td>31</td><td>34</td>
+                            </tr>
+                            <tr>
+                                <td>100</td><td>28.5</td><td>31.5</td>
+                                <td>110</td><td>31.5</td><td>34.5</td>
+                            </tr>
+                            <tr>
+                                <td>102</td><td>29</td><td>32</td>
+                                <td>112</td><td>32</td><td>35</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h3 style="margin-top: 2rem;">جدول حساب الكسرات (بناءً على محيط الوسط)</h3>
+                    <table class="measurement-table">
+                        <thead>
+                            <tr>
+                                <th>محيط الوسط</th>
+                                <th>عدد الكسرات</th>
+                                <th>عرض القماش المطلوب</th>
+                                <th>عرض الكسرة بعد التكسير</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>72 سم</td><td>16 كسرة</td><td>222 سم</td><td>4.5 سم</td>
+                            </tr>
+                            <tr>
+                                <td>80 سم</td><td>16 كسرة</td><td>246 سم</td><td>5 سم</td>
+                            </tr>
+                            <tr>
+                                <td>88 سم</td><td>16 كسرة</td><td>270 سم</td><td>5.5 سم</td>
+                            </tr>
+                            <tr>
+                                <td>72 سم</td><td>12 كسرة</td><td>222 سم</td><td>6 سم</td>
+                            </tr>
+                            <tr>
+                                <td>80 سم</td><td>12 كسرة</td><td>246 سم</td><td>6.5 سم</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="alert alert-info" style="margin-top: 2rem;">
+                        <i class="fas fa-lightbulb"></i>
+                        <div>
+                            <strong>ملاحظة:</strong> هذه الجداول منقولة مباشرة من "موسوعة الأجيال للتفصيل". 
+                            يمكنك الرجوع إليها لتوفير الوقت في القسمة والطرح.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-content">
+            <div class="footer-logo">
+                <i class="fas fa-ruler-combined"></i>
+                <div>
+                    <h3>موسوعة الأجيال للتفصيل</h3>
+                    <div>نظام رسم الباترونات الإلكتروني</div>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>جميع الحقوق محفوظة © 2023 | تم تطويره بناءً على محتوى موسوعة الأجيال للتفصيل</p>
+                <p>خوارزميات الحساب مبنية على القواعد الهندسية في الكتاب</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // العناصر الأساسية
+        const canvas = document.getElementById('patternCanvas');
+        const ctx = canvas.getContext('2d');
+        const generateBtn = document.getElementById('generatePattern');
+        const resetBtn = document.getElementById('resetPattern');
+        const printBtn = document.getElementById('printPattern');
+        const zoomInBtn = document.getElementById('zoomIn');
+        const zoomOutBtn = document.getElementById('zoomOut');
+        const downloadBtn = document.getElementById('downloadPattern');
+        const patternTypes = document.querySelectorAll('.pattern-type');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // متغيرات الرسم
+        let scale = 1.0;
+        let currentPatternType = 'normal';
+        let currentMeasurements = {
+            hip: 100,
+            waist: 72,
+            length: 60,
+            sideLength: 20
+        };
+        
+        // تهيئة النظام
+        function init() {
+            // تحديث القياسات من المدخلات
+            updateMeasurements();
+            
+            // توليد باترون افتراضي
+            generatePattern();
+            
+            // إعداد مستمعي الأحداث
+            setupEventListeners();
+            
+            // إعداد جدول الحسابات
+            updateCalculationTable();
+        }
+        
+        // إعداد مستمعي الأحداث
+        function setupEventListeners() {
+            // أزرار التحكم
+            generateBtn.addEventListener('click', generatePattern);
+            resetBtn.addEventListener('click', resetPattern);
+            printBtn.addEventListener('click', printPattern);
+            zoomInBtn.addEventListener('click', () => zoomCanvas(1.2));
+            zoomOutBtn.addEventListener('click', () => zoomCanvas(0.8));
+            downloadBtn.addEventListener('click', downloadPattern);
+            
+            // أنواع الباترونات
+            patternTypes.forEach(type => {
+                type.addEventListener('click', function() {
+                    patternTypes.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    currentPatternType = this.dataset.type;
+                    
+                    // إظهار/إخفاء الخيارات الإضافية
+                    document.getElementById('panelsOptions').style.display = 
+                        currentPatternType === 'panels' ? 'block' : 'none';
+                    document.getElementById('pleatsOptions').style.display = 
+                        currentPatternType === 'pleated' ? 'block' : 'none';
+                    
+                    generatePattern();
+                });
+            });
+            
+            // التبويبات
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.dataset.tab;
+                    
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === tabId + 'Tab') {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+            
+            // تحديث القياسات عند التغيير
+            document.getElementById('hip').addEventListener('input', updateMeasurements);
+            document.getElementById('waist').addEventListener('input', updateMeasurements);
+            document.getElementById('length').addEventListener('input', updateMeasurements);
+            document.getElementById('sideLength').addEventListener('input', updateMeasurements);
+        }
+        
+        // تحديث القياسات من المدخلات
+        function updateMeasurements() {
+            currentMeasurements = {
+                hip: parseInt(document.getElementById('hip').value) || 100,
+                waist: parseInt(document.getElementById('waist').value) || 72,
+                length: parseInt(document.getElementById('length').value) || 60,
+                sideLength: parseInt(document.getElementById('sideLength').value) || 20
+            };
+        }
+        
+        // حساب أبعاد الباترون
+        function calculatePatternDimensions() {
+            const m = currentMeasurements;
+            
+            // الحسابات الأساسية من الكتاب
+            const backWidth = (m.hip / 4) - 1.5;      // عرض باترون الظهر
+            const frontWidth = (m.hip / 4) + 1.5;     // عرض باترون الأمام
+            
+            // تكسيم الوسط
+            const backWaistWidth = (m.waist / 4) - 1; // عرض الوسط من الخلف
+            const frontWaistWidth = (m.waist / 4) + 1; // عرض الوسط من الأمام
+            
+            const backDartAmount = backWidth - backWaistWidth;
+            const frontDartAmount = frontWidth - frontWaistWidth;
+            
+            // توزيع التكسيم
+            const backSideDart = backDartAmount / 2;
+            const backCenterDart = backDartAmount / 2;
+            
+            const frontSideDart = frontDartAmount / 2;
+            const frontCenterDart = frontDartAmount / 2;
+            
+            return {
+                backWidth,
+                frontWidth,
+                backWaistWidth,
+                frontWaistWidth,
+                backDartAmount,
+                frontDartAmount,
+                backSideDart,
+                backCenterDart,
+                frontSideDart,
+                frontCenterDart,
+                totalLength: m.length,
+                sideLength: m.sideLength
+            };
+        }
+        
+        // توليد الباترون على Canvas
+        function generatePattern() {
+            updateMeasurements();
+            const dim = calculatePatternDimensions();
+            
+            // مسح Canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // تعيين خلفية
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // إضافة شبكة الخلفية
+            drawGrid();
+            
+            // تحديد نوع الباترون المرسوم
+            switch(currentPatternType) {
+                case 'normal':
+                    drawNormalPattern(dim);
+                    break;
+                case 'tight':
+                    drawTightPattern(dim);
+                    break;
+                case 'wide':
+                    drawWidePattern(dim);
+                    break;
+                case 'pleated':
+                    drawPleatedPattern(dim);
+                    break;
+                case 'circle':
+                    drawCirclePattern(dim);
+                    break;
+                case 'panels':
+                    drawPanelsPattern(dim);
+                    break;
+                default:
+                    drawNormalPattern(dim);
+            }
+            
+            // تحديث تفاصيل الحسابات
+            updatePatternDetails(dim);
+            updateCalculationTable();
+        }
+        
+        // رسم باترون عادي
+        function drawNormalPattern(dim) {
+            const scaleFactor = 3 * scale;
+            const centerX = canvas.width / 2;
+            const startY = 100;
+            
+            // رسم باترون الظهر (على اليسار)
+            const backStartX = centerX - 250;
+            drawBackPattern(backStartX, startY, dim, scaleFactor);
+            
+            // رسم باترون الأمام (على اليمين)
+            const frontStartX = centerX + 50;
+            drawFrontPattern(frontStartX, startY, dim, scaleFactor);
+            
+            // إضافة تسميات
+            ctx.fillStyle = '#333';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('الجزء الخلفي', backStartX + (dim.backWidth * scaleFactor) / 2, startY - 20);
+            ctx.fillText('الجزء الأمامي', frontStartX + (dim.frontWidth * scaleFactor) / 2, startY - 20);
+            
+            // إضافة مفتاح الرسم
+            drawLegend(centerX, startY + (dim.totalLength * scaleFactor) + 50);
+        }
+        
+        // رسم باترون الظهر
+        function drawBackPattern(startX, startY, dim, scaleFactor) {
+            // المستطيل الأساسي
+            const width = dim.backWidth * scaleFactor;
+            const height = dim.totalLength * scaleFactor;
+            
+            // رسم المستطيل
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(startX, startY, width, height);
+            
+            // خط الهنش
+            const hipLineY = startY + (dim.sideLength * scaleFactor);
+            ctx.strokeStyle = '#8a2be2';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(startX, hipLineY);
+            ctx.lineTo(startX + width, hipLineY);
+            ctx.stroke();
+            
+            // خط نصف الظهر
+            ctx.strokeStyle = '#ff6b6b';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(startX, startY + height);
+            ctx.stroke();
+            
+            // خط الجنب
+            ctx.strokeStyle = '#20bf6b';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(startX + width, startY);
+            ctx.lineTo(startX + width, startY + height);
+            ctx.stroke();
+            
+            // دوران الجنب
+            const sideDart = dim.backSideDart * scaleFactor;
+            ctx.strokeStyle = '#fa8231';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(startX + width - sideDart, startY);
+            ctx.lineTo(startX + width, hipLineY);
+            ctx.stroke();
+            
+            // بنسة الظهر
+            const dartWidth = dim.backCenterDart * scaleFactor;
+            const dartHeight = (dim.sideLength * scaleFactor) / 4;
+            const dartX = startX + (width / 3);
+            
+            ctx.fillStyle = 'rgba(138, 43, 226, 0.1)';
+            ctx.beginPath();
+            ctx.moveTo(dartX - dartWidth/2, hipLineY - dartHeight);
+            ctx.lineTo(dartX + dartWidth/2, hipLineY - dartHeight);
+            ctx.lineTo(dartX, hipLineY);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#8a2be2';
+            ctx.stroke();
+            
+            // إضافة التسميات
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'right';
+            
+            // تسمية الخطوط
+            ctx.fillText('خط الهنش', startX - 5, hipLineY + 4);
+            ctx.fillText('خط نصف الظهر', startX - 5, startY + height/2);
+            ctx.fillText('خط الجنب', startX + width + 5, startY + height/2);
+            ctx.fillText('بنسة الظهر', dartX, hipLineY - dartHeight - 5);
+        }
+        
+        // رسم باترون الأمام
+        function drawFrontPattern(startX, startY, dim, scaleFactor) {
+            // المستطيل الأساسي
+            const width = dim.frontWidth * scaleFactor;
+            const height = dim.totalLength * scaleFactor;
+            
+            // رسم المستطيل
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(startX, startY, width, height);
+            
+            // خط الهنش
+            const hipLineY = startY + (dim.sideLength * scaleFactor);
+            ctx.strokeStyle = '#8a2be2';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(startX, hipLineY);
+            ctx.lineTo(startX + width, hipLineY);
+            ctx.stroke();
+            
+            // خط نصف الأمام
+            ctx.strokeStyle = '#ff6b6b';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(startX + width, startY);
+            ctx.lineTo(startX + width, startY + height);
+            ctx.stroke();
+            
+            // خط الجنب
+            ctx.strokeStyle = '#20bf6b';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(startX, startY + height);
+            ctx.stroke();
+            
+            // دوران الجنب
+            const sideDart = dim.frontSideDart * scaleFactor;
+            ctx.strokeStyle = '#fa8231';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(startX + sideDart, startY);
+            ctx.lineTo(startX, hipLineY);
+            ctx.stroke();
+            
+            // بنسة الأمام
+            const dartWidth = dim.frontCenterDart * scaleFactor;
+            const dartHeight = (dim.sideLength * scaleFactor) / 3;
+            const dartX = startX + width - (width / 3);
+            
+            ctx.fillStyle = 'rgba(138, 43, 226, 0.1)';
+            ctx.beginPath();
+            ctx.moveTo(dartX - dartWidth/2, hipLineY - dartHeight);
+            ctx.lineTo(dartX + dartWidth/2, hipLineY - dartHeight);
+            ctx.lineTo(dartX, hipLineY);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#8a2be2';
+            ctx.stroke();
+            
+            // إضافة التسميات
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'left';
+            
+            // تسمية الخطوط
+            ctx.fillText('خط الهنش', startX + width + 5, hipLineY + 4);
+            ctx.fillText('خط نصف الأمام', startX + width + 5, startY + height/2);
+            ctx.fillText('خط الجنب', startX - 5, startY + height/2);
+            ctx.fillText('بنسة الأمام', dartX, hipLineY - dartHeight - 5);
+        }
+        
+        // رسم باترون ضيق
+        function drawTightPattern(dim) {
+            drawNormalPattern(dim);
+            
+            // إضافة تسمية إضافية
+            ctx.fillStyle = '#333';
+            ctx.font = '18px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('جونلة ضيقة - مع فتحات للحركة', canvas.width/2, 50);
+        }
+        
+        // رسم باترون واسع
+        function drawWidePattern(dim) {
+            drawNormalPattern(dim);
+            
+            // توسيع الذيل
+            const scaleFactor = 3 * scale;
+            const centerX = canvas.width / 2;
+            const startY = 100;
+            const frontStartX = centerX + 50;
+            
+            // إضافة توسيع للذيل في الأمام
+            const expansion = 7 * scaleFactor;
+            ctx.strokeStyle = '#4b0082';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([5, 5]);
+            
+            // خط التوسيع في الذيل
+            ctx.beginPath();
+            ctx.moveTo(frontStartX, startY + (dim.totalLength * scaleFactor));
+            ctx.lineTo(frontStartX - expansion, startY + (dim.totalLength * scaleFactor));
+            ctx.stroke();
+            
+            ctx.setLineDash([]);
+            
+            // إضافة تسمية إضافية
+            ctx.fillStyle = '#333';
+            ctx.font = '18px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('جونلة واسعة - مع توسيع في الذيل', canvas.width/2, 50);
+        }
+        
+        // رسم باترون الكلوش
+        function drawCirclePattern(dim) {
+            const scaleFactor = 2 * scale;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            // رسم نصف دائرة (كلوش)
+            ctx.strokeStyle = '#8a2be2';
+            ctx.lineWidth = 2;
+            
+            // قوس نصف دائري
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, (dim.waist/2) * scaleFactor, 0, Math.PI, false);
+            ctx.stroke();
+            
+            // خط الوسط
+            ctx.strokeStyle = '#ff6b6b';
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX, centerY - (dim.totalLength * scaleFactor));
+            ctx.stroke();
+            
+            // إضافة تسمية
+            ctx.fillStyle = '#333';
+            ctx.font = '18px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('جونلة كلوش (نصف دائرة)', canvas.width/2, 50);
+        }
+        
+        // رسم باترون القصات
+        function drawPanelsPattern(dim) {
+            const panelCount = parseInt(document.getElementById('panelCount').value) || 6;
+            drawNormalPattern(dim);
+            
+            // إضافة خطوط القصات
+            const scaleFactor = 3 * scale;
+            const centerX = canvas.width / 2;
+            const startY = 100;
+            const frontStartX = centerX + 50;
+            const backStartX = centerX - 250;
+            
+            // تقسيم باترون الأمام إلى قصات
+            const frontWidth = dim.frontWidth * scaleFactor;
+            const panelWidth = frontWidth / (panelCount / 2);
+            
+            ctx.strokeStyle = '#4b0082';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
+            
+            for (let i = 1; i < panelCount / 2; i++) {
+                const x = frontStartX + (i * panelWidth);
+                ctx.beginPath();
+                ctx.moveTo(x, startY);
+                ctx.lineTo(x, startY + (dim.totalLength * scaleFactor));
+                ctx.stroke();
+            }
+            
+            // تقسيم باترون الخلف إلى قصات
+            const backWidth = dim.backWidth * scaleFactor;
+            const backPanelWidth = backWidth / (panelCount / 2);
+            
+            for (let i = 1; i < panelCount / 2; i++) {
+                const x = backStartX + (i * backPanelWidth);
+                ctx.beginPath();
+                ctx.moveTo(x, startY);
+                ctx.lineTo(x, startY + (dim.totalLength * scaleFactor));
+                ctx.stroke();
+            }
+            
+            ctx.setLineDash([]);
+            
+            // إضافة تسمية
+            ctx.fillStyle = '#333';
+            ctx.font = '18px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`جونلة ذات ${panelCount} قصات`, canvas.width/2, 50);
+        }
+        
+        // رسم باترون الكسرات
+        function drawPleatedPattern(dim) {
+            const pleatCount = parseInt(document.getElementById('pleatCount').value) || 8;
+            drawNormalPattern(dim);
+            
+            // إضافة خطوط الكسرات
+            const scaleFactor = 3 * scale;
+            const centerX = canvas.width / 2;
+            const startY = 100;
+            const frontStartX = centerX + 50;
+            
+            // حساب عرض الكسرة
+            const pleatWidth = (dim.waist * 3) / pleatCount;
+            
+            // رسم خطوط الكسرات
+            ctx.strokeStyle = '#4b0082';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([2, 2]);
+            
+            for (let i = 0; i <= pleatCount / 2; i++) {
+                const x = frontStartX + (i * pleatWidth * scaleFactor);
+                ctx.beginPath();
+                ctx.moveTo(x, startY);
+                ctx.lineTo(x, startY + (dim.totalLength * scaleFactor));
+                ctx.stroke();
+            }
+            
+            ctx.setLineDash([]);
+            
+            // إضافة تسمية
+            ctx.fillStyle = '#333';
+            ctx.font = '18px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`جونلة ذات ${pleatCount} كسرة`, canvas.width/2, 50);
+        }
+        
+        // رسم شبكة الخلفية
+        function drawGrid() {
+            const gridSize = 20 * scale;
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 0.5;
+            
+            // خطوط عمودية
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            // خطوط أفقية
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+        
+        // رسم مفتاح الرسم
+        function drawLegend(x, y) {
+            const legends = [
+                { color: '#333', text: 'حدود الباترون' },
+                { color: '#8a2be2', text: 'خط الهنش' },
+                { color: '#ff6b6b', text: 'خط الوسط' },
+                { color: '#20bf6b', text: 'خط الجنب' },
+                { color: '#fa8231', text: 'دوران الجنب' },
+                { color: '#8a2be2', text: 'البنسات', fill: true }
+            ];
+            
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'right';
+            
+            legends.forEach((legend, i) => {
+                const legendY = y + (i * 25);
+                
+                if (legend.fill) {
+                    ctx.fillStyle = 'rgba(138, 43, 226, 0.1)';
+                    ctx.fillRect(x - 150, legendY - 10, 15, 15);
+                    ctx.strokeStyle = legend.color;
+                    ctx.strokeRect(x - 150, legendY - 10, 15, 15);
+                } else {
+                    ctx.fillStyle = legend.color;
+                    ctx.fillRect(x - 150, legendY - 8, 15, 3);
+                }
+                
+                ctx.fillStyle = '#333';
+                ctx.fillText(legend.text, x - 160, legendY);
+            });
+        }
+        
+        // تحديث تفاصيل الحسابات المعروضة
+        function updatePatternDetails(dim) {
+            // تحديث قسم الحسابات الأساسية
+            document.getElementById('calcDetails').innerHTML = `
+                عرض الظهر: ${dim.backWidth.toFixed(1)} سم<br>
+                عرض الأمام: ${dim.frontWidth.toFixed(1)} سم<br>
+                تكسيم الظهر: ${dim.backDartAmount.toFixed(1)} سم<br>
+                تكسيم الأمام: ${dim.frontDartAmount.toFixed(1)} سم
+            `;
+            
+            // تحديث قسم أبعاد الباترون
+            document.getElementById('patternDimensions').innerHTML = `
+                الطول الكلي: ${dim.totalLength} سم<br>
+                طول الجنب: ${dim.sideLength} سم<br>
+                نسبة الرسم: 1:${(1/scale).toFixed(1)}<br>
+                النوع: ${getPatternTypeName(currentPatternType)}
+            `;
+            
+            // تحديث قسم تفاصيل التكسيم
+            document.getElementById('dartDetails').innerHTML = `
+                توزيع تكسيم الظهر:<br>
+                - للجنب: ${dim.backSideDart.toFixed(1)} سم<br>
+                - للبنسة: ${dim.backCenterDart.toFixed(1)} سم<br>
+                توزيع تكسيم الأمام:<br>
+                - للجنب: ${dim.frontSideDart.toFixed(1)} سم<br>
+                - للبنسة: ${dim.frontCenterDart.toFixed(1)} سم
+            `;
+            
+            // تحديث قسم ملاحظات التنفيذ
+            document.getElementById('executionNotes').innerHTML = getExecutionNotes(currentPatternType, dim);
+        }
+        
+        // الحصول على اسم نوع الباترون
+        function getPatternTypeName(type) {
+            const names = {
+                normal: 'جونلة عادية',
+                tight: 'جونلة ضيقة',
+                wide: 'جونلة واسعة',
+                pleated: 'جونلة ذات كسرات',
+                circle: 'جونلة كلوش',
+                panels: 'جونلة ذات قصات'
+            };
+            return names[type] || 'جونلة عادية';
+        }
+        
+        // الحصول على ملاحظات التنفيذ حسب النوع
+        function getExecutionNotes(type, dim) {
+            const notes = {
+                normal: 'باترون عادي - يمكن تنفيذه مباشرة على القماش مع مراعاة اتجاه النسيج.',
+                tight: `جونلة ضيقة - يجب عمل فتحات في الذيل للحركة. أقصى تضييق مسموح: ${Math.min(dim.backDartAmount + dim.frontDartAmount, 18).toFixed(1)} سم`,
+                wide: 'جونلة واسعة - إضافة توسيع في الذيل حسب الموديل المطلوب.',
+                pleated: `جونلة كسرات - عدد الكسرات: ${document.getElementById('pleatCount').value}. عرض القماش المطلوب: ${(dim.waist * 3).toFixed(0)} سم`,
+                circle: 'جونلة كلوش - يوضع خط الوسط على ثنية القماش.',
+                panels: `جونلة قصات - عدد القصات: ${document.getElementById('panelCount').value}. تبدأ القصات من الوسط.`
+            };
+            return notes[type] || 'اتبع تعليمات الرسم الأساسية.';
+        }
+        
+        // تحديث جدول الحسابات
+        function updateCalculationTable() {
+            const dim = calculatePatternDimensions();
+            const table = document.getElementById('calculationTable');
+            
+            const calculations = [
+                ['عرض باترون الظهر', `${dim.backWidth.toFixed(1)} سم`, '(¼ محيط الهنش - 1.5 سم)', `${(currentMeasurements.hip/4 - 1.5).toFixed(1)} سم`],
+                ['عرض باترون الأمام', `${dim.frontWidth.toFixed(1)} سم`, '(¼ محيط الهنش + 1.5 سم)', `${(currentMeasurements.hip/4 + 1.5).toFixed(1)} سم`],
+                ['عرض الوسط (الظهر)', `${dim.backWaistWidth.toFixed(1)} سم`, '(¼ محيط الوسط - 1 سم)', `${(currentMeasurements.waist/4 - 1).toFixed(1)} سم`],
+                ['عرض الوسط (الأمام)', `${dim.frontWaistWidth.toFixed(1)} سم`, '(¼ محيط الوسط + 1 سم)', `${(currentMeasurements.waist/4 + 1).toFixed(1)} سم`],
+                ['تكسيم الظهر', `${dim.backDartAmount.toFixed(1)} سم`, 'عرض الباترون - عرض الوسط', `${(dim.backWidth - dim.backWaistWidth).toFixed(1)} سم`],
+                ['تكسيم الأمام', `${dim.frontDartAmount.toFixed(1)} سم`, 'عرض الباترون - عرض الوسط', `${(dim.frontWidth - dim.frontWaistWidth).toFixed(1)} سم`]
+            ];
+            
+            table.innerHTML = '';
+            calculations.forEach(calc => {
+                const row = document.createElement('tr');
+                calc.forEach((cell, i) => {
+                    const td = document.createElement('td');
+                    td.textContent = cell;
+                    if (i === 1 || i === 3) td.style.fontWeight = 'bold';
+                    row.appendChild(td);
+                });
+                table.appendChild(row);
+            });
+        }
+        
+        // تكبير/تصغير الرسم
+        function zoomCanvas(factor) {
+            scale *= factor;
+            generatePattern();
+        }
+        
+        // إعادة تعيين الباترون
+        function resetPattern() {
+            // إعادة تعيين القيم الافتراضية
+            document.getElementById('hip').value = 100;
+            document.getElementById('waist').value = 72;
+            document.getElementById('length').value = 60;
+            document.getElementById('sideLength').value = 20;
+            
+            // إعادة تعيين نوع الباترون
+            patternTypes.forEach(t => t.classList.remove('active'));
+            document.querySelector('.pattern-type[data-type="normal"]').classList.add('active');
+            currentPatternType = 'normal';
+            
+            // إعادة تعيين التكبير
+            scale = 1.0;
+            
+            // إعادة توليد الباترون
+            updateMeasurements();
+            generatePattern();
+        }
+        
+        // طباعة الباترون
+        function printPattern() {
+            // إنشاء نافذة طباعة
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>طباعة باترون الجونلة - موسوعة الأجيال</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h1 { color: #4b0082; text-align: center; }
+                        .pattern-info { margin: 20px 0; }
+                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                        th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+                        th { background-color: #f0f0f0; }
+                        .instructions { background-color: #f9f7fe; padding: 15px; margin: 20px 0; border-radius: 5px; }
+                        @media print {
+                            .no-print { display: none; }
+                            body { padding: 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>باترون الجونلة - موسوعة الأجيال للتفصيل</h1>
+                    <div class="pattern-info">
+                        <p><strong>تاريخ الطباعة:</strong> ${new Date().toLocaleDateString('ar-EG')}</p>
+                        <p><strong>نوع الباترون:</strong> ${getPatternTypeName(currentPatternType)}</p>
+                    </div>
+                    
+                    <table>
+                        <tr><th>المقياس</th><th>القيمة</th></tr>
+                        <tr><td>محيط الهنش</td><td>${currentMeasurements.hip} سم</td></tr>
+                        <tr><td>محيط الوسط</td><td>${currentMeasurements.waist} سم</td></tr>
+                        <tr><td>طول الجونلة</td><td>${currentMeasurements.length} سم</td></tr>
+                        <tr><td>طول الجنب</td><td>${currentMeasurements.sideLength} سم</td></tr>
+                    </table>
+                    
+                    <div class="instructions">
+                        <h3>تعليمات التنفيذ:</h3>
+                        <p>${getExecutionNotes(currentPatternType, calculatePatternDimensions())}</p>
+                        <p><strong>مقياس الرسم:</strong> 1:${(1/scale).toFixed(1)} (كل 1 سم على الرسم = ${(1/scale).toFixed(1)} سم على القماش)</p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <button class="no-print" onclick="window.print()" style="padding: 10px 20px; background-color: #4b0082; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            طباعة الصفحة
+                        </button>
+                    </div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+        
+        // تحميل الباترون كصورة
+        function downloadPattern() {
+            const link = document.createElement('a');
+            link.download = `باترون-جونلة-${getPatternTypeName(currentPatternType)}-${new Date().getTime()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // تهيئة التطبيق عند تحميل الصفحة
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

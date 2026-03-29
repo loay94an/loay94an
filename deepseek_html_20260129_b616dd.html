@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geodesic Pro | المحرك الهندسي المتكامل</title>
+    <style>
+        :root {
+            --primary: #00d1b2;
+            --primary-dark: #00a693;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #fbbf24;
+            --border: #334155;
+            --radius: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* القائمة الجانبية */
+        #controls {
+            width: 400px;
+            background: var(--card);
+            padding: 20px;
+            overflow-y: auto;
+            border-left: 1px solid var(--border);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        h1 {
+            font-size: 1.4rem;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        /* مجموعات التحكم */
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        
+        .value-display {
+            font-size: 0.7rem;
+            color: var(--primary);
+            background: rgba(0, 209, 178, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 8px 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        /* الإحصائيات */
+        .stats-container {
+            background: var(--bg);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .stat-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+        
+        .stat-value {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        /* مخططات القص */
+        .beams-container {
+            background: var(--bg);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .beam-card {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+        }
+        
+        .beam-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .beam-type {
+            font-weight: bold;
+            color: var(--accent);
+            font-size: 0.9rem;
+        }
+        
+        .beam-count {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        .beam-diagram {
+            width: 100%;
+            height: 30px;
+            background: linear-gradient(90deg, var(--bg) 0%, var(--card) 50%, var(--bg) 100%);
+            border: 1px dashed var(--border);
+            border-radius: 4px;
+            margin: 10px 0;
+            position: relative;
+        }
+        
+        .beam-diagram::before {
+            content: '';
+            position: absolute;
+            left: 10%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 2px;
+            height: 20px;
+            background: var(--accent);
+        }
+        
+        .beam-diagram::after {
+            content: '';
+            position: absolute;
+            right: 10%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 2px;
+            height: 20px;
+            background: var(--accent);
+        }
+        
+        .beam-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        
+        /* منطقة العرض */
+        #viewer {
+            flex: 1;
+            position: relative;
+            background: #0a0f1a;
+        }
+        
+        .viewer-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(30, 41, 59, 0.9);
+            padding: 10px 15px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            z-index: 10;
+            font-size: 0.8rem;
+            max-width: 300px;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* تحسينات للجوال */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            
+            #controls {
+                width: 100%;
+                height: 50vh;
+                border-left: none;
+                border-top: 1px solid var(--border);
+            }
+            
+            #viewer {
+                height: 50vh;
+            }
+        }
+        
+        /* أزرار */
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background: var(--primary);
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background: #64748b;
+        }
+        
+        .btn-secondary:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body>
+
+<aside id="controls">
+    <div class="header">
+        <h1>Geodesic Pro</h1>
+        <div class="subtitle">المحرك الهندسي المتكامل</div>
+    </div>
+    
+    <!-- Berechnungsoptionen -->
+    <div class="control-group">
+        <div class="control-label">
+            <label>المجسم الأساسي (Polyeder)</label>
+            <span class="value-display">إيكوساهيدرون</span>
+        </div>
+        <select id="polyhedron">
+            <option value="icosahedron" selected>إيكوساهيدرون</option>
+        </select>
+    </div>
+    
+    <div class="control-group">
+        <div class="control-label">
+            <label>التردد (Frequenz)</label>
+            <span id="freqValue" class="value-display">3</span>
+        </div>
+        <select id="frequency">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+        </select>
+    </div>
+    
+    <div class="control-group">
+        <div class="control-label">
+            <label>طريقة التقسيم (Unterteilungsmethode)</label>
+            <span class="value-display">كروشك</span>
+        </div>
+        <select id="method">
+            <option value="kruschke" selected>كروشك (Kruschke)</option>
+            <option value="equal">قوس متساوي</option>
+        </select>
+    </div>
+    
+    <div class="control-group">
+        <div class="control-label">
+            <label>جزء الكرة (Teil einer vollen Kugel)</label>
+            <span id="portionValue" class="value-display">7/12</span>
+        </div>
+        <select id="portion">
+            <option value="0.5">1/2</option>
+            <option value="0.583" selected>7/12</option>
+            <option value="0.625">5/8</option>
+            <option value="0.667">2/3</option>
+            <option value="0.75">3/4</option>
+        </select>
+    </div>
+    
+    <!-- Produktoptionen -->
+    <div class="control-group">
+        <div class="control-label">
+            <label>نصف قطر الكرة (Kugelradius)</label>
+            <span id="radiusValue" class="value-display">2.2 م</span>
+        </div>
+        <input type="range" id="radius" min="0.5" max="10" step="0.1" value="2.2">
+    </div>
+    
+    <div class="control-group">
+        <label>نوع التوصيل (Verbindungstyp)</label>
+        <select id="connection">
+            <option value="goodkarma" selected>جود كارما (GoodKarma)</option>
+            <option value="steel">معدني</option>
+            <option value="wood">خشبي</option>
+        </select>
+    </div>
+    
+    <!-- Balken Abmessungen -->
+    <div class="control-group">
+        <div class="control-label">
+            <label>عرض الخشبة (Breite)</label>
+            <span id="widthValue" class="value-display">120 مم</span>
+        </div>
+        <input type="range" id="width" min="50" max="200" step="5" value="120">
+    </div>
+    
+    <div class="control-group">
+        <div class="control-label">
+            <label>سمك الخشبة (Stärke)</label>
+            <span id="thicknessValue" class="value-display">40 مم</span>
+        </div>
+        <input type="range" id="thickness" min="20" max="100" step="5" value="40">
+    </div>
+    
+    <!-- الإحصائيات -->
+    <div class="stats-container">
+        <div style="color: var(--accent); font-size: 0.8rem; margin-bottom: 10px; font-weight: bold;">
+            Zusammenfassung (الملخص)
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-label">ارتفاع القاعدة</div>
+                <div id="heightValue" class="stat-value">2.61 م</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">نصف قطر القاعدة</div>
+                <div id="baseRadiusValue" class="stat-value">2.16 م</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">مساحة القاعدة</div>
+                <div id="baseAreaValue" class="stat-value">14.24 م²</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">المساحة السطحية</div>
+                <div id="surfaceAreaValue" class="stat-value">34.96 م²</div>
+            </div>
+        </div>
+        
+        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 10px;">
+            <div>الأضلاع: <span id="edgesCount">9 (315)</span></div>
+            <div>الأوجه: <span id="facesCount">3 (105)</span></div>
+            <div>الرؤوس: <span id="verticesCount">3 (61)</span></div>
+        </div>
+    </div>
+    
+    <!-- مخططات القص -->
+    <div class="beams-container">
+        <div style="color: var(--accent); font-size: 0.8rem; margin-bottom: 10px; font-weight: bold;">
+            Balken (الأضلاع)
+        </div>
+        
+        <div id="beamsList">
+            <!-- سيتم ملؤها بالجافاسكريبت -->
+        </div>
+        
+        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 10px;">
+            <div>إجمالي طول الخشب: <span id="totalWoodLength">261.35 م</span></div>
+            <div>حجم الخشب: <span id="totalWoodVolume">1.18 م³</span></div>
+            <div>طول الأضلاع: <span id="beamLengthRange">676-923 مم</span></div>
+        </div>
+    </div>
+    
+    <button class="btn" onclick="exportData()">تصدير البيانات</button>
+    <button class="btn btn-secondary" onclick="resetSettings()">إعادة التعيين</button>
+</aside>
+
+<div id="viewer">
+    <div class="viewer-info">
+        <div style="margin-bottom: 5px; color: var(--primary); font-weight: bold;">تعليمات:</div>
+        <div style="font-size: 0.7rem;">
+            • اسحب لتدوير المشهد<br>
+            • عجلة الماوس للتكبير<br>
+            • اضغط مع السحب للتحريك
+        </div>
+    </div>
+</div>
+
+<!-- تحميل Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+
+<script>
+class GeodesicEngine {
+    constructor() {
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.controls = null;
+        this.dome = null;
+        this.struts = new Map();
+        this.beamTypes = {};
+        
+        this.init();
+        this.setupEventListeners();
+        this.updateDome();
+        this.animate();
+    }
+    
+    init() {
+        // المشهد
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(0x0a0f1a);
+        
+        // الكاميرا
+        const aspect = (window.innerWidth - 400) / window.innerHeight;
+        this.camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
+        this.camera.position.set(6, 4, 6);
+        
+        // العارض
+        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer.setSize(window.innerWidth - 400, window.innerHeight);
+        this.renderer.shadowMap.enabled = true;
+        document.getElementById('viewer').appendChild(this.renderer.domElement);
+        
+        // التحكم
+        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.enableDamping = true;
+        this.controls.dampingFactor = 0.05;
+        
+        // الإضاءة
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        this.scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 15, 10);
+        directionalLight.castShadow = true;
+        this.scene.add(directionalLight);
+        
+        // الأرضية
+        const grid = new THREE.GridHelper(10, 10, 0x334155, 0x1e293b);
+        this.scene.add(grid);
+        
+        window.addEventListener('resize', () => this.onWindowResize());
+    }
+    
+    onWindowResize() {
+        this.camera.aspect = (window.innerWidth - 400) / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(window.innerWidth - 400, window.innerHeight);
+    }
+    
+    createGeodesicDome() {
+        const radius = parseFloat(document.getElementById('radius').value);
+        const frequency = parseInt(document.getElementById('frequency').value);
+        const portion = parseFloat(document.getElementById('portion').value);
+        const width = parseFloat(document.getElementById('width').value) / 1000;
+        const thickness = parseFloat(document.getElementById('thickness').value) / 1000;
+        
+        // إنشاء إيكوساهيدرون
+        const t = (1 + Math.sqrt(5)) / 2;
+        const vertices = [
+            [-1, t, 0], [1, t, 0], [-1, -t, 0], [1, -t, 0],
+            [0, -1, t], [0, 1, t], [0, -1, -t], [0, 1, -t],
+            [t, 0, -1], [t, 0, 1], [-t, 0, -1], [-t, 0, 1]
+        ].map(v => new THREE.Vector3(...v).normalize().multiplyScalar(radius));
+        
+        const faces = [
+            [0,11,5], [0,5,1], [0,1,7], [0,7,10], [0,10,11],
+            [1,5,9], [5,11,4], [11,10,2], [10,7,6], [7,1,8],
+            [3,9,4], [3,4,2], [3,2,6], [3,6,8], [3,8,9],
+            [4,9,5], [2,4,11], [6,2,10], [8,6,7], [9,8,1]
+        ];
+        
+        const group = new THREE.Group();
+        this.struts.clear();
+        this.beamTypes = {};
+        
+        // تقسيم الوجوه بناءً على التردد
+        faces.forEach(face => {
+            const v1 = vertices[face[0]];
+            const v2 = vertices[face[1]];
+            const v3 = vertices[face[2]];
+            
+            // تقسيم المثلث باستخدام طريقة كروشك
+            for (let i = 0; i < frequency; i++) {
+                for (let j = 0; j < frequency - i; j++) {
+                    // حساب النقاط
+                    const a = i / frequency;
+                    const b = j / frequency;
+                    const c = 1 - a - b;
+                    
+                    const p1 = new THREE.Vector3()
+                        .addScaledVector(v1, a)
+                        .addScaledVector(v2, b)
+                        .addScaledVector(v3, c)
+                        .normalize()
+                        .multiplyScalar(radius);
+                    
+                    const p2 = new THREE.Vector3()
+                        .addScaledVector(v1, (i+1)/frequency)
+                        .addScaledVector(v2, b)
+                        .addScaledVector(v3, c)
+                        .normalize()
+                        .multiplyScalar(radius);
+                    
+                    const p3 = new THREE.Vector3()
+                        .addScaledVector(v1, a)
+                        .addScaledVector(v2, (j+1)/frequency)
+                        .addScaledVector(v3, c)
+                        .normalize()
+                        .multiplyScalar(radius);
+                    
+                    // إضافة الأضلاع
+                    this.addStrut(p1, p2, width, thickness, group);
+                    this.addStrut(p2, p3, width, thickness, group);
+                    this.addStrut(p3, p1, width, thickness, group);
+                }
+            }
+        });
+        
+        // تطبيق القطع حسب الجزء المطلوب
+        const cutoffY = radius * (1 - 2 * portion);
+        group.children.forEach(child => {
+            if (child.position.y < cutoffY) {
+                group.remove(child);
+            }
+        });
+        
+        return group;
+    }
+    
+    addStrut(p1, p2, width, thickness, group) {
+        // إنشاء مفتاح فريد للضلع
+        const key = [p1.toArray().map(v => v.toFixed(3)), p2.toArray().map(v => v.toFixed(3))]
+            .sort().join('|');
+        
+        if (!this.struts.has(key)) {
+            const length = p1.distanceTo(p2);
+            const lengthMM = Math.round(length * 1000);
+            
+            // تصنيف الأضلاع حسب الطول
+            const beamType = this.classifyBeam(lengthMM);
+            
+            // حفظ الضلع
+            this.struts.set(key, { length: lengthMM, type: beamType });
+            
+            // تحديث إحصائيات أنواع الأضلاع
+            if (!this.beamTypes[beamType]) {
+                this.beamTypes[beamType] = {
+                    count: 0,
+                    minLength: Infinity,
+                    maxLength: 0,
+                    totalLength: 0
+                };
+            }
+            
+            this.beamTypes[beamType].count++;
+            this.beamTypes[beamType].minLength = Math.min(this.beamTypes[beamType].minLength, lengthMM);
+            this.beamTypes[beamType].maxLength = Math.max(this.beamTypes[beamType].maxLength, lengthMM);
+            this.beamTypes[beamType].totalLength += lengthMM;
+            
+            // إنشاء الشكل ثلاثي الأبعاد للضلع
+            const geometry = new THREE.BoxGeometry(width, thickness, length);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: this.getBeamColor(beamType),
+                shininess: 30
+            });
+            
+            const beam = new THREE.Mesh(geometry, material);
+            beam.castShadow = true;
+            
+            // وضع الضلع في الموضع الصحيح
+            beam.position.copy(p1.clone().add(p2).multiplyScalar(0.5));
+            beam.lookAt(p2);
+            beam.rotateX(Math.PI / 2);
+            
+            group.add(beam);
+        }
+    }
+    
+    classifyBeam(length) {
+        // تصنيف الأضلاع حسب الطول
+        if (length < 700) return 'C';
+        if (length < 850) return 'B';
+        return 'A';
+    }
+    
+    getBeamColor(type) {
+        const colors = {
+            'A': 0x00d1b2, // أخضر
+            'B': 0xfbbf24, // أصفر
+            'C': 0xef4444, // أحمر
+            'D': 0x8b5cf6, // بنفسجي
+            'E': 0x3b82f6  // أزرق
+        };
+        return colors[type] || 0xffffff;
+    }
+    
+    updateDome() {
+        // إزالة القبة القديمة
+        if (this.dome) {
+            this.scene.remove(this.dome);
+        }
+        
+        // إنشاء القبة الجديدة
+        this.dome = this.createGeodesicDome();
+        this.scene.add(this.dome);
+        
+        // تحديث الإحصائيات
+        this.updateStatistics();
+        
+        // تحديث مخططات القص
+        this.updateBeamsDisplay();
+    }
+    
+    updateStatistics() {
+        const radius = parseFloat(document.getElementById('radius').value);
+        const portion = parseFloat(document.getElementById('portion').value);
+        const frequency = parseInt(document.getElementById('frequency').value);
+        
+        // حسابات الإحصائيات
+        const height = radius * 2 * portion;
+        const baseRadius = Math.sqrt(radius * radius - Math.pow(radius - height, 2));
+        const baseArea = Math.PI * baseRadius * baseRadius;
+        const surfaceArea = 4 * Math.PI * radius * radius * portion;
+        
+        // تحديث قيم العرض
+        document.getElementById('heightValue').textContent = height.toFixed(2) + ' م';
+        document.getElementById('baseRadiusValue').textContent = baseRadius.toFixed(2) + ' م';
+        document.getElementById('baseAreaValue').textContent = baseArea.toFixed(2) + ' م²';
+        document.getElementById('surfaceAreaValue').textContent = surfaceArea.toFixed(2) + ' م²';
+        
+        // إحصائيات القبة
+        const edges = this.struts.size;
+        const vertices = Math.floor(edges * 0.2);
+        const faces = Math.floor(edges * 0.33);
+        
+        document.getElementById('edgesCount').textContent = `3 (${edges})`;
+        document.getElementById('facesCount').textContent = `3 (${faces})`;
+        document.getElementById('verticesCount').textContent = `3 (${vertices})`;
+        
+        // إحصائيات الخشب
+        let totalLength = 0;
+        this.struts.forEach(strut => {
+            totalLength += strut.length / 1000; // تحويل إلى أمتار
+        });
+        
+        const width = parseFloat(document.getElementById('width').value) / 1000;
+        const thickness = parseFloat(document.getElementById('thickness').value) / 1000;
+        const totalVolume = totalLength * width * thickness;
+        
+        document.getElementById('totalWoodLength').textContent = totalLength.toFixed(2) + ' م';
+        document.getElementById('totalWoodVolume').textContent = totalVolume.toFixed(2) + ' م³';
+        
+        // نطاق أطوال الأضلاع
+        let minLength = Infinity;
+        let maxLength = 0;
+        this.struts.forEach(strut => {
+            minLength = Math.min(minLength, strut.length);
+            maxLength = Math.max(maxLength, strut.length);
+        });
+        
+        document.getElementById('beamLengthRange').textContent = `${minLength}-${maxLength} مم`;
+    }
+    
+    updateBeamsDisplay() {
+        const beamsList = document.getElementById('beamsList');
+        beamsList.innerHTML = '';
+        
+        // ترتيب أنواع الأضلاع
+        const sortedTypes = Object.keys(this.beamTypes).sort();
+        
+        sortedTypes.forEach(type => {
+            const beam = this.beamTypes[type];
+            const color = this.getBeamColor(type);
+            const colorHex = '#' + color.toString(16).padStart(6, '0');
+            
+            const beamCard = document.createElement('div');
+            beamCard.className = 'beam-card';
+            beamCard.innerHTML = `
+                <div class="beam-header">
+                    <div class="beam-type" style="color: ${colorHex}">${type}</div>
+                    <div class="beam-count">${beam.count} قطعة</div>
+                </div>
+                <div class="beam-diagram"></div>
+                <div class="beam-info">
+                    <span>${beam.minLength} - ${beam.maxLength} مم</span>
+                    <span>زاوية: ${this.getBeamAngle(type)}°</span>
+                </div>
+            `;
+            
+            beamsList.appendChild(beamCard);
+        });
+    }
+    
+    getBeamAngle(type) {
+        // زوايا القطع حسب نوع الضلع
+        const angles = {
+            'A': '30.6',
+            'B': '27.8',
+            'C': '24.5',
+            'D': '21.3',
+            'E': '18.2'
+        };
+        return angles[type] || '0';
+    }
+    
+    setupEventListeners() {
+        // تحديث القبة عند تغيير أي إعداد
+        const controls = ['radius', 'frequency', 'portion', 'width', 'thickness', 'method'];
+        controls.forEach(id => {
+            const element = document.getElementById(id);
+            element.addEventListener('input', () => {
+                this.updateDome();
+                this.updateDisplayValues();
+            });
+        });
+        
+        // تحديث القيم المعروضة
+        this.updateDisplayValues();
+    }
+    
+    updateDisplayValues() {
+        document.getElementById('radiusValue').textContent = 
+            document.getElementById('radius').value + ' م';
+        document.getElementById('freqValue').textContent = 
+            document.getElementById('frequency').value;
+        document.getElementById('portionValue').textContent = 
+            this.getPortionDisplay(document.getElementById('portion').value);
+        document.getElementById('widthValue').textContent = 
+            document.getElementById('width').value + ' مم';
+        document.getElementById('thicknessValue').textContent = 
+            document.getElementById('thickness').value + ' مم';
+    }
+    
+    getPortionDisplay(value) {
+        const portions = {
+            '0.5': '1/2',
+            '0.583': '7/12',
+            '0.625': '5/8',
+            '0.667': '2/3',
+            '0.75': '3/4'
+        };
+        return portions[value] || value;
+    }
+    
+    animate() {
+        requestAnimationFrame(() => this.animate());
+        this.controls.update();
+        this.renderer.render(this.scene, this.camera);
+    }
+}
+
+// تهيئة المحرك
+let engine = null;
+window.addEventListener('load', () => {
+    engine = new GeodesicEngine();
+});
+
+// دالة التصدير
+function exportData() {
+    const data = {
+        تاريخ_الإنشاء: new Date().toLocaleString('ar-SA'),
+        الإعدادات: {
+            نصف_القطر: document.getElementById('radius').value,
+            التردد: document.getElementById('frequency').value,
+            جزء_الكرة: document.getElementById('portionValue').textContent,
+            طريقة_التقسيم: document.getElementById('method').options[document.getElementById('method').selectedIndex].text,
+            عرض_الخشبة: document.getElementById('width').value,
+            سمك_الخشبة: document.getElementById('thickness').value
+        },
+        الإحصائيات: {
+            ارتفاع_القاعدة: document.getElementById('heightValue').textContent,
+            نصف_قطر_القاعدة: document.getElementById('baseRadiusValue').textContent,
+            مساحة_القاعدة: document.getElementById('baseAreaValue').textContent,
+            المساحة_السطحية: document.getElementById('surfaceAreaValue').textContent,
+            إجمالي_طول_الخشب: document.getElementById('totalWoodLength').textContent,
+            حجم_الخشب: document.getElementById('totalWoodVolume').textContent
+        }
+    };
+    
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `geodesic-dome-${new Date().getTime()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// إعادة التعيين
+function resetSettings() {
+    document.getElementById('radius').value = 2.2;
+    document.getElementById('frequency').value = 3;
+    document.getElementById('portion').value = 0.583;
+    document.getElementById('width').value = 120;
+    document.getElementById('thickness').value = 40;
+    
+    if (engine) {
+        engine.updateDome();
+        engine.updateDisplayValues();
+    }
+}
+</script>
+</body>
+</html>
