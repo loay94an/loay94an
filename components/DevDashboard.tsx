@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Fabric, FabricColor, StyleItem, PricingRule, Order, BrandingSettings, SectionConfig, ActivityLog, Gender, GarmentStyle, User, UserRole, Occasion, Measurements } from '../types';
 import jsPDF from 'jspdf';
@@ -25,9 +26,9 @@ interface Props {
   activityLogs: ActivityLog[];
   currentUser: User;
   allUsers: User[];
-  onAddUser: (username: string, password: string, role: UserRole) => Promise<User | null>; // Ensure it returns User | null
+  onAddUser: (username: string, password: string, role: UserRole) => Promise<User | null>; 
   onUpdateUser: (user: User) => Promise<boolean>;
-  onUpdateUserRole: (userId: string, newRole: UserRole) => void; // This might become redundant if onUpdateUser is generic enough
+  onUpdateUserRole: (userId: string, newRole: UserRole) => void; 
   onDeleteUser: (userId: string) => void;
   onLogout: () => void;
   db: Firestore;
@@ -51,7 +52,8 @@ export const DevDashboard: React.FC<Props> = ({
   // REAL-TIME STATE
   const [liveOrders, setLiveOrders] = useState<Order[]>(localOrders);
   const [loadingOrders, setLoadingOrders] = useState(false);
-  const [liveUsers, setLiveUsers] = useState<User[]>(allUsers); // Separate state for live users
+  const [liveUsers, setLiveUsers] = useState<User[]>(allUsers); 
+  const [permissionError, setPermissionError] = useState<string | null>(null);
 
   // CRUD Modal State
   const [modalType, setModalType] = useState<ModalType>(null);
@@ -69,30 +71,45 @@ export const DevDashboard: React.FC<Props> = ({
     }
 
     setLoadingOrders(true);
+    setPermissionError(null);
     let q;
 
+    // FIX: Removing orderBy from the Firestore query to prevent "Missing Index" errors.
+    // We will sort the results in JavaScript (client-side) instead.
     if (currentUser.role === UserRole.ADMIN) {
-        q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+        // Admin sees ALL orders
+        q = query(collection(db, 'orders'));
     } else if (currentUser.role === UserRole.MANAGER) {
-        q = query(collection(db, 'orders'), where('managerId', '==', currentUser.username), orderBy('createdAt', 'desc')); 
+        // Manager sees ONLY their orders
+        q = query(collection(db, 'orders'), where('managerId', '==', currentUser.username)); 
     } else {
-        q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+        // Fallback
+        q = query(collection(db, 'orders'));
     }
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const fetchedOrders: Order[] = [];
         snapshot.forEach((doc) => {
-            const data = { id: doc.id, ...doc.data() } as Order; // Ensure ID is captured
+            const data = { id: doc.id, ...doc.data() } as Order;
             fetchedOrders.push(data);
         });
         
-        fetchedOrders.sort((a, b) => b.createdAt - a.createdAt);
+        // Client-side sorting (Desc Date)
+        fetchedOrders.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        
         setLiveOrders(fetchedOrders);
-        setOrders(fetchedOrders); // Update parent state as well
+        setOrders(fetchedOrders); 
         setLoadingOrders(false);
+        setPermissionError(null);
     }, (error) => {
         console.error("Real-time orders fetch error:", error);
         setLoadingOrders(false);
+        if (error.code === 'permission-denied') {
+            setPermissionError("ليس لديك صلاحية لعرض الطلبات. يرجى التحقق من قواعد الأمان (Firestore Rules).");
+        } else {
+            setPermissionError(`حدث خطأ في جلب البيانات: ${error.message}`);
+        }
+        // Fallback to local if fetch fails
         setLiveOrders(localOrders);
     });
 
@@ -106,7 +123,8 @@ export const DevDashboard: React.FC<Props> = ({
         return;
     }
 
-    const q = query(collection(db, 'users'), orderBy('username'));
+    // Removing orderBy here too for safety, relying on client sort
+    const q = query(collection(db, 'users'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const fetchedUsers: User[] = [];
         snapshot.forEach((doc) => {
@@ -150,7 +168,6 @@ export const DevDashboard: React.FC<Props> = ({
     const file = e.target.files[0];
     setIsUploading(true);
 
-    // Provide an immediate preview
     const reader = new FileReader();
     reader.onloadend = () => {
         setEditingItem((prev: any) => ({ ...prev, [fieldName]: reader.result as string }));
@@ -162,7 +179,7 @@ export const DevDashboard: React.FC<Props> = ({
         try {
           await uploadBytes(storageRef, file);
           const url = await getDownloadURL(storageRef);
-          setEditingItem((prev: any) => ({ ...prev, [fieldName]: url })); // Update with cloud URL
+          setEditingItem((prev: any) => ({ ...prev, [fieldName]: url })); 
         } catch (error) {
           console.warn("Firebase upload failed, keeping local Base64 preview.", error);
         }
@@ -187,23 +204,18 @@ export const DevDashboard: React.FC<Props> = ({
         setColors(colors.filter(i => i.id !== id));
       }
       if (type === 'PRICING') {
-        if (db) await deleteDoc(doc(db, 'pricing', id)); // id here is styleId
+        if (db) await deleteDoc(doc(db, 'pricing', id)); 
         setPricing(pricing.filter(i => i.styleId !== id));
       }
       if (type === 'USER') {
         if (db) {
              await deleteDoc(doc(db, 'users', id));
-             // Also delete referral if exists
              const userToDelete = liveUsers.find(u => u.id === id);
              if (userToDelete?.referralCode) {
                  await deleteDoc(doc(db, 'referrals', userToDelete.referralCode));
              }
         }
-        setLiveUsers(liveUsers.filter(u => u.id !== id)); // Update liveUsers state
-        // Re-call onUpdateUser to update global app state (allUsers in App.tsx)
-        // This is a bit indirect, but onAddUser/onUpdateUser already handle App.tsx's allUsers
-        // For delete, we need to pass a callback if App.tsx doesn't listen to liveUsers
-        // For simplicity, for now, just update local, and App.tsx will eventually sync
+        setLiveUsers(liveUsers.filter(u => u.id !== id)); 
       }
       alert("✅ تم الحذف بنجاح");
     } catch (error) {
@@ -217,30 +229,18 @@ export const DevDashboard: React.FC<Props> = ({
     if (item) {
       setEditingItem({ ...item });
     } else {
-      // Initialize defaults for new items
       if (type === 'FABRIC') {
         setEditingItem({
           id: `fab-${Date.now()}`,
-          name: '', 
-          description: '', 
-          color: '#ffffff', // Default color
-          thickness: 'medium', 
-          material: '',
-          image: '', 
+          name: '', description: '', color: '#ffffff', thickness: 'medium', material: '', image: '', 
           properties: { stretch: 'متوسطة', breathability: 'متوسطة', durability: 'عالية' },
           physics: { mass: 1.0, stiffness: 0.5, damping: 0.5 }
         });
       }
       if (type === 'STYLE') {
         setEditingItem({
-          id: `STYLE_${Date.now()}`, // Unique ID for new style
-          label: '', 
-          icon: '👗', 
-          description: '', 
-          occasion: 'DAILY', 
-          season: 'ALL', 
-          gender: Gender.FEMALE, 
-          image: ''
+          id: `STYLE_${Date.now()}`, label: '', icon: '👗', description: '', occasion: 'DAILY', 
+          season: 'ALL', gender: Gender.FEMALE, image: ''
         });
       }
       if (type === 'COLOR') {
@@ -266,7 +266,7 @@ export const DevDashboard: React.FC<Props> = ({
     if (!modalType || !editingItem) return;
 
     if (modalType === 'USER') {
-        if (editingItem.id) { // Editing existing user
+        if (editingItem.id) { 
             const success = await onUpdateUser(editingItem);
             if (success) {
                 setLiveUsers(liveUsers.map(u => u.id === editingItem.id ? editingItem : u));
@@ -274,7 +274,7 @@ export const DevDashboard: React.FC<Props> = ({
             } else {
                 alert("❌ حدث خطأ أثناء تحديث المستخدم.");
             }
-        } else { // Adding new user
+        } else { 
             if (editingItem.username && editingItem.password) {
                 const newUser = await onAddUser(editingItem.username, editingItem.password, editingItem.role);
                 if (newUser) {
@@ -299,22 +299,18 @@ export const DevDashboard: React.FC<Props> = ({
         if (exists) setFabrics(fabrics.map(f => f.id === editingItem.id ? editingItem : f));
         else setFabrics([...fabrics, editingItem]);
       }
-      
       if (modalType === 'STYLE') {
         if (db) await setDoc(doc(db, 'styles', editingItem.id), editingItem);
         const exists = styles.some(s => s.id === editingItem.id);
-        // FIX: Corrected a typo where 'f' was used instead of 's' in the map function.
         if (exists) setStyles(styles.map(s => s.id === editingItem.id ? editingItem : s));
         else setStyles([...styles, editingItem]);
       }
-      
       if (modalType === 'COLOR') {
         if (db) await setDoc(doc(db, 'colors', editingItem.id), editingItem);
         const exists = colors.some(c => c.id === editingItem.id);
         if (exists) setColors(colors.map(c => c.id === editingItem.id ? editingItem : c));
         else setColors([...colors, editingItem]);
       }
-      
       if (modalType === 'PRICING') {
         if (db) await setDoc(doc(db, 'pricing', editingItem.styleId), editingItem);
         const others = pricing.filter(p => p.styleId !== editingItem.styleId);
@@ -359,8 +355,6 @@ export const DevDashboard: React.FC<Props> = ({
       )}
 
       {/* --- MODALS --- */}
-      
-      {/* 1. CRUD FORM MODAL */}
       {modalType && editingItem && (
         <div className="fixed inset-0 z-[700] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[2rem] border border-white/10 shadow-2xl p-6 sm:p-8 animate-in zoom-in-95 duration-200 custom-scrollbar">
@@ -498,6 +492,16 @@ export const DevDashboard: React.FC<Props> = ({
         {/* MAIN CONTENT */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-12 bg-dark/20 backdrop-blur-3xl custom-scrollbar lg:mr-80">
            <button onClick={handleSidebarToggle} className="lg:hidden fixed top-6 left-6 z-[601] w-12 h-12 rounded-full bg-slate-800 text-white flex items-center justify-center text-2xl shadow-lg">☰</button>
+
+           {permissionError && (
+               <div className="mb-6 bg-red-500/10 border border-red-500/30 p-4 rounded-2xl flex items-center gap-3 text-red-400">
+                   <span className="text-2xl">⚠️</span>
+                   <div>
+                       <h4 className="font-bold">خطأ في الصلاحيات</h4>
+                       <p className="text-sm">{permissionError}</p>
+                   </div>
+               </div>
+           )}
 
            {/* 1. MANAGER ZONE */}
            {activeTab === 'MANAGER_ZONE' && (
@@ -761,23 +765,3 @@ const Checkbox = ({ label, checked, onChange }: any) => (
         <span className="text-sm font-bold text-white">{label}</span>
     </label>
 );
-
-const StatCard = ({ label, val, icon, color }: any) => {
-  const colorMap: any = {
-    emerald: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-    primary: 'bg-primary/10 text-primary border-primary/20',
-    amber: 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-  };
-
-  return (
-    <div className={`p-8 rounded-[2.5rem] border ${colorMap[color]} shadow-xl flex items-center justify-between group hover:scale-[1.02] transition-transform`}>
-      <div className="text-right">
-        <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] block mb-2">{label}</span>
-        <span className="text-3xl font-black text-white">{val}</span>
-      </div>
-      <div className="w-16 h-16 rounded-3xl bg-slate-900 border border-white/5 flex items-center justify-center text-4xl shadow-inner group-hover:rotate-6 transition-transform">
-        {icon}
-      </div>
-    </div>
-  );
-};

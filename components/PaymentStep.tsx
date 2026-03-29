@@ -9,9 +9,10 @@ interface Props {
   onBack: () => void;
   branding: BrandingSettings;
   language: 'ar' | 'en';
+  referralManager: string | null; // Received from App state
 }
 
-export const PaymentStep: React.FC<Props> = ({ orderDetails, onConfirm, onBack, branding, language }) => {
+export const PaymentStep: React.FC<Props> = ({ orderDetails, onConfirm, onBack, branding, language, referralManager }) => {
   const txt = TRANSLATIONS[language];
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -32,7 +33,9 @@ export const PaymentStep: React.FC<Props> = ({ orderDetails, onConfirm, onBack, 
     
     setIsSubmitting(true);
 
-    const referrerUsername = localStorage.getItem('smart_tailor_manager_ref') || "loay94an1@gmail.com";
+    // PRIORITY: Use the prop passed from App state. Fallback to localStorage. Default to Admin if neither exists.
+    let finalManagerId = referralManager || localStorage.getItem('smart_tailor_manager_ref') || "loay94an1@gmail.com";
+    finalManagerId = finalManagerId.trim();
 
     const newOrder: Order = {
         id: `ORD-${Date.now()}`,
@@ -46,9 +49,11 @@ export const PaymentStep: React.FC<Props> = ({ orderDetails, onConfirm, onBack, 
             ...orderDetails,
             totalPrice: estimatedPrice
         },
-        managerId: referrerUsername
+        managerId: finalManagerId
     };
     
+    console.log("Submitting order for manager:", finalManagerId); // Debugging
+
     const success = await onConfirm(newOrder);
 
     // If the submission fails (due to offline mode or other errors), re-enable the button.
@@ -128,6 +133,12 @@ export const PaymentStep: React.FC<Props> = ({ orderDetails, onConfirm, onBack, 
                     <SummaryRow label="القماش" value={orderDetails.fabric?.name || ''} />
                     <SummaryRow label="اللون" value={orderDetails.color?.name || ''} />
                     <SummaryRow label="النقشة" value={orderDetails.pattern?.name || ''} />
+                    {referralManager && (
+                        <div className="py-2 px-3 bg-indigo-500/10 rounded-xl border border-indigo-500/20 mt-4">
+                           <span className="text-[10px] text-indigo-400 block mb-1">المصمم المشرف</span>
+                           <span className="text-sm font-bold text-white">{referralManager}</span>
+                        </div>
+                    )}
                 </div>
                 <div className="pt-6 border-t border-white/10 space-y-2">
                     <div className="flex justify-between items-end">

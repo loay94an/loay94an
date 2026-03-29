@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { HashRouter, Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import { AppStep, Gender, Measurements, Fabric, GarmentStyle, FabricColor, PatternDesign, BrandingSettings, ActivityLog, Order, StyleItem, PricingRule, SectionConfig, User, UserRole, SleeveType, CollarType } from './types';
-import { STANDARD_SIZES, INITIAL_COLORS, PATTERNS, INITIAL_FABRICS, INITIAL_STYLES, INITIAL_PRICING, INITIAL_USERS, TRANSLATIONS } from './constants'; // Removed INITIAL_ORDERS here
+import { STANDARD_SIZES, INITIAL_COLORS, PATTERNS, INITIAL_FABRICS, INITIAL_STYLES, INITIAL_PRICING, INITIAL_USERS, TRANSLATIONS } from './constants'; 
 import { db, storage } from './firebase'; 
 import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, writeBatch, addDoc } from 'firebase/firestore';
 
@@ -13,7 +13,7 @@ import { DevDashboard } from './components/DevDashboard';
 import { GenderSelection } from './components/GenderSelection';
 import { SizeInput } from './components/SizeInput';
 import { FabricSelection } from './components/FabricSelection';
-import { ColorSelection } from './components/ColorSelection'; // Kept but unused in main flow
+import { ColorSelection } from './components/ColorSelection';
 import { StyleSelection } from './components/StyleSelection';
 import { PatternEditor } from './components/PatternEditor';
 import { Checkout } from './components/Checkout';
@@ -137,7 +137,6 @@ const StoreContent: React.FC = () => {
   });
   
   // Orders are primarily managed by the real-time listener in DevDashboard.
-  // This state can be used as a fallback or for other UI parts if needed.
   const [orders, setOrders] = useState<Order[]>([]); 
 
   const [fabrics, setFabrics] = useState<Fabric[]>(() => {
@@ -325,32 +324,42 @@ const StoreContent: React.FC = () => {
     addLog("طلب جديد", `تم استلام طلب جديد من ${newOrder.customerName}`);
 
     if (!db) {
-        alert("خطأ في الاتصال: يعمل التطبيق في وضع عدم الاتصال. لن يتم حفظ هذا الطلب مركزيًا. يرجى التحقق من إعدادات Firebase والاتصال بالإنترنت.");
-        return false; // Signal failure
+        alert("⚠️ خطأ في التهيئة: مفاتيح Firebase غير موجودة أو غير صحيحة.\n\nإذا كنت المطور، يرجى الذهاب إلى إعدادات Netlify -> Environment Variables وإضافة مفاتيح Firebase الخاصة بك (VITE_FIREBASE_API_KEY، إلخ).");
+        return false; 
     }
 
     try {
-        await addDoc(collection(db, 'orders'), newOrder);
+        // FIX: Using JSON serialization/deserialization is the most robust way 
+        // to strip 'undefined' values which cause Firestore write errors.
+        const safeOrder = JSON.parse(JSON.stringify(newOrder));
+
+        // 1. Create Order
+        await addDoc(collection(db, 'orders'), safeOrder);
         
+        // 2. Update Stats (Non-Critical Operation)
         if (newOrder.managerId) {
-            const statsRef = doc(db, 'stats', newOrder.managerId);
-            const statsSnap = await getDoc(statsRef);
-            const currentStats = statsSnap.exists() ? statsSnap.data() : { totalOrders: 0, revenue: 0 };
-            await setDoc(statsRef, {
-                totalOrders: (currentStats.totalOrders || 0) + 1,
-                revenue: (currentStats.revenue || 0) + newOrder.details.totalPrice,
-                activeClients: (currentStats.activeClients || 0) + 1, 
-                updatedAt: Date.now()
-            }, { merge: true });
+            try {
+                const statsRef = doc(db, 'stats', newOrder.managerId);
+                const statsSnap = await getDoc(statsRef);
+                const currentStats = statsSnap.exists() ? statsSnap.data() : { totalOrders: 0, revenue: 0 };
+                await setDoc(statsRef, {
+                    totalOrders: (currentStats.totalOrders || 0) + 1,
+                    revenue: (currentStats.revenue || 0) + newOrder.details.totalPrice,
+                    activeClients: (currentStats.activeClients || 0) + 1, 
+                    updatedAt: Date.now()
+                }, { merge: true });
+            } catch (statsErr) {
+                console.warn("Could not update manager stats. Order preserved.", statsErr);
+            }
         }
         
         setStep(AppStep.SUCCESS);
-        return true; // Signal success
+        return true; 
 
-    } catch (e) { 
+    } catch (e: any) { 
         console.error("Failed to save order to Firestore", e); 
-        alert("فشل حفظ الطلب في قاعدة البيانات المركزية. قد تكون هناك مشكلة في الاتصال أو صلاحيات الكتابة. يرجى المحاولة مرة أخرى.");
-        return false; // Signal failure
+        alert(`فشل حفظ الطلب. التفاصيل: ${e.message || "خطأ غير معروف"}. يرجى التحقق من اتصال الإنترنت وقواعد الأمان.`);
+        return false; 
     }
   };
 
@@ -479,9 +488,16 @@ const StoreContent: React.FC = () => {
             branding={branding} onBackToHub={onBackToHub} language={language} onImageChange={setClientPhotoUrl} 
          />;
       case AppStep.EXPORT: 
-         return <Checkout orderDetails={{ gender: gender!, style: style!, measurements, fabric: fabric!, color: selectedColor!, pattern: selectedPattern!, sleeveType: SleeveType.BASIC, collarType: CollarType.NONE, totalPrice: calculatePrice(), clientPhotoUrl: clientPhotoUrl || undefined } as any} onConfirm={() => {}} onNext={() => setStep(AppStep.PAYMENT)} branding={branding} onBackToHub={onBackToHub} language={language} />;
+         return <Checkout orderDetails={{ gender: gender!, style: style!, measurements, fabric: fabric!, color: selectedColor!, pattern: selectedPattern!, sleeveType: SleeveType.BASIC, collarType: CollarType.NONE, totalPrice: calculatePrice(), clientPhotoUrl: clientPhotoUrl || null } as any} onConfirm={() => {}} onNext={() => setStep(AppStep.PAYMENT)} branding={branding} onBackToHub={onBackToHub} language={language} />;
       case AppStep.PAYMENT: 
-         return <PaymentStep orderDetails={{ gender: gender!, style: style!, measurements, fabric: fabric!, color: selectedColor!, pattern: selectedPattern!, sleeveType: SleeveType.BASIC, collarType: CollarType.NONE, totalPrice: calculatePrice(), clientPhotoUrl: clientPhotoUrl || undefined }} onConfirm={handleCompleteOrder} onBack={() => setStep(AppStep.EXPORT)} branding={branding} language={language} />;
+         return <PaymentStep 
+            orderDetails={{ gender: gender!, style: style!, measurements, fabric: fabric!, color: selectedColor!, pattern: selectedPattern!, sleeveType: SleeveType.BASIC, collarType: CollarType.NONE, totalPrice: calculatePrice(), clientPhotoUrl: clientPhotoUrl || null }} 
+            onConfirm={handleCompleteOrder} 
+            onBack={() => setStep(AppStep.EXPORT)} 
+            branding={branding} 
+            language={language} 
+            referralManager={referralManager} // PASSING THE PROP
+         />;
       case AppStep.SUCCESS: 
          return <div className="text-center py-20 sm:py-32 animate-in zoom-in duration-700"><div className="text-7xl sm:text-9xl mb-8 sm:mb-12">🎉</div><h2 className="text-3xl sm:text-5xl font-black text-white mb-6">{language === 'ar' ? 'تم الطلب بنجاح' : 'Order Placed'}</h2><button onClick={() => setStep('HUB')} className="bg-primary px-8 sm:px-12 py-4 sm:py-6 rounded-3xl font-black text-white text-lg sm:text-xl shadow-2xl" style={{ backgroundColor: branding.primaryColor }}>{txt.backToHome}</button></div>;
       default: return null;

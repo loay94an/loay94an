@@ -1,3 +1,0 @@
-src/services/pattern-core.service.ts
-src/services/pattern-generators.service.ts
-src/services/pattern.service.ts

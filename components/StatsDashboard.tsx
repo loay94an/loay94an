@@ -6,7 +6,7 @@ import 'jspdf-autotable';
 
 interface Props {
   orders: Order[];
-  branding: BrandingSettings; // Added branding prop
+  branding: BrandingSettings;
 }
 
 // Helper: Convert ArrayBuffer to Base64 for Font
@@ -23,7 +23,6 @@ const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
 // Helper: Add font to PDF doc
 const addArabicFont = async (doc: jsPDF): Promise<boolean> => {
     try {
-        // Use GitHub Raw for stable TTF file
         const fontUrl = "https://raw.githubusercontent.com/google/fonts/main/ofl/tajawal/Tajawal-Regular.ttf";
         const response = await fetch(fontUrl);
         if (!response.ok) throw new Error("Network response was not ok");
@@ -35,82 +34,60 @@ const addArabicFont = async (doc: jsPDF): Promise<boolean> => {
         doc.setFont("Tajawal", "normal");
         return true;
     } catch (error) {
-        console.error("Could not load Arabic font, text might be garbled.", error);
+        console.error("Could not load Arabic font", error);
         return false;
     }
 };
 
-// Helper function to export individual order details to PDF
 const exportOrderToPDF = async (order: Order) => {
   const doc = new jsPDF();
-  
   const fontLoaded = await addArabicFont(doc);
   if (!fontLoaded) doc.setFont("helvetica", "normal");
 
   doc.setFontSize(20);
   doc.text("تفاصيل الطلب", 105, 20, { align: 'center' });
 
-  doc.setFontSize(12);
   let yPos = 40;
+  doc.setFontSize(12);
 
-  const styleName = order.details.style ? (order.details.style as string).replace(/_/g, ' ') : 'غير محدد';
-  const sleeveName = order.details.sleeveType ? (order.details.sleeveType as string).replace(/_/g, ' ') : 'غير محدد';
-  const collarName = order.details.collarType ? (order.details.collarType as string).replace(/_/g, ' ') : 'غير محدد';
+  const styleName = order.details.style ? (order.details.style as string).replace(/_/g, ' ') : '-';
+  
+  const rightColX = 196;
+  const lineHeight = 8;
 
-  doc.text(`ID الطلب: ${order.id}`, 196, yPos, { align: 'right' }); yPos += 8;
-  doc.text(`حالة الطلب: ${order.status === 'PENDING' ? 'قيد الانتظار' : order.status === 'PROCESSING' ? 'قيد التجهيز' : order.status === 'SHIPPED' ? 'تم الشحن' : 'مكتمل'}`, 196, yPos, { align: 'right' }); yPos += 8;
-  doc.text(`تاريخ الطلب: ${new Date(order.createdAt).toLocaleString('ar-SA')}`, 196, yPos, { align: 'right' }); yPos += 12;
+  const addLine = (label: string, value: string | undefined) => {
+      doc.text(`${label}: ${value || '-'}`, rightColX, yPos, { align: 'right' });
+      yPos += lineHeight;
+  };
 
-  doc.text(`اسم العميل: ${order.customerName}`, 196, yPos, { align: 'right' }); yPos += 8;
-  doc.text(`الهاتف: ${order.phone}`, 196, yPos, { align: 'right' }); yPos += 8;
-  doc.text(`العنوان: ${order.address}`, 196, yPos, { align: 'right' }); yPos += 12;
+  addLine("ID الطلب", order.id);
+  addLine("العميل", order.customerName);
+  addLine("الهاتف", order.phone);
+  addLine("الموديل", styleName);
+  addLine("القماش", order.details.fabric?.name);
+  addLine("السعر", `${order.details.totalPrice} ر.س`);
+  
+  yPos += 10;
+  doc.text("المقاسات:", rightColX, yPos, { align: 'right' });
+  yPos += 10;
 
-  doc.text(`الموديل: ${styleName}`, 196, yPos, { align: 'right' }); yPos += 8;
-  doc.text(`القماش: ${order.details.fabric?.name || 'غير محدد'}`, 196, yPos, { align: 'right' }); yPos += 8;
-  doc.text(`اللون: ${order.details.color?.name || 'غير محدد'} (${order.details.color?.hex || ''})`, 196, yPos, { align: 'right' }); yPos += 8;
-  doc.text(`النقشة: ${order.details.pattern?.name || 'غير محدد'}`, 196, yPos, { align: 'right' }); yPos += 8;
-  doc.text(`نوع الكم: ${sleeveName}`, 196, yPos, { align: 'right' }); yPos += 8;
-  doc.text(`نوع الياقة: ${collarName}`, 196, yPos, { align: 'right' }); yPos += 12;
-
-  doc.text(`المقاسات المعتمدة:`, 196, yPos, { align: 'right' }); yPos += 8;
-
-  const measurements = order.details.measurements as Measurements;
-  const measurementData = Object.entries(measurements || {}).map(([key, value]) => {
-    // Basic Arabic labels for common measurements
-    const arabicLabels: Record<string, string> = {
-      height: "الطول الكلي", chest: "محيط الصدر", waist: "محيط الخصر", hips: "محيط الورك",
-      shoulderWidth: "عرض الكتف", armLength: "طول الكم", neckCircumference: "محيط الرقبة",
-      backWidth: "عرض الظهر", shoulderLength: "طول الكتف", backLength: "طول الظهر",
-      armCircumference: "محيط الذراع", cuffCircumference: "محيط الإسوارة", waistToHip: "من الخصر للورك",
-      waistToKnee: "من الخصر للركبة", waistToFloor: "طول الساق للأرض", skirtLength: "طول التنورة",
-      bodiceLength: "طول الصدر", armholeCircumference: "محيط حفرة الإبط", waistToArmhole: "من الخصر للإبط",
-      shoulderToBust: "من الكتف للثدي", bustPointToPoint: "بين الثديين"
-    };
-    return [arabicLabels[key] || key, `${value} سم`];
-  });
+  const measurements = Object.entries(order.details.measurements || {})
+    .filter(([_, v]) => (v as number) > 0)
+    .map(([k, v]) => [k, `${v} cm`]);
 
   if ((doc as any).autoTable) {
     (doc as any).autoTable({
         startY: yPos,
         head: [['القياس', 'القيمة']],
-        body: measurementData,
+        body: measurements,
         theme: 'grid',
-        styles: { font: fontLoaded ? 'Tajawal' : 'helvetica', halign: 'right', fontStyle: 'normal' },
-        headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], font: fontLoaded ? 'Tajawal' : 'helvetica' },
+        styles: { font: fontLoaded ? 'Tajawal' : 'helvetica', halign: 'right' },
+        headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255] },
     });
-    yPos = (doc as any).autoTable.previous.finalY + 12;
-  } else {
-    yPos += 100; // Fallback spacing if autotable fails
   }
 
-  doc.setFontSize(16);
-  doc.text(`السعر الإجمالي: ${order.details.totalPrice} ر.س`, 196, yPos, { align: 'right' });
-  doc.text(`طريقة الدفع: ${order.paymentMethod === 'CARD' ? 'بطاقة ائتمان' : 'نقداً'}`, 196, yPos + 10, { align: 'right' });
-
-
-  doc.save(`order_${order.customerName}_${order.id}.pdf`);
+  doc.save(`order_${order.id}.pdf`);
 };
-
 
 export const StatsDashboard: React.FC<Props> = ({ orders, branding }) => {
   const [period, setPeriod] = useState<string>("يومي");
@@ -121,114 +98,27 @@ export const StatsDashboard: React.FC<Props> = ({ orders, branding }) => {
     const avgPrice = orders.length > 0 ? totalRevenue / orders.length : 0;
     
     const styleCounts: Record<string, number> = {};
-    const fabricCounts: Record<string, number> = {};
-    const colorCounts: Record<string, { count: number; hex: string }> = {};
     const regions: Record<string, number> = {};
 
     orders.forEach(o => {
-      // Ensure style is a string, providing a fallback if null/undefined
-      const style = o.details.style ? (o.details.style as string) : 'UNKNOWN_STYLE';
+      const style = o.details.style ? (o.details.style as string) : 'UNKNOWN';
       styleCounts[style] = (styleCounts[style] || 0) + 1;
       
-      const fabricName = o.details.fabric?.name || 'غير محدد';
-      fabricCounts[fabricName] = (fabricCounts[fabricName] || 0) + 1;
-      
-      const colorName = o.details.color?.name || 'غير محدد';
-      const colorHex = o.details.color?.hex || '#cccccc';
-      if (!colorCounts[colorName]) {
-        colorCounts[colorName] = { count: 0, hex: colorHex };
-      }
-      colorCounts[colorName].count++;
-      
-      const city = o.address ? o.address.split('،')[0] : 'غير محدد';
+      const city = o.address ? o.address.split('،')[0].split(',')[0].trim() : 'غير محدد';
       regions[city] = (regions[city] || 0) + 1;
     });
 
-    return { totalRevenue, avgPrice, styleCounts, fabricCounts, colorCounts, regions };
+    return { totalRevenue, avgPrice, styleCounts, regions };
   }, [orders]);
 
-  const exportSummaryPDF = async () => {
-    const doc = new jsPDF();
-    
-    const fontLoaded = await addArabicFont(doc);
-    if (!fontLoaded) doc.setFont("helvetica", "normal");
-
-    let yOffset = 20;
-
-    // Add company logo if available
-    if (branding.logoUrl) {
-      try {
-        const response = await fetch(branding.logoUrl);
-        const blob = await response.blob();
-        const reader = new FileReader();
-        reader.readAsDataURL(blob);
-        await new Promise<void>((resolve) => {
-          reader.onloadend = () => {
-            doc.addImage(reader.result as string, "PNG", 150, 10, 40, 40); // Adjust position and size as needed
-            resolve();
-          };
-        });
-      } catch (error) {
-        console.error("Error loading logo image:", error);
-      }
-    }
-
-    // Add company name
-    doc.setFontSize(22);
-    doc.setTextColor(branding.primaryColor);
-    doc.text(branding.companyName, 105, yOffset, { align: 'center' });
-    yOffset += 10;
-
-    doc.setFontSize(16);
-    doc.setTextColor(50, 50, 50);
-    doc.text(`تقرير الإحصائيات - فترة: ${period}`, 105, yOffset, { align: 'center' });
-    yOffset += 20;
-    
-    doc.setFontSize(12);
-    doc.text(`إجمالي المبيعات: ${stats.totalRevenue.toLocaleString()} ر.س`, 196, yOffset, { align: 'right' }); yOffset += 8;
-    doc.text(`عدد الطلبات المنفذة: ${orders.length}`, 196, yOffset, { align: 'right' }); yOffset += 8;
-    doc.text(`متوسط قيمة الطلب: ${stats.avgPrice.toFixed(2)} ر.س`, 196, yOffset, { align: 'right' }); yOffset += 15;
-
-    const tableData = orders.map(o => [
-      o.customerName,
-      o.details.style ? (o.details.style as string).replace(/_/g, ' ') : 'غير محدد',
-      o.details.fabric?.name || 'غير محدد',
-      (o.details.totalPrice || 0) + ' ر.س',
-      o.status === 'PENDING' ? 'قيد الانتظار' : o.status === 'PROCESSING' ? 'قيد التجهيز' : o.status === 'SHIPPED' ? 'تم الشحن' : 'مكتمل',
-      new Date(o.createdAt).toLocaleDateString('ar-SA')
-    ]);
-
-    if ((doc as any).autoTable) {
-        (doc as any).autoTable({
-        head: [['اسم العميل', 'الموديل', 'القماش', 'السعر', 'الحالة', 'التاريخ']],
-        body: tableData,
-        startY: yOffset,
-        styles: { font: fontLoaded ? 'Tajawal' : 'helvetica', halign: 'right', fontStyle: 'normal' },
-        headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], font: fontLoaded ? 'Tajawal' : 'helvetica' },
-        });
-    }
-
-    doc.save(`smart_tailor_report_${period}.pdf`);
-  };
-
   const renderMeasurementTable = (measurements: Measurements) => {
-    const labels: Record<string, string> = {
-        height: "الطول الكلي", chest: "محيط الصدر", waist: "محيط الخصر", hips: "محيط الورك",
-        shoulderWidth: "عرض الكتف", armLength: "طول الكم", neckCircumference: "محيط الرقبة",
-        backWidth: "عرض الظهر", shoulderLength: "طول الكتف", backLength: "طول الظهر",
-        armCircumference: "محيط الذراع", cuffCircumference: "محيط الإسوارة", waistToHip: "من الخصر للورك",
-        waistToKnee: "من الخصر للركبة", waistToFloor: "طول الساق للأرض", skirtLength: "طول التنورة",
-        bodiceLength: "طول الصدر", armholeCircumference: "محيط حفرة الإبط", waistToArmhole: "من الخصر للإبط",
-        shoulderToBust: "من الكتف للثدي", bustPointToPoint: "بين الثديين"
-    };
-    
     return (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {Object.entries(measurements).map(([key, value]) => {
                 if (!value) return null;
                 return (
                     <div key={key} className="bg-slate-800 p-2 rounded-lg flex justify-between items-center text-xs">
-                         <span className="text-slate-400">{labels[key] || key}</span>
+                         <span className="text-slate-400 opacity-80">{key}</span>
                          <span className="text-white font-bold">{value} cm</span>
                     </div>
                 );
@@ -273,7 +163,6 @@ export const StatsDashboard: React.FC<Props> = ({ orders, branding }) => {
                              <DetailRow label="الموديل" value={selectedOrder.details.style ? String(selectedOrder.details.style).replace(/_/g, ' ') : '-'} icon="👗" />
                              <DetailRow label="القماش" value={selectedOrder.details.fabric?.name} icon="🧵" />
                              <DetailRow label="اللون" value={selectedOrder.details.color?.name} icon="🎨" />
-                             <DetailRow label="النقشة" value={selectedOrder.details.pattern?.name} icon="💠" />
                              <DetailRow label="السعر الإجمالي" value={`${selectedOrder.details.totalPrice} ر.س`} icon="💰" highlight />
                         </div>
                     </div>
@@ -289,54 +178,62 @@ export const StatsDashboard: React.FC<Props> = ({ orders, branding }) => {
 
                 {/* CLIENT ATTACHED PHOTO */}
                 {selectedOrder.details.clientPhotoUrl && (
-                    <div className="mt-10 space-y-4">
-                        <h4 className="text-cyan-400 font-black uppercase tracking-widest text-xs mb-4 border-b border-cyan-400/20 pb-2 w-fit">الصورة المرفقة من العميل</h4>
-                        <div className="group relative w-fit">
-                            <a href={selectedOrder.details.clientPhotoUrl} target="_blank" rel="noopener noreferrer" title="اضغط لعرض الصورة بالحجم الكامل">
-                                <img src={selectedOrder.details.clientPhotoUrl} alt="Client Reference" className="max-h-64 w-auto rounded-2xl border-2 border-white/10 transition-all group-hover:opacity-70" />
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl pointer-events-none">
-                                    <span className="text-white font-bold text-lg">عرض 🔍</span>
-                                </div>
-                            </a>
+                    <div className="mt-10 p-6 bg-slate-950 rounded-3xl border border-white/10">
+                        <h4 className="text-cyan-400 font-black uppercase tracking-widest text-xs mb-4 border-b border-cyan-400/20 pb-2 w-fit flex items-center gap-2">
+                            <span>📸</span> صورة العميل المرفقة
+                        </h4>
+                        <div className="flex flex-col sm:flex-row gap-6 items-start">
+                            <div className="relative group rounded-2xl overflow-hidden border-2 border-slate-700 shadow-xl max-w-xs">
+                                <img 
+                                    src={selectedOrder.details.clientPhotoUrl} 
+                                    alt="Client Reference" 
+                                    className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-110" 
+                                />
+                                <a 
+                                    href={selectedOrder.details.clientPhotoUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    <span className="bg-white text-black px-4 py-2 rounded-full font-bold text-xs transform scale-90 group-hover:scale-100 transition-transform">تكبير 🔍</span>
+                                </a>
+                            </div>
+                            <div className="flex flex-col gap-3">
+                                <p className="text-slate-400 text-sm max-w-xs leading-relaxed">
+                                    قام العميل بإرفاق هذه الصورة كمرجع للتصميم أو لأخذ القياسات.
+                                </p>
+                                <a 
+                                    href={selectedOrder.details.clientPhotoUrl} 
+                                    target="_blank"
+                                    download={`client-photo-${selectedOrder.id}`}
+                                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-3 rounded-xl font-bold text-sm shadow-lg transition-all w-fit"
+                                >
+                                    <span>تحميل الصورة</span>
+                                    <span>📥</span>
+                                </a>
+                            </div>
                         </div>
-                        <a 
-                            href={selectedOrder.details.clientPhotoUrl} 
-                            download={`client-photo-${selectedOrder.id}.jpg`}
-                            className="inline-flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-lg text-xs font-bold border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all"
-                        >
-                            <span>تحميل الصورة</span>
-                            <span>📥</span>
-                        </a>
                     </div>
                 )}
+
+                <div className="mt-8 pt-6 border-t border-white/5 flex justify-end">
+                     <button 
+                        onClick={() => exportOrderToPDF(selectedOrder)}
+                        className="bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-600 transition-all flex items-center gap-2"
+                     >
+                        <span>تصدير PDF</span>
+                        <span>📄</span>
+                     </button>
+                </div>
              </div>
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-6">
-         <div className="flex gap-2">
-            {['يومي', 'أسبوعي', 'شهري'].map(p => (
-              <button 
-                key={p} 
-                onClick={() => setPeriod(p)}
-                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${period === p ? 'bg-primary text-white shadow-lg' : 'bg-slate-900 text-slate-500'}`}
-              >
-                {p}
-              </button>
-            ))}
-         </div>
-         <button 
-           onClick={exportSummaryPDF} 
-           className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-6 py-2 rounded-xl text-[10px] font-black hover:bg-emerald-500 hover:text-white transition-all"
-         >
-           تصدير تقرير ملخص PDF 📄
-         </button>
-      </div>
-
+      {/* DASHBOARD STATS CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard label="إجمالي الدخل" val={`${stats.totalRevenue.toLocaleString()} ر.س`} icon="💰" color="emerald" />
         <StatCard label="عدد الطلبات" val={orders.length} icon="📦" color="primary" />
-        <StatCard label="متوسط سعر الطلب" val={`${Math.round(stats.avgPrice)} ر.س`} icon="📈" color="amber" />
+        <StatCard label="متوسط السعر" val={`${Math.round(stats.avgPrice)} ر.س`} icon="📈" color="amber" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -377,7 +274,7 @@ export const StatsDashboard: React.FC<Props> = ({ orders, branding }) => {
       </div>
 
       <section className="bg-slate-900/50 p-8 rounded-[3rem] border border-white/5 space-y-6">
-        <h3 className="text-lg font-black text-white">جميع الطلبات</h3>
+        <h3 className="text-lg font-black text-white">سجل الطلبات</h3>
         {orders.length === 0 ? (
           <div className="py-20 text-center opacity-30">
             <span className="text-7xl block mb-4">📦</span>
@@ -391,11 +288,9 @@ export const StatsDashboard: React.FC<Props> = ({ orders, branding }) => {
                   <th className="p-3">ID</th>
                   <th className="p-3">العميل</th>
                   <th className="p-3">الموديل</th>
-                  <th className="p-3">القماش</th>
                   <th className="p-3">السعر</th>
                   <th className="p-3">الحالة</th>
                   <th className="p-3">التاريخ</th>
-                  <th className="p-3">الإجراءات</th>
                 </tr>
               </thead>
               <tbody>
@@ -405,35 +300,22 @@ export const StatsDashboard: React.FC<Props> = ({ orders, branding }) => {
                     onClick={() => setSelectedOrder(order)}
                     className={`group text-sm font-medium ${index % 2 === 0 ? 'bg-slate-800/20' : ''} hover:bg-slate-700/50 transition-all border-b border-white/5 last:border-b-0 cursor-pointer`}
                   >
-                    <td className="p-3 font-mono text-xs text-slate-500">{order.id}</td>
+                    <td className="p-3 font-mono text-xs text-slate-500">{order.id.substring(0,8)}...</td>
                     <td className="p-3 text-white">{order.customerName}</td>
                     <td className="p-3 text-white">
-                      {order.details.style ? (order.details.style as string).replace(/_/g, ' ') : 'غير محدد'}
+                      {order.details.style ? (order.details.style as string).replace(/_/g, ' ') : '-'}
                     </td>
-                    <td className="p-3 text-slate-300">{order.details.fabric?.name || 'غير محدد'}</td>
                     <td className="p-3 text-primary font-black">{order.details.totalPrice} ر.س</td>
                     <td className="p-3">
                       <span className={`px-3 py-1 rounded-full text-xs font-black ${
                         order.status === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-500' :
-                        order.status === 'PROCESSING' ? 'bg-indigo-500/20 text-indigo-500' :
                         order.status === 'SHIPPED' ? 'bg-cyan-500/20 text-cyan-500' :
                         'bg-amber-500/20 text-amber-500'
                       }`}>
-                        {order.status === 'PENDING' ? 'قيد الانتظار' :
-                         order.status === 'PROCESSING' ? 'قيد التجهيز' :
-                         order.status === 'SHIPPED' ? 'تم الشحن' :
-                         'مكتمل'}
+                        {order.status}
                       </span>
                     </td>
                     <td className="p-3 text-slate-500 text-xs">{new Date(order.createdAt).toLocaleDateString('ar-SA')}</td>
-                    <td className="p-3">
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); exportOrderToPDF(order); }}
-                        className="bg-emerald-500/10 text-emerald-500 px-4 py-2 rounded-xl text-xs font-black hover:bg-emerald-500 hover:text-white transition-all"
-                      >
-                        تصدير PDF
-                      </button>
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -471,6 +353,6 @@ const DetailRow = ({ label, value, icon, highlight }: any) => (
           <span className="text-lg">{icon}</span>
           <span className="text-xs font-bold text-slate-400">{label}</span>
       </div>
-      <span className={`font-black text-sm ${highlight ? 'text-emerald-400' : 'text-white'}`}>{value}</span>
+      <span className={`font-black text-sm ${highlight ? 'text-emerald-400' : 'text-white'}`}>{value || '-'}</span>
   </div>
 );
