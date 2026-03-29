@@ -1,0 +1,633 @@
+// src/services/pattern.service.ts
+// Modified PatternService - full file ready to paste (replace existing).
+// - Adaptive Bezier sampling for high-quality curves
+// - Robust path translation (no fragile regex)
+// - Accurate bezier length fallback using adaptive sampling
+// - Optional polygon offset using clipper-lib (if installed)
+// - Configurable sampling constants for preview/export
+
+import { Injectable } from '@angular/core';
+import { Measurements, PatternData, PatternModel, SvgPath, Category, Unit } from '../models/pattern.model';
+
+interface PatternPiece {
+  paths: SvgPath[];
+  width: number;
+  height: number;
+}
+
+interface BodiceResult {
+  piece: PatternPiece;
+  armholeCurveLength: number;
+}
+
+/**
+ * A utility class to programmatically build SVG path data strings.
+ */
+class PathBuilder {
+  private d: string[] = [];
+
+  moveTo(x: number, y: number): this {
+    this.d.push(`M ${x} ${y}`);
+    return this;
+  }
+
+  lineTo(x: number, y: number): this {
+    this.d.push(`L ${x} ${y}`);
+    return this;
+  }
+
+  arcTo(rx: number, ry: number, xAxisRotation: number, largeArcFlag: number, sweepFlag: number, x: number, y: number): this {
+    this.d.push(`A ${rx} ${ry} ${xAxisRotation} ${largeArcFlag} ${sweepFlag} ${x} ${y}`);
+    return this;
+  }
+
+  cubicCurveTo(x1: number, y1: number, x2: number, y2: number, x: number, y: number): this {
+    this.d.push(`C ${x1} ${y1}, ${x2} ${y2}, ${x} ${y}`);
+    return this;
+  }
+
+  quadraticCurveTo(x1: number, y1: number, x: number, y: number): this {
+    this.d.push(`Q ${x1} ${y1}, ${x} ${y}`);
+    return this;
+  }
+
+  closePath(): this {
+    this.d.push('Z');
+    return this;
+  }
+
+  build(): string {
+    return this.d.join(' ');
+  }
+}
+
+@Injectable({
+  providedIn: 'root',
+})
+export class PatternService {
+  // Base scale for drawing (units conversion)
+  private scale = 10; // keep as before for compatibility
+
+  // Sampling and adaptive parameters
+  private readonly DEFAULT_PREVIEW_SAMPLING = 128;
+  private readonly DEFAULT_EXPORT_SAMPLING = 512;
+  private readonly MAX_ADAPTIVE_DEPTH = 14;
+  private readonly MAX_SEG_LEN_MM = 0.5; // maximum segment length in mm for densify
+
+  generatePattern(model: PatternModel, measurements: Measurements, options?: { showMeasurements?: boolean; unit?: Unit }): PatternData {
+    const allPaths: SvgPath[] = [];
+    let currentX = 0;
+    let maxHeight = 0;
+    const padding = 10 * this.scale;
+
+    let totalArmholeLength = 0;
+    const bodiceOptions = { showMeasurements: options?.showMeasurements, isDarted: model.id.includes('darted'), unit: options?.unit };
+
+    // --- Generator for specific, image-based patterns ---
+    const imageBasedPatterns: { [id: string]: () => PatternPiece[] } = {
+      'w-zip-polo-image': () => this._generateZipPoloFromImage(),
+      'm-hoodie-unisex-image': () => this._generateUnisexHoodieFromImage(),
+      'w-lab-coat-image': () => this._generateLabCoatFromImage(),
+      'm-tshirt-adult-image': () => this._generateTshirtFromImage(),
+      'm-social-pants-image': () => this._generateMensSocialPantsFromImage(),
+    };
+
+    if (imageBasedPatterns[model.id]) {
+      const pieces = imageBasedPatterns[model.id]();
+      for (const piece of pieces) {
+        this._offsetPaths(piece.paths, currentX, 0);
+        allPaths.push(...piece.paths);
+        currentX += piece.width + padding;
+        maxHeight = Math.max(maxHeight, piece.height);
+      }
+      return { paths: allPaths, width: currentX - padding, height: maxHeight + padding };
+    }
+
+    // --- COMPLEX SYSTEM GENERATORS (override standard flow) ---
+    if (model.sleeveType === 'kimono') {
+      const kimonoPieces = this._generateKimono(measurements);
+      for (const piece of kimonoPieces) {
+        this._offsetPaths(piece.paths, currentX, 0);
+        allPaths.push(...piece.paths);
+        currentX += piece.width + padding;
+        maxHeight = Math.max(maxHeight, piece.height);
+      }
+      return { paths: allPaths, width: currentX, height: maxHeight + padding };
+    }
+    if (model.sleeveType === 'raglan') {
+      const raglanPieces = this._generateRaglanPieces(measurements, model.category, options);
+      for (const piece of raglanPieces) {
+        this._offsetPaths(piece.paths, currentX, 0);
+        allPaths.push(...piece.paths);
+        currentX += piece.width + padding;
+        maxHeight = Math.max(maxHeight, piece.height);
+      }
+      return { paths: allPaths, width: currentX, height: maxHeight + padding };
+    }
+
+    // --- STANDARD FACTORY FLOW (Body -> Sleeve -> Collar) ---
+
+    // 1. Generate Main Body Pieces
+    if (model.id.includes('bodice') || model.id.includes('dress') || model.id.includes('shirt') || model.id.includes('jacket') || model.id.includes('blouse') || model.id.includes('jumpsuit') || model.id.includes('abaya') || model.id.includes('cardigan') || model.id.includes('polo') || model.id.includes('hoodie') || model.id.includes('thobe') || model.id.includes('pajamas') || model.id.includes('coat') || model.id.includes('robe')) {
+      const frontResult = this._generateBodice(measurements, true, model.category, bodiceOptions);
+      this._offsetPaths(frontResult.piece.paths, currentX, 0);
+      allPaths.push(...frontResult.piece.paths);
+      currentX += frontResult.piece.width + padding;
+      maxHeight = Math.max(maxHeight, frontResult.piece.height);
+      totalArmholeLength += frontResult.armholeCurveLength;
+
+      const backResult = this._generateBodice(measurements, false, model.category, bodiceOptions);
+      this._offsetPaths(backResult.piece.paths, currentX, 0);
+      allPaths.push(...backResult.piece.paths);
+      currentX += backResult.piece.width + padding;
+      maxHeight = Math.max(maxHeight, backResult.piece.height);
+      totalArmholeLength += backResult.armholeCurveLength;
+    } else if (model.id.includes('skirt')) {
+      let skirtPiece: PatternPiece;
+      if (model.id.includes('circle')) {
+        const type = model.id.includes('double') ? 'double' : 'full';
+        skirtPiece = this._generateCircleSkirt(measurements, type, options);
+      } else if (model.id.includes('pleated')) {
+        skirtPiece = this._generatePleatedSkirt(measurements);
+      } else {
+        skirtPiece = this._generateSkirt(measurements, model.category, bodiceOptions);
+      }
+      this._offsetPaths(skirtPiece.paths, currentX, 0);
+      allPaths.push(...skirtPiece.paths);
+      currentX += skirtPiece.width + padding;
+      maxHeight = Math.max(maxHeight, skirtPiece.height);
+    }
+
+    if (model.id.includes('pants') || model.id.includes('jumpsuit') || model.id.includes('shorts') || model.id.includes('pajamas') || model.id.includes('overalls') || model.id.includes('sweatpants')) {
+      const frontPants = this._generatePants(measurements, true, model.category, options);
+      this._offsetPaths(frontPants.paths, currentX, 0);
+      allPaths.push(...frontPants.paths);
+      currentX += frontPants.width + padding;
+      maxHeight = Math.max(maxHeight, frontPants.height);
+
+      const backPants = this._generatePants(measurements, false, model.category, options);
+      this._offsetPaths(backPants.paths, currentX, 0);
+      allPaths.push(...backPants.paths);
+      currentX += backPants.width + padding;
+      maxHeight = Math.max(maxHeight, backPants.height);
+    }
+
+    // 2. Generate Sleeve Piece (if requested and applicable)
+    if (model.sleeveType && totalArmholeLength > 0) {
+      let sleevePiece: PatternPiece | null = null;
+      switch (model.sleeveType) {
+        case 'basic':
+        case 'puff':
+        case 'darted':
+          sleevePiece = this._generateSleeve(measurements, totalArmholeLength, model.sleeveType, options);
+          break;
+        case 'twopiece':
+          const sleevePieces = this._generateTwoPieceSleeve(measurements, totalArmholeLength, options);
+          this._offsetPaths(sleevePieces[0].paths, currentX, 0);
+          allPaths.push(...sleevePieces[0].paths);
+          currentX += sleevePieces[0].width + padding;
+          maxHeight = Math.max(maxHeight, sleevePieces[0].height);
+
+          this._offsetPaths(sleevePieces[1].paths, currentX, 0);
+          allPaths.push(...sleevePieces[1].paths);
+          currentX += sleevePieces[1].width + padding;
+          maxHeight = Math.max(maxHeight, sleevePieces[1].height);
+          break;
+      }
+
+      if (sleevePiece) {
+        this._offsetPaths(sleevePiece.paths, currentX, 0);
+        allPaths.push(...sleevePiece.paths);
+        currentX += sleevePiece.width + padding;
+        maxHeight = Math.max(maxHeight, sleevePiece.height);
+      }
+    }
+
+    // 3. Generate Collar Piece (if requested)
+    if (model.collarType && measurements.neckCircumference) {
+      const collarPiece = this._generateCollar(model.collarType, measurements);
+      if (collarPiece) {
+        this._offsetPaths(collarPiece.paths, currentX, 0);
+        allPaths.push(...collarPiece.paths);
+        currentX += collarPiece.width + padding;
+        maxHeight = Math.max(maxHeight, collarPiece.height);
+      }
+    }
+
+    return {
+      paths: allPaths,
+      width: currentX,
+      height: maxHeight + padding,
+    };
+  }
+
+  // -------------------------
+  // Robust path translation (replaces fragile regex approach)
+  // -------------------------
+  private _offsetPaths(paths: SvgPath[], offsetX: number, offsetY: number): void {
+    // Lightweight parser for absolute SVG commands produced by PathBuilder (M L C Q A Z)
+    const cmdRe = /([MLCQAZ])([^MLCQAZ]*)/g;
+    for (const path of paths) {
+      if (!path.d) {
+        if (path.x !== undefined) path.x += offsetX;
+        if (path.y !== undefined) path.y += offsetY;
+        continue;
+      }
+      let newD = '';
+      let match: RegExpExecArray | null;
+      while ((match = cmdRe.exec(path.d)) !== null) {
+        const cmd = match[1];
+        const coords = match[2].trim();
+        if (!coords) {
+          newD += `${cmd} `;
+          continue;
+        }
+        const nums = coords.split(/[\s,]+/).map(s => parseFloat(s)).filter(n => !isNaN(n));
+        if (cmd === 'A') {
+          // Arc: rx ry xAxisRotation largeArcFlag sweepFlag x y  (repeating)
+          let out = '';
+          for (let i = 0; i < nums.length; i += 7) {
+            const rx = nums[i], ry = nums[i + 1], xAxis = nums[i + 2], laf = nums[i + 3], sf = nums[i + 4];
+            const x = nums[i + 5] + offsetX;
+            const y = nums[i + 6] + offsetY;
+            out += `${rx} ${ry} ${xAxis} ${laf} ${sf} ${x} ${y} `;
+          }
+          newD += `${cmd} ${out.trim()} `;
+        } else {
+          // other commands: pairs of coordinates
+          let out = '';
+          for (let i = 0; i < nums.length; i += 2) {
+            const x = nums[i] + offsetX;
+            const y = nums[i + 1] + offsetY;
+            out += `${x} ${y} `;
+          }
+          newD += `${cmd} ${out.trim()} `;
+        }
+      }
+      path.d = newD.trim();
+      if (path.x !== undefined) path.x += offsetX;
+      if (path.y !== undefined) path.y += offsetY;
+    }
+  }
+
+  // -------------------------
+  // Adaptive Bezier sampling (de Casteljau subdivision)
+  // -------------------------
+  private _adaptiveSampleBezier(p0: { x: number; y: number }, p1: { x: number; y: number }, p2: { x: number; y: number }, p3: { x: number; y: number }, maxSegLen = this.MAX_SEG_LEN_MM, maxDepth = this.MAX_ADAPTIVE_DEPTH): [number, number][] {
+    const out: [number, number][] = [];
+    const toArr = (p: { x: number; y: number }) => [p.x, p.y] as [number, number];
+
+    const bezPoint = (a: [number, number], b: [number, number], c: [number, number], d: [number, number], t: number) => {
+      const u = 1 - t;
+      const x = u * u * u * a[0] + 3 * u * u * t * b[0] + 3 * u * t * t * c[0] + t * t * t * d[0];
+      const y = u * u * u * a[1] + 3 * u * u * t * b[1] + 3 * u * t * t * c[1] + t * t * t * d[1];
+      return [x, y] as [number, number];
+    };
+
+    const subdivide = (a: [number, number], b: [number, number], c: [number, number], d: [number, number], depth: number) => {
+      const mid = bezPoint(a, b, c, d, 0.5);
+      const lm: [number, number] = [(a[0] + d[0]) / 2, (a[1] + d[1]) / 2];
+      const dx = mid[0] - lm[0], dy = mid[1] - lm[1];
+      if (Math.hypot(dx, dy) > maxSegLen && depth < maxDepth) {
+        // de Casteljau subdivision
+        const a1: [number, number] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+        const b1: [number, number] = [(b[0] + c[0]) / 2, (b[1] + c[1]) / 2];
+        const c1: [number, number] = [(c[0] + d[0]) / 2, (c[1] + d[1]) / 2];
+        const a2: [number, number] = [(a1[0] + b1[0]) / 2, (a1[1] + b1[1]) / 2];
+        const b2: [number, number] = [(b1[0] + c1[0]) / 2, (b1[1] + c1[1]) / 2];
+        const m: [number, number] = [(a2[0] + b2[0]) / 2, (a2[1] + b2[1]) / 2];
+        subdivide(a, a1, a2, m, depth + 1);
+        subdivide(m, b2, c1, d, depth + 1);
+      } else {
+        out.push(a);
+        out.push(d);
+      }
+    };
+
+    subdivide(toArr(p0), toArr(p1), toArr(p2), toArr(p3), 0);
+
+    // remove consecutive duplicates
+    const res: [number, number][] = [];
+    for (const pt of out) {
+      if (res.length === 0 || Math.hypot(res[res.length - 1][0] - pt[0], res[res.length - 1][1] - pt[1]) > 1e-9) res.push(pt);
+    }
+    return res;
+  }
+
+  // -------------------------
+  // Approximate bezier length using adaptive sampling
+  // -------------------------
+  private _approximateBezierLengthDirect(p0: { x: number; y: number }, c1: { x: number; y: number }, c2: { x: number; y: number }, p3: { x: number; y: number }): number {
+    const pts = this._adaptiveSampleBezier(p0, c1, c2, p3, this.MAX_SEG_LEN_MM, this.MAX_ADAPTIVE_DEPTH);
+    let len = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const dx = pts[i][0] - pts[i - 1][0];
+      const dy = pts[i][1] - pts[i - 1][1];
+      len += Math.hypot(dx, dy);
+    }
+    return len;
+  }
+
+  // -------------------------
+  // Optional: polygon offset using clipper-lib (if installed)
+  // -------------------------
+  private _offsetPolygon(points: [number, number][], offset: number): [number, number][] {
+    try {
+      // dynamic import to avoid hard dependency if not installed
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const ClipperLib = require('clipper-lib');
+      const scale = 1000;
+      const subj = points.map(p => ({ X: Math.round(p[0] * scale), Y: Math.round(p[1] * scale) }));
+      const co = new ClipperLib.ClipperOffset();
+      co.AddPath(subj, ClipperLib.JoinType.jtRound, ClipperLib.EndType.etClosedPolygon);
+      const solution = new ClipperLib.Paths();
+      co.Execute(solution, offset * scale);
+      if (!solution || solution.length === 0) return [];
+      return solution[0].map((pt: any) => [pt.X / scale, pt.Y / scale]);
+    } catch (e) {
+      // clipper not available — caller should fallback to approximate offset
+      return [];
+    }
+  }
+
+  // -------------------------
+  // The main bodice generator (uses helpers above)
+  // -------------------------
+  private _generateBodice(measurements: Measurements, isFront: boolean, category: Category, options?: { showMeasurements?: boolean; isDarted?: boolean; unit?: Unit }): BodiceResult {
+    const { bust, waist, hips, shoulderWidth, pieceLength } = measurements;
+    const scale = this.scale;
+    const paths: SvgPath[] = [];
+
+    // Calculations based on quarter measurements with ease
+    const bustEase = category === 'man' ? 2.5 : 2;
+    const waistEase = 2.5;
+    const hipsEase = category === 'man' ? 2 : 1.5;
+
+    const finalQuarterBust = (bust / 4) + bustEase;
+    const finalQuarterWaist = (waist / 4) + waistEase;
+    const finalQuarterHips = (hips / 4) + hipsEase;
+    const waistReduction = finalQuarterBust - finalQuarterWaist;
+
+    // Vertical key points
+    const backNeckDrop = 2;
+    const frontNeckDrop = isFront ? (bust / 12) + 1 : backNeckDrop;
+    const armholeDepth = (bust / 10) + (category === 'woman' ? 10.5 : 12);
+    const waistline = category === 'child' ? 35 : 42; // Standard back-waist length
+    const hipLine = waistline + (category === 'child' ? 15 : 20); // Standard hip depth
+
+    // Horizontal key points
+    const neckWidth = (bust / 20) + 2;
+    const shoulderSlope = category === 'child' ? 3 : 4.5;
+
+    // --- NEW: Professional Back/Chest Width Calculations ---
+    const backWidth = (bust / 8) + 5.5; // Standard formula for back width
+    const chestWidth = (bust / 4) - 4; // Standard formula for front chest width
+
+    // Define all points for the pattern piece
+    const p = {
+      neckTop: { x: neckWidth, y: 0 },
+      shoulderTip: { x: shoulderWidth / 2, y: shoulderSlope },
+      neckDrop: { x: 0, y: isFront ? frontNeckDrop : backNeckDrop },
+      bustSide: { x: finalQuarterBust, y: armholeDepth },
+      waistCenter: { x: 0, y: waistline },
+      waistSide: { x: finalQuarterWaist, y: waistline },
+      hipCenter: { x: 0, y: hipLine },
+      hipSide: { x: finalQuarterHips, y: hipLine },
+      hemCenter: { x: 0, y: pieceLength },
+      hemSide: { x: finalQuarterHips, y: pieceLength },
+      armholeLandmark: { x: isFront ? chestWidth : backWidth, y: armholeDepth }
+    };
+
+    // --- REFINED NECKLINE CURVE CONTROL POINTS ---
+    const neckCurveC1 = { x: p.neckDrop.x + (p.neckTop.x * 0.55), y: p.neckDrop.y };
+    const neckCurveC2 = { x: p.neckTop.x * 0.9, y: p.neckTop.y + (p.neckDrop.y * 0.55) };
+
+    // --- RE-ENGINEERED ARMHOLE CURVE CONTROL POINTS ---
+    const armholeHeight = p.bustSide.y - p.shoulderTip.y;
+    const armholeC1 = {
+      x: p.shoulderTip.x - (isFront ? 2.5 : 0.75),
+      y: p.shoulderTip.y + armholeHeight * 0.35
+    };
+    const armholeC2 = {
+      x: isFront
+        ? p.armholeLandmark.x + (p.bustSide.x - p.armholeLandmark.x) * 0.2
+        : p.armholeLandmark.x + (p.bustSide.x - p.armholeLandmark.x) * 0.7,
+      y: p.bustSide.y - armholeHeight * 0.30
+    };
+
+    // --- More robust side seam curve calculation using two chained bezier curves ---
+    const waistHeight = p.waistSide.y - p.bustSide.y;
+    const hipHeight = p.hipSide.y - p.waistSide.y;
+
+    const bustToWaistC1 = { x: p.bustSide.x, y: p.bustSide.y + waistHeight * 0.4 };
+    const bustToWaistC2 = { x: p.waistSide.x, y: p.waistSide.y - waistHeight * 0.6 };
+
+    const waistToHipC1 = { x: p.waistSide.x, y: p.waistSide.y + hipHeight * 0.6 };
+    const waistToHipC2 = { x: p.hipSide.x, y: p.hipSide.y - hipHeight * 0.4 };
+
+    const mainPath = new PathBuilder()
+      .moveTo(p.hemCenter.x * scale, p.hemCenter.y * scale)
+      .lineTo(p.waistCenter.x * scale, p.waistCenter.y * scale)
+      .lineTo(p.neckDrop.x * scale, p.neckDrop.y * scale)
+      .cubicCurveTo(neckCurveC1.x * scale, neckCurveC1.y * scale, neckCurveC2.x * scale, neckCurveC2.y * scale, p.neckTop.x * scale, p.neckTop.y * scale)
+      .lineTo(p.shoulderTip.x * scale, p.shoulderTip.y * scale)
+      .cubicCurveTo(armholeC1.x * scale, armholeC1.y * scale, armholeC2.x * scale, armholeC2.y * scale, p.bustSide.x * scale, p.bustSide.y * scale)
+      .cubicCurveTo(bustToWaistC1.x * scale, bustToWaistC1.y * scale, bustToWaistC2.x * scale, bustToWaistC2.y * scale, p.waistSide.x * scale, p.waistSide.y * scale)
+      .cubicCurveTo(waistToHipC1.x * scale, waistToHipC1.y * scale, waistToHipC2.x * scale, waistToHipC2.y * scale, p.hipSide.x * scale, p.hipSide.y * scale)
+      .lineTo(p.hemSide.x * scale, p.hemSide.y * scale)
+      .closePath()
+      .build();
+
+    paths.push({ d: mainPath, class: 'stroke-red-600 fill-red-500/10 stroke-2' });
+
+    // --- Calculate precise armhole length using Bezier.js if available, otherwise adaptive sampling fallback ---
+    let armholeCurveLength: number;
+    const BezierConstructor = (window as any).Bezier;
+
+    try {
+      if (typeof BezierConstructor === 'function') {
+        const armholeCurve = new BezierConstructor(
+          p.shoulderTip.x, p.shoulderTip.y,
+          armholeC1.x, armholeC1.y,
+          armholeC2.x, armholeC2.y,
+          p.bustSide.x, p.bustSide.y
+        );
+        armholeCurveLength = armholeCurve.length();
+      } else {
+        throw new Error('Bezier not available');
+      }
+    } catch (e) {
+      // fallback: adaptive sampling length (accurate)
+      armholeCurveLength = this._approximateBezierLengthDirect(p.shoulderTip, armholeC1, armholeC2, p.bustSide);
+    }
+
+    // --- ADD ARMHOLE NOTCHES using Bezier.js if available, otherwise approximate positions from sampling ---
+    const notchClass = 'stroke-red-800 stroke-2';
+    if (typeof BezierConstructor === 'function') {
+      try {
+        const armholeCurve = new BezierConstructor(
+          p.shoulderTip.x, p.shoulderTip.y,
+          armholeC1.x, armholeC1.y,
+          armholeC2.x, armholeC2.y,
+          p.bustSide.x, p.bustSide.y
+        );
+        const addNotch = (t: number, length = 0.5 * scale) => {
+          const point = armholeCurve.get(t);
+          const normal = armholeCurve.normal(t);
+          const p1 = { x: (point.x * scale) - (normal.x * length), y: (point.y * scale) - (normal.y * length) };
+          const p2 = { x: (point.x * scale) + (normal.x * length), y: (point.y * scale) + (normal.y * length) };
+          return `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`;
+        };
+        if (isFront) {
+          paths.push({ d: addNotch(0.65), class: notchClass });
+        } else {
+          paths.push({ d: addNotch(0.60), class: notchClass });
+          paths.push({ d: addNotch(0.65), class: notchClass });
+        }
+      } catch (e) {
+        // ignore notch creation if Bezier fails
+      }
+    } else {
+      // approximate notch positions by sampling and picking near t positions
+      const sampled = this._adaptiveSampleBezier(p.shoulderTip, armholeC1, armholeC2, p.bustSide, this.MAX_SEG_LEN_MM, this.MAX_ADAPTIVE_DEPTH);
+      const pickAt = (ratio: number) => {
+        const idx = Math.floor(ratio * (sampled.length - 1));
+        const pt = sampled[Math.max(0, Math.min(sampled.length - 1, idx))];
+        const len = 0.5 * scale;
+        // simple horizontal notch (approx)
+        return `M ${pt[0] * scale - len} ${pt[1] * scale} L ${pt[0] * scale + len} ${pt[1] * scale}`;
+      };
+      if (isFront) {
+        paths.push({ d: pickAt(0.65), class: notchClass });
+      } else {
+        paths.push({ d: pickAt(0.60), class: notchClass });
+        paths.push({ d: pickAt(0.65), class: notchClass });
+      }
+    }
+
+    if (options?.showMeasurements) {
+      const guidlineClass = 'stroke-slate-400 stroke-1 stroke-dasharray';
+      const labelClass = 'fill-slate-600 text-xs';
+      const offsetX = finalQuarterBust * scale + 1 * scale; // Position for vertical labels
+
+      // --- Horizontal Guide Lines ---
+      const bustLinePath = new PathBuilder().moveTo(0, p.bustSide.y * scale).lineTo(p.bustSide.x * scale, p.bustSide.y * scale).build();
+      paths.push({ d: bustLinePath, class: guidlineClass });
+      paths.push({ d: '', label: `خط الصدر (${this._formatDim(armholeDepth, options.unit)})`, class: labelClass, x: offsetX, y: p.bustSide.y * scale });
+
+      const waistLinePath = new PathBuilder().moveTo(0, p.waistSide.y * scale).lineTo(p.waistSide.x * scale, p.waistSide.y * scale).build();
+      paths.push({ d: waistLinePath, class: guidlineClass });
+      paths.push({ d: '', label: `خط الخصر (${this._formatDim(waistline, options.unit)})`, class: labelClass, x: offsetX, y: p.waistSide.y * scale });
+
+      const hipLinePath = new PathBuilder().moveTo(0, p.hipSide.y * scale).lineTo(p.hipSide.x * scale, p.hipSide.y * scale).build();
+      paths.push({ d: hipLinePath, class: guidlineClass });
+      paths.push({ d: '', label: `خط الأرداف (${this._formatDim(hipLine, options.unit)})`, class: labelClass, x: offsetX, y: p.hipSide.y * scale });
+
+      // --- Vertical Guide Lines ---
+      const widthGuideLabel = isFront ? `عرض الصدر (${this._formatDim(chestWidth, options.unit)})` : `عرض الظهر (${this._formatDim(backWidth, options.unit)})`;
+      const widthGuidePath = new PathBuilder().moveTo(p.armholeLandmark.x * scale, p.shoulderTip.y * scale).lineTo(p.armholeLandmark.x * scale, p.armholeLandmark.y * scale).build();
+      paths.push({ d: widthGuidePath, class: guidlineClass });
+      paths.push({ d: '', label: widthGuideLabel, class: labelClass, x: p.armholeLandmark.x * scale - (isFront ? 15 : 12), y: p.shoulderTip.y * scale + 15 });
+
+      // Add Center Front/Back line for clarity
+      const centerLinePath = new PathBuilder().moveTo(0, 0).lineTo(0, pieceLength * scale).build();
+      paths.push({ d: centerLinePath, class: 'stroke-slate-500 stroke-1' });
+
+      // --- Dimensions ---
+      paths.push(...this._createDimension(0, p.bustSide.y, p.bustSide.x, p.bustSide.y, 6, finalQuarterBust, options.unit));
+      paths.push(...this._createDimension(0, p.waistSide.y, p.waistSide.x, p.waistSide.y, 7, finalQuarterWaist, options.unit));
+      paths.push(...this._createDimension(0, p.hipSide.y, p.hipSide.x, p.hipSide.y, 8, finalQuarterHips, options.unit));
+      paths.push(...this._createDimension(0, p.neckTop.y, p.neckTop.x, p.neckTop.y, -2.5, neckWidth, options.unit));
+      paths.push(...this._createDimension(p.neckTop.x, 0, p.shoulderTip.x, p.shoulderTip.y, -4, shoulderWidth / 2, options.unit));
+
+      // Vertical
+      paths.push(...this._createDimension(0, 0, 0, p.hemCenter.y, -6, pieceLength, options.unit));
+      const neckDropDimX = isFront ? -2.5 : p.neckTop.x + 2;
+      paths.push(...this._createDimension(0, 0, 0, p.neckDrop.y, neckDropDimX, frontNeckDrop, options.unit));
+      paths.push(...this._createDimension(p.shoulderTip.x, 0, p.shoulderTip.x, p.shoulderTip.y, 2, shoulderSlope, options.unit));
+    }
+
+    // --- DART IMPLEMENTATION (unchanged logic) ---
+    if (category === 'woman' && options?.isDarted) {
+      const dartIntake = Math.max(0, waistReduction - 1.5);
+      if (dartIntake > 0) {
+        const dartApexX = bust / 10;
+        const topDartTipY = armholeDepth + 3;
+        const bottomDartTipY = waistline + 12;
+        const dartLeg1X = dartApexX - dartIntake / 2;
+        const dartLeg2X = dartApexX + dartIntake / 2;
+
+        const waistDartPath = new PathBuilder()
+          .moveTo(dartApexX * scale, topDartTipY * scale)
+          .lineTo(dartLeg1X * scale, waistline * scale)
+          .lineTo(dartApexX * scale, bottomDartTipY * scale)
+          .lineTo(dartLeg2X * scale, waistline * scale)
+          .closePath().build();
+        paths.push({ d: waistDartPath, class: 'stroke-red-600 stroke-1' });
+      }
+
+      if (isFront) {
+        const sideDartIntake = 3;
+        const sideDartY = p.bustSide.y - 5;
+        const bustApex = { x: bust / 10, y: armholeDepth + 3 };
+        const sideDartPath = new PathBuilder()
+          .moveTo(p.bustSide.x * scale, (sideDartY - sideDartIntake / 2) * scale)
+          .lineTo(bustApex.x * scale, bustApex.y * scale)
+          .lineTo(p.bustSide.x * scale, (sideDartY + sideDartIntake / 2) * scale).build();
+        paths.push({ d: sideDartPath, class: 'stroke-red-600 stroke-1' });
+      } else {
+        const shoulderMidX = (p.neckTop.x + p.shoulderTip.x) / 2;
+        const shoulderDartTipY = p.shoulderTip.y + 8;
+        const shoulderDartWidth = 1.5;
+ (replaces fragile regex approach)
+  // -------------------------
+  private _offsetPaths(paths: SvgPath[], offsetX: number, offsetY: number): void {
+    // Lightweight parser for absolute SVG commands produced by PathBuilder (M L C Q A Z)
+    const cmdRe = /([MLCQAZ])([^MLCQAZ]*)/g;
+    for (const path of paths) {
+      if (!path.d) {
+        if (path.x !== undefined) path.x += offsetX;
+        if (path.y !== undefined) path.y += offsetY;
+        continue;
+      }
+      let newD = '';
+      let match: RegExpExecArray | null;
+      while ((match = cmdRe.exec(path.d)) !== null) {
+        const cmd = match[1];
+        const coords = match[2].trim();
+        if (!coords) {
+          newD += `${cmd} `;
+          continue;
+        }
+        const nums = coords.split(/[\s,]+/).map(s => parseFloat(s)).filter(n => !isNaN(n));
+        if (cmd === 'A') {
+          // Arc: rx ry xAxisRotation largeArcFlag sweepFlag x y  (repeating)
+          let out = '';
+          for (let i = 0; i < nums.length; i += 7) {
+            const rx = nums[i], ry = nums[i + 1], xAxis = nums[i + 2], laf = nums[i + 3], sf = nums[i + 4];
+            const x = nums[i + 5] + offsetX;
+            const y = nums[i + 6] + offsetY;
+            out += `${rx} ${ry} ${xAxis} ${laf} ${sf} ${x} ${y} `;
+          }
+          newD += `${cmd} ${out.trim()} `;
+        } else {
+          // other commands: pairs of coordinates
+          let out = '';
+          for (let i = 0; i < nums.length; i += 2) {
+            const x = nums[i] + offsetX;
+            const y = nums[i + 1] + offsetY;
+            out += `${x} ${y} `;
+          }
+          newD += `${cmd} ${out.trim()} `;
+        }
+      }
+      path.d = newD.trim();
+      if (path.x !== undefined) path.x += offsetX;
+      if (path.y !== undefined) path.y += offsetY;
+    }
+  }
+
+  // -------------------------
+  // Adaptive Bezier sampling (de Casteljau subdivision)
+  // -------------------------
+  private _adaptiveSampleBezier(p0: { x: number

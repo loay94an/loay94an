@@ -1,0 +1,142 @@
+// ===============================================================
+//  PATTERN SERVICE — ULTRA PRO EDITION (PART 3 — FACTORY + ASSEMBLY)
+//  Final assembly of pattern pieces into PatternData
+// ===============================================================
+
+import { Injectable } from '@angular/core';
+import { PatternServiceCore, SvgPath, Point, Polyline } from './pattern-core.service';
+import { PatternGenerators } from './pattern-generators.service';
+
+export interface PatternData {
+  paths: SvgPath[];
+  width: number;
+  height: number;
+}
+
+@Injectable({ providedIn: 'root' })
+export class PatternService {
+
+  constructor(
+    private core: PatternServiceCore,
+    private gen: PatternGenerators
+  ) {}
+
+  // -------------------------------------------------------------
+  //  MAIN ENTRY POINT
+  // -------------------------------------------------------------
+  generatePattern(model: any, meas: any): PatternData {
+
+    const all: SvgPath[] = [];
+    let xOffset = 0;
+    let maxHeight = 0;
+    const pad = 80; // spacing between pieces
+
+    // -----------------------------------------------------------
+    // 1) BODICE (front + back)
+    // -----------------------------------------------------------
+    if (model.includes('bodice') || model.includes('shirt') || model.includes('dress')) {
+
+      const front = this.gen.generateBodice(meas, true, 'woman');
+      this.offsetPaths(front.paths, xOffset, 0);
+      all.push(...front.paths);
+      xOffset += front.width + pad;
+      maxHeight = Math.max(maxHeight, front.height);
+
+      const back = this.gen.generateBodice(meas, false, 'woman');
+      this.offsetPaths(back.paths, xOffset, 0);
+      all.push(...back.paths);
+      xOffset += back.width + pad;
+      maxHeight = Math.max(maxHeight, back.height);
+
+      // sleeve
+      const sleeve = this.gen.generateSleeve(meas, front.armhole + back.armhole, 'basic');
+      this.offsetPaths(sleeve.paths, xOffset, 0);
+      all.push(...sleeve.paths);
+      xOffset += sleeve.width + pad;
+      maxHeight = Math.max(maxHeight, sleeve.height);
+    }
+
+    // -----------------------------------------------------------
+    // 2) PANTS
+    // -----------------------------------------------------------
+    if (model.includes('pants')) {
+      const front = this.gen.generatePants(meas, true);
+      this.offsetPaths(front.paths, xOffset, 0);
+      all.push(...front.paths);
+      xOffset += front.width + pad;
+      maxHeight = Math.max(maxHeight, front.height);
+
+      const back = this.gen.generatePants(meas, false);
+      this.offsetPaths(back.paths, xOffset, 0);
+      all.push(...back.paths);
+      xOffset += back.width + pad;
+      maxHeight = Math.max(maxHeight, back.height);
+    }
+
+    // -----------------------------------------------------------
+    // 3) SKIRT
+    // -----------------------------------------------------------
+    if (model.includes('skirt')) {
+      const skirt = this.gen.generateSkirt(meas);
+      this.offsetPaths(skirt.paths, xOffset, 0);
+      all.push(...skirt.paths);
+      xOffset += skirt.width + pad;
+      maxHeight = Math.max(maxHeight, skirt.height);
+    }
+
+    // -----------------------------------------------------------
+    // 4) COLLAR
+    // -----------------------------------------------------------
+    if (model.includes('collar')) {
+      const col = this.gen.generateCollar(meas);
+      this.offsetPaths(col.paths, xOffset, 0);
+      all.push(...col.paths);
+      xOffset += col.width + pad;
+      maxHeight = Math.max(maxHeight, col.height);
+    }
+
+    // -----------------------------------------------------------
+    // 5) IMAGE‑BASED PATTERNS
+    // -----------------------------------------------------------
+    if (model.includes('image')) {
+      const pieces = this.gen.generateFromImage(model);
+      for (const p of pieces) {
+        this.offsetPaths(p.paths, xOffset, 0);
+        all.push(...p.paths);
+        xOffset += p.width + pad;
+        maxHeight = Math.max(maxHeight, p.height);
+      }
+    }
+
+    // -----------------------------------------------------------
+    // 6) FINAL RETURN
+    // -----------------------------------------------------------
+    return {
+      paths: all,
+      width: xOffset,
+      height: maxHeight + pad
+    };
+  }
+
+  // -------------------------------------------------------------
+  //  OFFSET PATHS (translate SVG paths)
+  // -------------------------------------------------------------
+  private offsetPaths(paths: SvgPath[], dx: number, dy: number) {
+    for (const p of paths) {
+      if (p.d) {
+        const tokens = this.core.parsePath(p.d);
+        const moved = tokens.map(t => {
+          const a = t.args.slice();
+          for (let i=0;i<a.length;i+=2) {
+            a[i] += dx;
+            a[i+1] += dy;
+          }
+          return { cmd:t.cmd, args:a };
+        });
+        p.d = moved.map(t => `${t.cmd} ${t.args.join(' ')}`).join(' ');
+      }
+      if (p.x !== undefined) p.x += dx;
+      if (p.y !== undefined) p.y += dy;
+    }
+  }
+}

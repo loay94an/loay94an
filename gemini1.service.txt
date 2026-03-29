@@ -1,0 +1,289 @@
+
+import { Injectable } from '@angular/core';
+import { GoogleGenAI, Type, GenerateContentResponse } from '@google/genai';
+import { Measurements, Category } from '../models/pattern.model';
+
+// Define the expected JSON structure from the AI
+export interface AiPatternAnalysis {
+  garmentName: string;
+  category: Category;
+  requiredMeasurements: (keyof Measurements)[];
+}
+
+export interface OnlinePatternResult {
+  imageUrl: string;
+  sourceTitle: string;
+  sourceUrl: string;
+}
+
+@Injectable({
+  providedIn: 'root',
+})
+export class GeminiService {
+  private ai: GoogleGenAI;
+  private validMeasurements: (keyof Measurements)[] = [
+      'bust', 'waist', 'hips', 'shoulderWidth', 'pieceLength', 
+      'sleeveLength', 'armCircumference', 'inlegLength', 'waistToFloor', 'shoulderToCrotch', 'sleevePuffRatio'
+  ];
+
+  constructor() {
+    // IMPORTANT: The API key is injected via environment variables.
+    // Do not hardcode or expose it in the frontend.
+    this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+  }
+  
+  async generateImageFromText(prompt: string, bodyShape: string | null = null): Promise<string> {
+    // Construct a more direct and detailed prompt for better image generation.
+    const bodyShapeInstruction = bodyShape
+      ? `The mannequin must have a distinct '${bodyShape}' body shape.`
+      : '';
+
+    const finalPrompt = `
+      Create an ultra-realistic, studio-quality photograph of a single clothing item: "${prompt}".
+      
+      **Key requirements:**
+      - **Subject:** Only the described garment, displayed on a simple, featureless mannequin. Do not show any human models.
+      - **Mannequin:** ${bodyShapeInstruction}
+      - **View:** Full frontal view, centered in the frame.
+      - **Background:** Solid, neutral light gray (#f3f4f6).
+      - **Lighting:** Bright, even studio lighting that beautifully highlights the fabric's texture and details.
+      - **Fidelity:** Strictly adhere to all details in the description (color, cut, style, fabric).
+      - **Composition:** The garment should be the main focus and fill most of the image.
+    `;
+
+    try {
+      const response = await this.ai.models.generateImages({
+        model: 'imagen-4.0-generate-001',
+        prompt: finalPrompt, // Use the new, more detailed prompt
+        config: {
+          numberOfImages: 1,
+          outputMimeType: 'image/png',
+          aspectRatio: '3:4', // Good for clothing
+        },
+      });
+
+      if (response.generatedImages && response.generatedImages.length > 0) {
+        return response.generatedImages[0].image.imageBytes; // This is a base64 string
+      } else {
+        throw new Error('Image generation failed to produce an image.');
+      }
+    } catch (error) {
+      console.error('Gemini API request failed (Image Generation):', error);
+      if (error instanceof Error && error.message.toLowerCase().includes('quota')) {
+        throw new Error('فشل الاتصال بـ Gemini API: لقد تجاوزت الحصة المخصصة لك. يرجى المحاولة مرة أخرى في وقت لاحق.');
+      }
+      throw new Error('فشل توليد الصورة من الوصف. قد لا يتمكن النموذج من معالجة هذا الطلب.');
+    }
+  }
+
+  async createImagePromptFromParts(
+    garmentImageBase64: string,
+    garmentMimeType: string,
+    fabricImageBase64: string,
+    fabricMimeType: string,
+    userPrompt: string
+  ): Promise<string> {
+    const garmentPart = { inlineData: { mimeType: garmentMimeType, data: garmentImageBase64 } };
+    const fabricPart = { inlineData: { mimeType: fabricMimeType, data: fabricImageBase64 } };
+    
+    const combinedPrompt = `The first image is the clothing style. The second image is the fabric pattern/color. User's additional instructions: "${userPrompt || 'None'}".`;
+
+    const systemInstruction = `You are an AI assistant that writes prompts for an image generation model.
+Look at the first image (a piece of clothing) and the second image (a fabric pattern or color scheme).
+Also, consider the user's instructions.
+Combine all of this information into a single, highly detailed, photorealistic description of the final garment. 
+The description must be suitable to be used as a prompt for an image generation AI like Imagen.
+Describe the garment on a simple, featureless mannequin against a solid, neutral light gray background.
+Do not add any extra text, markdown, or explanations. Your entire response should be only the prompt itself.
+Example output format: "An ultra-realistic, studio-quality photograph of a woman's A-line skirt made of blue denim with white floral patterns, displayed on a simple mannequin against a solid light gray background."`;
+
+    try {
+      const response: GenerateContentResponse = await this.ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [{
+          parts: [
+            garmentPart,
+            fabricPart,
+            { text: combinedPrompt },
+          ],
+        }],
+        config: {
+          systemInstruction: systemInstruction,
+        },
+      });
+
+      return response.text.trim();
+    } catch (error) {
+      console.error('Gemini API request failed (createImagePromptFromParts):', error);
+      if (error instanceof Error && error.message.toLowerCase().includes('quota')) {
+        throw new Error('فشل الاتصال بـ Gemini API: لقد تجاوزت الحصة المخصصة لك. يرجى المحاولة مرة أخرى في وقت لاحق.');
+      }
+      throw new Error('فشل إنشاء وصف مدمج من الصور المقدمة.');
+    }
+  }
+
+  async searchForPatternsOnline(query: string): Promise<OnlinePatternResult[]> {
+    const systemInstruction = `You are a helpful assistant for sewists. Your goal is to find sewing patterns online using Google Search based on the user's query. You must find direct image URLs of the pattern pieces themselves (technical drawings, line art, flat sketches), not photos of the final garment being worn. For each image, provide the source page title and the URL of the page where the image was found. Prioritize free or instructional patterns. Your final response MUST be a valid JSON array of objects, where each object has "imageUrl", "sourceTitle", and "sourceUrl" keys. Do not include any other text, explanations, or markdown formatting like \`\`\`json.`;
+    
+    const restrictedQuery = `${query} (site:marlenemukai.com.br OR site:marlenemukaimoldeinfantil.com.br)`;
+
+    try {
+       const response: GenerateContentResponse = await this.ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [{ parts: [{ text: restrictedQuery }] }],
+        config: {
+          systemInstruction,
+          tools: [{googleSearch: {}}],
+        },
+      });
+
+      const textResponse = response.text.trim();
+      // Find the JSON array within the response text, robust against surrounding text.
+      const jsonMatch = textResponse.match(/\[.*\]/s);
+      
+      if (!jsonMatch) {
+          console.error("No JSON array found in Gemini response for pattern search:", textResponse);
+          return [];
+      }
+
+      const jsonText = jsonMatch[0];
+      const parsed = JSON.parse(jsonText);
+      if (Array.isArray(parsed)) {
+        // Additional validation to ensure the data is in the expected shape
+        return parsed.filter(item => item.imageUrl && item.sourceUrl && item.sourceTitle) as OnlinePatternResult[];
+      }
+      return [];
+    } catch(error) {
+       console.error('Gemini API request failed or JSON parsing failed (Pattern Search):', error);
+       if (error instanceof Error && error.message.toLowerCase().includes('quota')) {
+        throw new Error('فشل الاتصال بـ Gemini API: لقد تجاوزت الحصة المخصصة لك. يرجى المحاولة مرة أخرى في وقت لاحق.');
+       }
+       throw new Error('فشل البحث عن باترونات على الإنترنت. أعاد الذكاء الاصطناعي تنسيقاً غير متوقع.');
+    }
+  }
+  
+  async analyzeGarmentImage(
+    base64Image: string,
+    mimeType: string,
+    prompt: string
+  ): Promise<AiPatternAnalysis> {
+    const imagePart = {
+      inlineData: {
+        mimeType: mimeType,
+        data: base64Image,
+      },
+    };
+
+    const systemInstruction = `You are an expert pattern maker analyzing clothing designs. 
+Analyze the garment in the user's image and their prompt. 
+Determine the wearer category (man, woman, or child) and identify all essential body measurements required to draft a pattern for it. 
+Only choose from this list of valid measurement keys: ${this.validMeasurements.join(', ')}. 
+Respond with a JSON object that adheres to the provided schema.`;
+
+    try {
+      const response: GenerateContentResponse = await this.ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [{
+          parts: [
+            imagePart,
+            { text: `User prompt: "${prompt}". Please analyze.` },
+          ],
+        }],
+        config: this.getAiConfig(systemInstruction),
+      });
+
+      return this.parseAndValidateResponse(response);
+    } catch (error) {
+      console.error('Gemini API request failed (Image):', error);
+      if (error instanceof Error && error.message.toLowerCase().includes('quota')) {
+        throw new Error('فشل الاتصال بـ Gemini API: لقد تجاوزت الحصة المخصصة لك. يرجى المحاولة مرة أخرى في وقت لاحق.');
+      }
+      throw new Error('فشل تحليل الصورة. قد لا يتمكن النموذج من معالجة هذا الطلب.');
+    }
+  }
+
+  async analyzeGarmentText(prompt: string): Promise<AiPatternAnalysis> {
+    const systemInstruction = `You are an expert pattern maker analyzing clothing descriptions.
+Analyze the user's text description of a garment.
+Determine the wearer category (man, woman, or child) and identify all essential body measurements required to draft a pattern for it.
+Only choose from this list of valid measurement keys: ${this.validMeasurements.join(', ')}.
+Respond with a JSON object that adheres to the provided schema.`;
+
+    try {
+       const response: GenerateContentResponse = await this.ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [{
+          parts: [
+            { text: `User prompt: "${prompt}". Please analyze.` },
+          ],
+        }],
+        config: this.getAiConfig(systemInstruction),
+      });
+      
+      return this.parseAndValidateResponse(response);
+    } catch (error) {
+      console.error('Gemini API request failed (Text):', error);
+      if (error instanceof Error && error.message.toLowerCase().includes('quota')) {
+        throw new Error('فشل الاتصال بـ Gemini API: لقد تجاوزت الحصة المخصصة لك. يرجى المحاولة مرة أخرى في وقت لاحق.');
+      }
+      throw new Error('فشل تحليل الوصف. قد لا يتمكن النموذج من معالجة هذا الطلب.');
+    }
+  }
+  
+  private getAiConfig(systemInstruction: string) {
+    return {
+      systemInstruction: systemInstruction,
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          garmentName: {
+            type: Type.STRING,
+            description: 'A short, descriptive name for the garment, e.g., "A-Line Skirt" or "Men\'s Classic T-Shirt".',
+          },
+          category: {
+            type: Type.STRING,
+            description: "The wearer category. Must be one of: 'woman', 'man', or 'child'.",
+          },
+          requiredMeasurements: {
+            type: Type.ARRAY,
+            description: 'An array of measurement key strings required for this pattern. The keys must be from the provided valid list.',
+            items: { type: Type.STRING },
+          },
+        },
+        required: ['garmentName', 'category', 'requiredMeasurements'],
+      },
+    };
+  }
+  
+  private parseAndValidateResponse(response: GenerateContentResponse): AiPatternAnalysis {
+      if (!response || typeof response.text !== 'string' || response.text.trim() === '') {
+        throw new Error('AI response was empty or invalid.');
+      }
+      const jsonText = response.text.trim();
+      let parsedJson: any;
+
+      try {
+          parsedJson = JSON.parse(jsonText);
+      } catch (e) {
+          console.error('Failed to parse AI response JSON:', jsonText);
+          throw new Error('AI returned a response that was not valid JSON.');
+      }
+
+      if (this.isValidAnalysis(parsedJson)) {
+        return parsedJson;
+      } else {
+        console.error('Invalid AI response format:', parsedJson);
+        throw new Error('AI response did not match the required format.');
+      }
+  }
+  
+  private isValidAnalysis(data: any): data is AiPatternAnalysis {
+    return (
+      data &&
+      typeof data.garmentName === 'string' &&
+      ['woman', 'man', 'child'].includes(data.category) &&
+      Array.isArray(data.requiredMeasurements)
+    );
+  }
+}

@@ -1,0 +1,413 @@
+// src/services/pattern.service.ts
+// Industrial-improved PatternService
+// Paste to src/services/pattern.service.ts (replace existing)
+
+import { Injectable } from '@angular/core';
+import { Measurements, PatternData, PatternModel, SvgPath, Category, Unit } from '../models/pattern.model';
+
+type Point = { x: number; y: number };
+
+interface PatternPiece { paths: SvgPath[]; width: number; height: number; }
+interface BodiceResult { piece: PatternPiece; armholeCurveLength: number; }
+
+class PathBuilder {
+  private d: string[] = [];
+  moveTo(x: number, y: number){ this.d.push(`M ${x} ${y}`); return this; }
+  lineTo(x: number, y: number){ this.d.push(`L ${x} ${y}`); return this; }
+  arcTo(rx:number,ry:number,xAxis:number,laf:number,sf:number,x:number,y:number){ this.d.push(`A ${rx} ${ry} ${xAxis} ${laf} ${sf} ${x} ${y}`); return this; }
+  cubicCurveTo(x1:number,y1:number,x2:number,y2:number,x:number,y:number){ this.d.push(`C ${x1} ${y1}, ${x2} ${y2}, ${x} ${y}`); return this; }
+  quadraticCurveTo(x1:number,y1:number,x:number,y:number){ this.d.push(`Q ${x1} ${y1}, ${x} ${y}`); return this; }
+  closePath(){ this.d.push('Z'); return this; }
+  build(){ return this.d.join(' '); }
+}
+
+@Injectable({ providedIn: 'root' })
+export class PatternService {
+  private scale = 10;
+
+  // Tunables
+  private PREVIEW_SAMPLING = 128;
+  private EXPORT_SAMPLING = 512;
+  private MAX_SEG_LEN_MM = 0.5;
+  private MAX_ADAPTIVE_DEPTH = 14;
+  private G2_MAX_ITERS = 60;
+  private G2_STEP = 0.2;
+
+  // -------------------------
+  // Public entry
+  // -------------------------
+  generatePattern(model: PatternModel, measurements: Measurements, options?: { showMeasurements?: boolean; unit?: Unit }): PatternData {
+    const allPaths: SvgPath[] = [];
+    let currentX = 0, maxHeight = 0;
+    const padding = 10 * this.scale;
+    let totalArmholeLength = 0;
+    const bodiceOptions = { showMeasurements: options?.showMeasurements, isDarted: model.id.includes('darted'), unit: options?.unit };
+
+    // (image-based and special flows omitted for brevity — keep original logic)
+    // We'll call _generateBodice/_generateSleeve etc. as before; they use helpers below.
+
+    // Example: if model is bodice-like
+    if (model.id.includes('bodice') || model.id.includes('shirt') || model.id.includes('dress')) {
+      const front = this._generateBodice(measurements, true, model.category, bodiceOptions);
+      this._translatePaths(front.piece.paths, currentX, 0);
+      allPaths.push(...front.piece.paths);
+      currentX += front.piece.width + padding;
+      maxHeight = Math.max(maxHeight, front.piece.height);
+      totalArmholeLength += front.armholeCurveLength;
+
+      const back = this._generateBodice(measurements, false, model.category, bodiceOptions);
+      this._translatePaths(back.piece.paths, currentX, 0);
+      allPaths.push(...back.piece.paths);
+      currentX += back.piece.width + padding;
+      maxHeight = Math.max(maxHeight, back.piece.height);
+      totalArmholeLength += back.armholeCurveLength;
+    }
+
+    // Sleeve generation (simplified)
+    if (model.sleeveType && totalArmholeLength > 0) {
+      const sleeve = this._generateSleeve(measurements, totalArmholeLength, model.sleeveType as any, { showMeasurements: options?.showMeasurements, unit: options?.unit });
+      if (sleeve) {
+        this._translatePaths(sleeve.paths, currentX, 0);
+        allPaths.push(...sleeve.paths);
+        currentX += sleeve.width + padding;
+        maxHeight = Math.max(maxHeight, sleeve.height);
+      }
+    }
+
+    return { paths: allPaths, width: currentX, height: maxHeight + padding };
+  }
+
+  // -------------------------
+  // Robust translation (supports absolute and relative commands)
+  // -------------------------
+  private _translatePaths(paths: SvgPath[], dx: number, dy: number) {
+    for (const p of paths) {
+      if (!p.d) { if (p.x !== undefined) p.x += dx; if (p.y !== undefined) p.y += dy; continue; }
+      const tokens = this._parsePath(p.d);
+      const moved = this._applyTranslateToTokens(tokens, dx, dy);
+      p.d = this._tokensToPath(moved);
+      if (p.x !== undefined) p.x += dx;
+      if (p.y !== undefined) p.y += dy;
+    }
+  }
+
+  // -------------------------
+  // SVG path parser (supports common absolute/relative commands)
+  // Returns array of {cmd, args, relative}
+  // -------------------------
+  private _parsePath(d: string): { cmd: string; args: number[]; relative: boolean }[] {
+    const out: { cmd: string; args: number[]; relative: boolean }[] = [];
+    const re = /([a-zA-Z])([^a-zA-Z]*)/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(d)) !== null) {
+      const cmd = m[1];
+      const raw = m[2].trim();
+      const nums = raw.length ? raw.split(/[\s,]+/).map(s => parseFloat(s)).filter(n => !isNaN(n)) : [];
+      out.push({ cmd: cmd.toUpperCase(), args: nums, relative: cmd === cmd.toLowerCase() });
+    }
+    return out;
+  }
+
+  private _applyTranslateToTokens(tokens: { cmd: string; args: number[]; relative: boolean }[], dx: number, dy: number) {
+    const res = [];
+    for (const t of tokens) {
+      const cmd = t.cmd;
+      const args = t.args.slice();
+      if (cmd === 'A') {
+        // rx ry xAxis laf sf x y  (repeat)
+        for (let i = 0; i < args.length; i += 7) {
+          args[i+5] = args[i+5] + dx;
+          args[i+6] = args[i+6] + dy;
+        }
+      } else if (['M','L','T'].includes(cmd)) {
+        for (let i = 0; i < args.length; i += 2) { args[i] += dx; args[i+1] += dy; }
+      } else if (['C','S','Q'].includes(cmd)) {
+        for (let i = 0; i < args.length; i += 2) { args[i] += dx; args[i+1] += dy; }
+      } else if (cmd === 'Z') {
+        // nothing
+      } else {
+        // fallback: translate pairs
+        for (let i = 0; i < args.length; i += 2) { if (args[i] !== undefined && args[i+1] !== undefined) { args[i] += dx; args[i+1] += dy; } }
+      }
+      res.push({ cmd, args, relative: t.relative });
+    }
+    return res;
+  }
+
+  private _tokensToPath(tokens: { cmd: string; args: number[]; relative: boolean }[]) {
+    return tokens.map(t => {
+      const cmd = t.relative ? t.cmd.toLowerCase() : t.cmd;
+      return `${cmd} ${t.args.join(' ')}`;
+    }).join(' ');
+  }
+
+  // -------------------------
+  // Adaptive Bezier sampling (de Casteljau)
+  // -------------------------
+  private _adaptiveSampleBezier(p0: Point, p1: Point, p2: Point, p3: Point, maxSeg = this.MAX_SEG_LEN_MM, maxDepth = this.MAX_ADAPTIVE_DEPTH): Point[] {
+    const out: Point[] = [];
+    const toArr = (p: Point) => [p.x, p.y] as [number, number];
+    const bez = (a:[number,number],b:[number,number],c:[number,number],d:[number,number],t:number) => {
+      const u = 1 - t;
+      return {
+        x: u*u*u*a[0] + 3*u*u*t*b[0] + 3*u*t*t*c[0] + t*t*t*d[0],
+        y: u*u*u*a[1] + 3*u*u*t*b[1] + 3*u*t*t*c[1] + t*t*t*d[1]
+      };
+    };
+    const subdivide = (a:[number,number],b:[number,number],c:[number,number],d:[number,number],depth:number) => {
+      const mid = bez(a,b,c,d,0.5);
+      const lm = [(a[0]+d[0])/2, (a[1]+d[1])/2];
+      const dx = mid.x - lm[0], dy = mid.y - lm[1];
+      if (Math.hypot(dx,dy) > maxSeg && depth < maxDepth) {
+        const a1 = [(a[0]+b[0])/2,(a[1]+b[1])/2];
+        const b1 = [(b[0]+c[0])/2,(b[1]+c[1])/2];
+        const c1 = [(c[0]+d[0])/2,(c[1]+d[1])/2];
+        const a2 = [(a1[0]+b1[0])/2,(a1[1]+b1[1])/2];
+        const b2 = [(b1[0]+c1[0])/2,(b1[1]+c1[1])/2];
+        const m = [(a2[0]+b2[0])/2,(a2[1]+b2[1])/2];
+        subdivide(a,a1,a2,m,depth+1);
+        subdivide(m,b2,c1,d,depth+1);
+      } else {
+        out.push({ x: a[0], y: a[1] });
+        out.push({ x: d[0], y: d[1] });
+      }
+    };
+    subdivide(toArr(p0), toArr(p1), toArr(p2), toArr(p3), 0);
+    // unique
+    const res: Point[] = [];
+    for (const pt of out) {
+      if (res.length === 0 || Math.hypot(res[res.length-1].x - pt.x, res[res.length-1].y - pt.y) > 1e-9) res.push(pt);
+    }
+    return res;
+  }
+
+  // -------------------------
+  // Densify path: convert C/Q segments to polylines (for export)
+  // Input: path tokens (from _parsePath)
+  // -------------------------
+  private _densifyTokens(tokens: { cmd: string; args: number[]; relative: boolean }[], segLen = this.MAX_SEG_LEN_MM): Point[] {
+    const pts: Point[] = [];
+    let cur: Point = { x: 0, y: 0 };
+    for (const t of tokens) {
+      const cmd = t.cmd;
+      const args = t.args;
+      if (cmd === 'M') { cur = { x: args[0], y: args[1] }; pts.push({ ...cur }); }
+      else if (cmd === 'L') { cur = { x: args[0], y: args[1] }; pts.push({ ...cur }); }
+      else if (cmd === 'C') {
+        // args: x1 y1 x2 y2 x y
+        const p0 = { ...cur }, p1 = { x: args[0], y: args[1] }, p2 = { x: args[2], y: args[3] }, p3 = { x: args[4], y: args[5] };
+        const sampled = this._adaptiveSampleBezier(p0,p1,p2,p3,segLen,this.MAX_ADAPTIVE_DEPTH);
+        // append excluding first (already at cur)
+        for (let i = 1; i < sampled.length; i++) pts.push(sampled[i]);
+        cur = { ...p3 };
+      } else if (cmd === 'Q') {
+        // quadratic -> approximate by cubic conversion or sample directly (simple subdivision)
+        const p0 = { ...cur }, p1 = { x: args[0], y: args[1] }, p2 = { x: args[2], y: args[3] };
+        // convert to cubic equivalent
+        const c1 = { x: p0.x + 2/3*(p1.x - p0.x), y: p0.y + 2/3*(p1.y - p0.y) };
+        const c2 = { x: p2.x + 2/3*(p1.x - p2.x), y: p2.y + 2/3*(p1.y - p2.y) };
+        const sampled = this._adaptiveSampleBezier(p0,c1,c2,p2,segLen,this.MAX_ADAPTIVE_DEPTH);
+        for (let i = 1; i < sampled.length; i++) pts.push(sampled[i]);
+        cur = { ...p2 };
+      } else if (cmd === 'A') {
+        // approximate arc by straight segments: take endpoint pairs (simple)
+        for (let i = 0; i < args.length; i += 7) {
+          const x = args[i+5], y = args[i+6];
+          cur = { x, y }; pts.push({ ...cur });
+        }
+      } else if (cmd === 'Z') {
+        // close: nothing special here
+      } else {
+        // fallback: try pairs
+        for (let i = 0; i < args.length; i += 2) {
+          cur = { x: args[i], y: args[i+1] }; pts.push({ ...cur });
+        }
+      }
+    }
+    return pts;
+  }
+
+  // -------------------------
+  // G2 solver (local numeric adjuster)
+  // - Given two cubic beziers A(p0,p1,p2,p3) and B(q0,q1,q2,q3) where p3==q0,
+  //   adjust p2 and q1 to reduce difference in first and second derivatives at join.
+  // - Simple gradient-descent style updates with finite-difference Jacobian approx.
+  // -------------------------
+  private _solveG2ForJoin(p0:Point,p1:Point,p2:Point,p3:Point, q0:Point,q1:Point,q2:Point,q3:Point) {
+    // ensure p3 == q0
+    const eps = 1e-6;
+    const vecSub = (a:Point,b:Point)=>({x:a.x-b.x,y:a.y-b.y});
+    const d1 = (a:Point,b:Point,c:Point,d:Point,t:number) => {
+      // first derivative of cubic bezier at t
+      const u = 1-t;
+      return {
+        x: 3*u*u*(b.x-a.x) + 6*u*t*(c.x-b.x) + 3*t*t*(d.x-c.x),
+        y: 3*u*u*(b.y-a.y) + 6*u*t*(c.y-b.y) + 3*t*t*(d.y-c.y)
+      };
+    };
+    const d2 = (a:Point,b:Point,c:Point,d:Point,t:number) => {
+      const u = 1-t;
+      return {
+        x: 6*u*(c.x - 2*b.x + a.x) + 6*t*(d.x - 2*c.x + b.x),
+        y: 6*u*(c.y - 2*b.y + a.y) + 6*t*(d.y - 2*c.y + b.y)
+      };
+    };
+
+    // objective: minimize ||d1A(1)-d1B(0)||^2 + w*||d2A(1)-d2B(0)||^2
+    const w = 0.6;
+    let p2v = { ...p2 }, q1v = { ...q1 };
+    for (let iter=0; iter < this.G2_MAX_ITERS; iter++) {
+      const d1A = d1(p0,p1,p2v,p3,1.0);
+      const d1B = d1(q0,q1v,q2,q3,0.0);
+      const d2A = d2(p0,p1,p2v,p3,1.0);
+      const d2B = d2(q0,q1v,q2,q3,0.0);
+      const r1 = { x: d1A.x - d1B.x, y: d1A.y - d1B.y };
+      const r2 = { x: d2A.x - d2B.x, y: d2A.y - d2B.y };
+      const cost = r1.x*r1.x + r1.y*r1.y + w*(r2.x*r2.x + r2.y*r2.y);
+      if (cost < 1e-6) break;
+
+      // finite-difference gradient approx for p2 and q1 (4 variables x,y)
+      const grad = { p2x:0,p2y:0,q1x:0,q1y:0 };
+      const delta = 1e-3;
+      const evalCost = (p2test:Point,q1test:Point) => {
+        const d1At = d1(p0,p1,p2test,p3,1.0);
+        const d1Bt = d1(q0,q1test,q2,q3,0.0);
+        const d2At = d2(p0,p1,p2test,p3,1.0);
+        const d2Bt = d2(q0,q1test,q2,q3,0.0);
+        const rr1 = { x: d1At.x - d1Bt.x, y: d1At.y - d1Bt.y };
+        const rr2 = { x: d2At.x - d2Bt.x, y: d2At.y - d2Bt.y };
+        return rr1.x*rr1.x + rr1.y*rr1.y + w*(rr2.x*rr2.x + rr2.y*rr2.y);
+      };
+      // p2x
+      grad.p2x = (evalCost({x:p2v.x+delta,y:p2v.y}, q1v) - cost)/delta;
+      grad.p2y = (evalCost({x:p2v.x,y:p2v.y+delta}, q1v) - cost)/delta;
+      grad.q1x = (evalCost(p2v, {x:q1v.x+delta,y:q1v.y}) - cost)/delta;
+      grad.q1y = (evalCost(p2v, {x:q1v.x,y:q1v.y+delta}) - cost)/delta;
+
+      // update with step scaled by G2_STEP and cost
+      const step = this.G2_STEP;
+      p2v.x -= step * grad.p2x;
+      p2v.y -= step * grad.p2y;
+      q1v.x -= step * grad.q1x;
+      q1v.y -= step * grad.q1y;
+    }
+    return { p2: p2v, q1: q1v };
+  }
+
+  // -------------------------
+  // Example bodice generator (concise, uses helpers)
+  // -------------------------
+  private _generateBodice(measurements: Measurements, isFront: boolean, category: Category, options?: any): BodiceResult {
+    const { bust = 92, waist = 74, hips = 98, shoulderWidth = 14, pieceLength = 42 } = measurements as any;
+    const scale = this.scale;
+    const paths: SvgPath[] = [];
+
+    const finalQuarterBust = (bust / 4) + (category === 'man' ? 2.5 : 2);
+    const armholeDepth = (bust / 10) + (category === 'woman' ? 10.5 : 12);
+    const neckWidth = (bust / 20) + 2;
+    const shoulderSlope = category === 'child' ? 3 : 4.5;
+    const backWidth = (bust / 8) + 5.5;
+    const chestWidth = (bust / 4) - 4;
+
+    const p = {
+      neckTop: { x: neckWidth, y: 0 },
+      shoulderTip: { x: shoulderWidth / 2, y: shoulderSlope },
+      neckDrop: { x: 0, y: isFront ? (bust/12)+1 : 2 },
+      bustSide: { x: finalQuarterBust, y: armholeDepth },
+      waistSide: { x: (waist/4)+2.5, y: 42 },
+      hipSide: { x: (hips/4)+ (category==='man'?2:1.5), y: 62 },
+      hemSide: { x: (hips/4)+ (category==='man'?2:1.5), y: pieceLength },
+      armholeLandmark: { x: isFront ? chestWidth : backWidth, y: armholeDepth }
+    };
+
+    // control points
+    const neckC1 = { x: p.neckDrop.x + p.neckTop.x*0.55, y: p.neckDrop.y };
+    const neckC2 = { x: p.neckTop.x*0.9, y: p.neckTop.y + p.neckDrop.y*0.55 };
+    const armC1 = { x: p.shoulderTip.x - (isFront?2.5:0.75), y: p.shoulderTip.y + (p.bustSide.y - p.shoulderTip.y)*0.35 };
+    const armC2 = { x: isFront ? p.armholeLandmark.x + (p.bustSide.x - p.armholeLandmark.x)*0.2 : p.armholeLandmark.x + (p.bustSide.x - p.armholeLandmark.x)*0.7, y: p.bustSide.y - (p.bustSide.y - p.shoulderTip.y)*0.30 };
+
+    const main = new PathBuilder()
+      .moveTo(0*scale, p.hemSide.y*scale)
+      .lineTo(0*scale, p.waistSide.y*scale)
+      .lineTo(p.neckDrop.x*scale, p.neckDrop.y*scale)
+      .cubicCurveTo(neckC1.x*scale, neckC1.y*scale, neckC2.x*scale, neckC2.y*scale, p.neckTop.x*scale, p.neckTop.y*scale)
+      .lineTo(p.shoulderTip.x*scale, p.shoulderTip.y*scale)
+      .cubicCurveTo(armC1.x*scale, armC1.y*scale, armC2.x*scale, armC2.y*scale, p.bustSide.x*scale, p.bustSide.y*scale)
+      .lineTo(p.hemSide.x*scale, p.hemSide.y*scale)
+      .closePath()
+      .build();
+
+    paths.push({ d: main, class: 'stroke-black fill-none' });
+
+    // compute armhole length via adaptive sampling
+    const armLen = this._approximateBezierLength(p.shoulderTip, armC1, armC2, p.bustSide);
+
+    // add notch positions using sampling (robust)
+    const sampled = this._adaptiveSampleBezier(p.shoulderTip, armC1, armC2, p.bustSide, this.MAX_SEG_LEN_MM, this.MAX_ADAPTIVE_DEPTH);
+    const pick = (ratio:number) => {
+      const idx = Math.floor(ratio*(sampled.length-1));
+      const pt = sampled[Math.max(0,Math.min(sampled.length-1,idx))];
+      const len = 0.5*scale;
+      return `M ${pt.x*scale - len} ${pt.y*scale} L ${pt.x*scale + len} ${pt.y*scale}`;
+    };
+    if (isFront) paths.push({ d: pick(0.65), class: 'stroke-red-600' });
+    else { paths.push({ d: pick(0.60), class: 'stroke-red-600' }); paths.push({ d: pick(0.65), class: 'stroke-red-600' }); }
+
+    const piece = { paths, width: finalQuarterBust*scale + 10*scale, height: pieceLength*scale };
+    return { piece, armholeCurveLength: armLen };
+  }
+
+  // -------------------------
+  // Approximate bezier length wrapper
+  // -------------------------
+  private _approximateBezierLength(a:Point,b:Point,c:Point,d:Point): number {
+    const pts = this._adaptiveSampleBezier(a,b,c,d,this.MAX_SEG_LEN_MM,this.MAX_ADAPTIVE_DEPTH);
+    let L = 0;
+    for (let i=1;i<pts.length;i++){ L += Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y); }
+    return L;
+  }
+
+  // -------------------------
+  // Sleeve generator (concise)
+  // -------------------------
+  private _generateSleeve(measurements: Measurements, armholeLengthCm: number, type: string, options?: any): PatternPiece {
+    const { sleeveLength = 60, armCircumference = 28 } = measurements as any;
+    const scale = this.scale;
+    const bicep = armCircumference + 6;
+    const half = bicep/2;
+    const capH = armholeLengthCm/3;
+    const p = {
+      capTop: { x: half, y: 0 },
+      left: { x: 0, y: capH },
+      right: { x: bicep, y: capH },
+      hemL: { x: half - 10, y: sleeveLength },
+      hemR: { x: half + 10, y: sleeveLength }
+    };
+    const cap = {
+      back_c1: { x: p.left.x + half*0.3, y: p.left.y - capH*1.1 },
+      back_c2: { x: p.capTop.x - half*0.6, y: p.capTop.y },
+      front_c1: { x: p.capTop.x + half*0.7, y: p.capTop.y },
+      front_c2: { x: p.right.x - half*0.15, y: p.right.y - capH*0.9 }
+    };
+    const pb = new PathBuilder();
+    pb.moveTo(p.hemL.x*scale,p.hemL.y*scale).lineTo(p.left.x*scale,p.left.y*scale)
+      .cubicCurveTo(cap.back_c1.x*scale,cap.back_c1.y*scale,cap.back_c2.x*scale,cap.back_c2.y*scale,p.capTop.x*scale,p.capTop.y*scale)
+      .cubicCurveTo(cap.front_c1.x*scale,cap.front_c1.y*scale,cap.front_c2.x*scale,cap.front_c2.y*scale,p.right.x*scale,p.right.y*scale)
+      .lineTo(p.hemR.x*scale,p.hemR.y*scale).closePath();
+    const paths: SvgPath[] = [{ d: pb.build(), class: 'stroke-black fill-none' }];
+
+    // notches via sampling
+    const frontSample = this._adaptiveSampleBezier(p.capTop, cap.front_c1, cap.front_c2, p.right, this.MAX_SEG_LEN_MM, this.MAX_ADAPTIVE_DEPTH);
+    const backSample = this._adaptiveSampleBezier(p.left, cap.back_c1, cap.back_c2, p.capTop, this.MAX_SEG_LEN_MM, this.MAX_ADAPTIVE_DEPTH);
+    const pick = (arr:Point[], r:number) => {
+      const idx = Math.floor(r*(arr.length-1)); const pt = arr[Math.max(0,Math.min(arr.length-1,idx))];
+      const len = 0.5*scale; return `M ${pt.x*scale-len} ${pt.y*scale} L ${pt.x*scale+len} ${pt.y*scale}`;
+    };
+    paths.push({ d: pick(frontSample,0), class: 'stroke-red' });
+    paths.push({ d: pick(frontSample,0.65), class: 'stroke-red' });
+    paths.push({ d: pick(backSample,1-0.60), class: 'stroke-red' });
+    paths.push({ d: pick(backSample,1-0.65), class: 'stroke-red' });
+
+    return { paths, width: (p.right.x - p.left.x)*scale + 20*scale, height: sleeveLength*scale };
+  }
+}
